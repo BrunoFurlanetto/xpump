@@ -26,12 +26,8 @@ class RegisterView(CreateAPIView):
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            # se quiser retornar dados do profile, faça algo como:
-            "profile": {
-                "height": user.profile.height,
-                "weight": user.profile.weight,
-                "photo": request.build_absolute_uri(user.profile.photo.url) if user.profile.photo else None,
-                "notification_preferences": user.profile.notification_preferences,
-            }
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "profile": user.profile.id
         }
         return Response(data, status=status.HTTP_201_CREATED)

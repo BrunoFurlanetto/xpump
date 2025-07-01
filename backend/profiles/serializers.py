@@ -1,4 +1,3 @@
-# profiles/serializers.py
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Profile
@@ -6,44 +5,43 @@ from .models import Profile
 User = get_user_model()
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        # liste aqui apenas os campos que o usuário poderá enviar no registro
-        fields = ('height', 'weight', 'photo', 'notification_preferences')
-
-
 class RegisterSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(write_only=True, required=True)
-    last_name = serializers.CharField(write_only=True, required=True)
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True, min_length=8)
     password2 = serializers.CharField(write_only=True, label='Confirmar senha')
-    profile = ProfileSerializer()
 
     class Meta:
         model = User
-        fields = (
-            'username', 'email',
-            'first_name', 'last_name',
-            'password', 'password2',
-            'profile'
-        )
+        # inclua first_name e last_name aqui
+        fields = ('username', 'email', 'first_name', 'last_name', 'password', 'password2')
 
     def validate(self, data):
+        # Confirmação de senha
         if data['password'] != data.pop('password2'):
             raise serializers.ValidationError("As senhas não conferem.")
+        # Nomes não podem estar em branco
+        if not data.get('first_name').strip():
+            raise serializers.ValidationError({"first_name": "Este campo é obrigatório."})
+        if not data.get('last_name').strip():
+            raise serializers.ValidationError({"last_name": "Este campo é obrigatório."})
         return data
 
     def create(self, validated_data):
-        profile_data = validated_data.pop('profile')
-        first_name = validated_data.pop('first_name')
-        last_name = validated_data.pop('last_name')
+        # Extrai os campos de nome
+        first = validated_data.pop('first_name')
+        last = validated_data.pop('last_name')
+        pwd = validated_data.pop('password')
+
+        # Cria o User com first_name e last_name
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data.get('email'),
-            first_name=first_name,
-            last_name=last_name,
-            password=validated_data['password']
+            password=pwd,
+            first_name=first,
+            last_name=last,
         )
-        Profile.objects.create(user=user, **profile_data)
+
+        # Cria o profile vazio (todos os defaults)
+        Profile.objects.create(user=user)
         return user
