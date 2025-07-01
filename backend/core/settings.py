@@ -64,10 +64,13 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 REST_FRAMEWORK = {
-  'DEFAULT_RENDERER_CLASSES': (
-    'rest_framework.renderers.JSONRenderer',
-  ),
-  # … outras configs …
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # Para leitura de JWT no header Authorization: Bearer <token>
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 TEMPLATES = [
