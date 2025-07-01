@@ -71,6 +71,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Xpump API',
+    'DESCRIPTION': 'Documentação dos endpoints da Xpump',
+    'VERSION': '0.0.1',
+    # 'SERVE_INCLUDE_SCHEMA': False,  # se não quiser incluir o JSON do schema no Swagger UI
+    # qualquer outra opção da doc: https://drf-spectacular.readthedocs.io/
 }
 
 TEMPLATES = [
