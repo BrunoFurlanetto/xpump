@@ -76,7 +76,7 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Xpump API',
-    'DESCRIPTION': 'Documentação dos endpoints da Xpump',
+    'DESCRIPTION': 'Documentation from endpoints of Xpump API',
     'VERSION': '0.0.1',
     # 'SERVE_INCLUDE_SCHEMA': False,  # se não quiser incluir o JSON do schema no Swagger UI
     # qualquer outra opção da doc: https://drf-spectacular.readthedocs.io/
