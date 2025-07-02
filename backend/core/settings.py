@@ -65,8 +65,8 @@ ROOT_URLCONF = 'core.urls'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # Para leitura de JWT no header Authorization: Bearer <token>
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -78,7 +78,7 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'Xpump API',
     'DESCRIPTION': 'Documentation from endpoints of Xpump API',
     'VERSION': '0.0.1',
-    # 'SERVE_INCLUDE_SCHEMA': False,  # se não quiser incluir o JSON do schema no Swagger UI
+    'SERVE_INCLUDE_SCHEMA': False,  # se não quiser incluir o JSON do schema no Swagger UI
     # qualquer outra opção da doc: https://drf-spectacular.readthedocs.io/
 }
 
