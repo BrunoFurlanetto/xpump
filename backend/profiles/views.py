@@ -15,12 +15,15 @@ class ProfilesAPIView(generics.ListCreateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfilesSerialializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get', 'put']
+    http_method_names = ['get']
 
 
 @extend_schema(tags=['Profiles'])
-class ProfileAPIView(generics.RetrieveUpdateDestroyAPIView):
+class ProfileAPIView(generics.RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfilesSerialializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'put']
+
+    def destroy(self, request, *args, **kwargs):
+        return Response({"detail": "Method 'DELETE' not allowed for profiles."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
