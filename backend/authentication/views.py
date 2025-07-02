@@ -24,10 +24,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            # Se for válido, cria o usuário
-            user = serializer.save()  # Aqui o save() já vai passar pela validação de senha
-
-            # Cria o profile associado ao usuário
+            user = serializer.save()
             Profile.objects.create(user=user)
 
             return Response({
@@ -50,7 +47,14 @@ class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_destroy(self, instance):
+        if hasattr(instance, 'profile'):
+            instance.profile.delete()
 
+        instance.delete()
+
+
+# -----------------------------------------------Views of JWT token ----------------------------------------------------
 @extend_schema(tags=["JWT Auth"])
 class TokenObtainPairView(SimpleJWTTokenObtainPairView):
     pass
