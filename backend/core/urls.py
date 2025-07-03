@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
-from backend.authentication.views import TokenObtainPairView, TokenVerifyView, TokenRefreshView
+from authentication.views import TokenObtainPairView, TokenVerifyView, TokenRefreshView
 
 urlpatterns = [
     # URLS from documentation

@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.views import (
@@ -11,7 +11,7 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView as SimpleJWTTokenVerifyView,
 )
 
-from backend.authentication.serializer import UserSerializer
+from authentication.serializer import UserSerializer
 from profiles.models import Profile
 
 
@@ -36,7 +36,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
                 "is_active": True,
                 "date_joined": user.date_joined,
                 "profile_id": user.profile.id,
-            })
+            }, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
