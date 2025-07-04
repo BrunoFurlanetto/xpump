@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'authentication.apps.AuthenticationConfig',
     'profiles.apps.ProfilesConfig',
+    'groups.apps.GroupsConfig',
 ]
 
 MIDDLEWARE = [
