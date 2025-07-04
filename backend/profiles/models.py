@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from groups.models import Group
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -9,6 +11,7 @@ class Profile(models.Model):
     photo = models.ImageField(upload_to='profile_photos', null=True, blank=True)
     notification_preferences = models.JSONField(default=dict, null=True, blank=True)
     score = models.PositiveBigIntegerField(default=0)
+    groups = models.ManyToManyField(Group, blank=True)
     streak_days = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
