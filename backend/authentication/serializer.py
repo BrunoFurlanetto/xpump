@@ -10,25 +10,24 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         # Campos padrão (evita expor senha e outros dados sensíveis)
         fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name']
+        extra_kwargs = {
+            'email': {'required': True},
+        }
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError('Passwords do not match')
+            raise serializers.ValidationError({'password': 'Passwords do not match'})
 
         if User.objects.filter(email=attrs['email']).exists():
-            raise serializers.ValidationError('Email already registered')
+            raise serializers.ValidationError({'email': 'Email already registered'})
 
         if attrs['first_name'] == '':
-            raise serializers.ValidationError('First Name required')
+            raise serializers.ValidationError({'first_name': 'First Name required'})
 
         return attrs
 
     def create(self, validated_data):
         validated_data.pop('password2', None)
-
-        password = validated_data.pop('password')
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
+        user = User.objects.create_user(**validated_data)
 
         return user
