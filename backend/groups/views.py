@@ -2,19 +2,23 @@ from django.shortcuts import render
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from groups.models import Group, GroupMembers
 from groups.serializer import GroupSerializer, GroupMemberSerializer
 
 
 @extend_schema(tags=['Groups'])
-class GroupsAPIView(ListAPIView):
+class GroupsAPIView(ListCreateAPIView):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user, owner=self.request.user)
 
 
 @extend_schema(tags=['Groups'])
@@ -76,3 +80,26 @@ class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
                 return PermissionDenied("Only group owner can delete admin members")
         else:
             return Response({"detail": "User not a member of this groups"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(tags=['Groups'])
+class JoinGroupAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            group = Group.objects.get(invite_code=kwargs['invite_code'])
+        except Group.DoesNotExist:
+            return Response({"detail": "Group does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if GroupMembers.objects.filter(group_id=group.id, member_id=request.user.id).exists():
+            return Response({"detail": "User already joined this group"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            GroupMembers.objects.create(group_id=group.id, member_id=request.user.id)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        request.user.profile.groups.add(group)
+
+        return Response({"detail": "User joined this group"}, status=status.HTTP_200_OK)

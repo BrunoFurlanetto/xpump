@@ -21,7 +21,6 @@ class Group(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.owner = self.created_by
             super().save(*args, **kwargs)
             GroupMembers.objects.create(member=self.created_by, joined_at=self.created_at, is_admin=True, group=self)
         else:
