@@ -50,36 +50,42 @@ class GroupMembersAPIView(ListAPIView):
 class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = GroupMemberSerializer
     permission_classes = [IsAuthenticated]
+    lookup_field = 'member_id'
 
     def get_queryset(self):
-        return GroupMembers.objects.filter(group_id=self.kwargs['group_id'], member_id=self.kwargs['user_id'])
+        return GroupMembers.objects.filter(group_id=self.kwargs['group_id'], member_id=self.kwargs['member_id'])
 
     def update(self, request, *args, **kwargs):
         group = Group.objects.get(pk=self.kwargs['group_id'])
+        group_member = self.get_object()
 
+        if set(request.data.keys()) - {'is_admin'}:
+            return Response(
+                {"error": "Only is_admin field can be updated from group owner"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         if group.owner != request.user:
-            if request.POST.get('is_admin', None):
-                return PermissionDenied("Only the group owner can update admin members")
-            else:
-                return Response(
-                    {
-                        "detail": "Only is_admin field can be updated from group owner"
-                    },
-                    status=status.HTTP_403_FORBIDDEN
-                )
+            raise PermissionDenied("Only the group owner can update admin members")
+
+        return super().update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        member = GroupMembers.objects.filter(member_id=request.user.id)
+        member = GroupMembers.objects.filter(member_id=request.user.id).first()
+        group = Group.objects.get(pk=self.kwargs['group_id'])
         member_removed = self.get_object()
 
-        if member.exists():
+        if member:
             if not member.is_admin:
-                return PermissionDenied("Only admin group can delete another members")
+                raise PermissionDenied("Only admin group can delete another members")
 
-            if member_removed.is_admin:
-                return PermissionDenied("Only group owner can delete admin members")
+            if member_removed.is_admin and member.member != group.owner:
+                raise PermissionDenied("Only group owner can delete admin members")
         else:
             return Response({"detail": "User not a member of this groups"}, status=status.HTTP_400_BAD_REQUEST)
+
+        member_removed.member.profile.groups.remove(group)
+        return super().delete(request, *args, **kwargs)
 
 
 @extend_schema(tags=['Groups'])
