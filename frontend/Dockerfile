@@ -1,5 +1,6 @@
 FROM node:20-alpine3.18
 
+
 WORKDIR /app
 
 COPY . . 
@@ -7,7 +8,15 @@ COPY . .
 RUN npm i -g pnpm
 RUN apk add --no-cache openssl
 RUN pnpm install
+
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
+ARG VAPID_PRIVATE_KEY
+ENV VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY
+
 RUN pnpm build 
+
+
 
 CMD ["pnpm", "start"]
 
