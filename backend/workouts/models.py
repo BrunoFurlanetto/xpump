@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from status.models import Status
@@ -23,3 +24,15 @@ class WorkoutCheckin(models.Model):
 
     def __str__(self):
         return f'Workout check-in for {self.user}'
+
+    def save(self, *args, **kwargs):
+        if self.check_in_type == 'PHOTO' and not self.image_proof:
+            raise ValidationError('With check-in of type PHOTO, needed an image proof')
+
+        if self.check_in_type == 'VIDEO' and not self.video_proof:
+            raise ValidationError('With check-in of type VIDEO, needed an video proof')
+
+        if self.check_in_type == 'GEOLOCATION' and not self.location:
+            raise ValidationError('With check-in of type GEOLOCATION, needed a location proof')
+        
+        super().save(*args, **kwargs)
