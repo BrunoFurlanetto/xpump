@@ -15,11 +15,13 @@ class GroupMemberSerializer(serializers.ModelSerializer):
         fields = ['member', 'joined_at', 'is_admin']
         read_only_fields = ['member', 'joined_at']
 
-    def validate(self, data):
+    def validate(self, attrs):
         """
         Custom validation to check that read-only fields are not provided.
         """
-        if 'joined_at' in data:
-            raise serializers.ValidationError({"joined_at": "This field is read-only and cannot be modified."})
+        if 'joined_at' in self.initial_data:
+            raise serializers.ValidationError({
+                "joined_at": "This field is read-only and cannot be modified."
+            })
 
-        return data
+        return attrs

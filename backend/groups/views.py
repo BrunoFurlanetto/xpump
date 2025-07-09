@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.core.exceptions import ObjectDoesNotExist
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -84,7 +84,13 @@ class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
         else:
             return Response({"detail": "User not a member of this groups"}, status=status.HTTP_400_BAD_REQUEST)
 
-        member_removed.member.profile.groups.remove(group)
+        try:
+            member_removed.member.profile.groups.remove(group)
+        except ObjectDoesNotExist:
+            pass
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return super().delete(request, *args, **kwargs)
 
 
