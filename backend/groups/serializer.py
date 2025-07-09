@@ -3,20 +3,14 @@ from rest_framework import serializers
 from groups.models import Group, GroupMembers
 
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
+class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = [
-            'name',
-            'description',
-            'invite_code',
-            'created_at',
-            'created_by',
-            'owner',
-        ]
+        fields = '__all__'
 
 
-class GroupMemberSerializer(serializers.HyperlinkedModelSerializer):
+class GroupMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupMembers
-        fields = '__all__'
+        fields = ['member', 'joined_at', 'is_admin']
+        read_only_fields = ['member', 'joined_at']
