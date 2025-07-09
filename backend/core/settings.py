@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'authentication.apps.AuthenticationConfig',
     'profiles.apps.ProfilesConfig',
     'groups.apps.GroupsConfig',
+    'workouts.apps.WorkoutsConfig',
+    'status.apps.StatusConfig',
 ]
 
 MIDDLEWARE = [

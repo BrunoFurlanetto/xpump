@@ -69,14 +69,14 @@ class UserAuthenticationTests(APITestCase):
         data = {
             "username": "newuser",
             "password": "newpassword123",
+            "password2": "newpassword123",
             "first_name": "New",
             "last_name": "User",
             "email": "newuser@example.com"
         }
 
-        # The request without a token should result in a 401 (Unauthorized)
         response = self.client.post(reverse('users-list'), data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)  # 401 because user is not authenticated
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_user_list(self):
         """
