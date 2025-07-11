@@ -45,7 +45,6 @@ DEBUG = True
 ALLOWED_HOSTS = ['xpump.onrender.com', 'xpump.up.railway.app']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
