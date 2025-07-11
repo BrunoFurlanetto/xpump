@@ -32,7 +32,7 @@ class WorkoutCheckin(models.Model):
     comments = models.TextField(blank=True)
     workout_date = models.DateTimeField()
     validation_status = models.ForeignKey(Status, on_delete=models.PROTECT)
-    base_points = models.FloatField(null=True, blank=True)
+    base_points = models.FloatField(null=True, blank=True, editable=False)
 
     def __str__(self):
         return f'Workout check-in for {self.user}'
