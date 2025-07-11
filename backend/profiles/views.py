@@ -22,6 +22,3 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfilesSerialializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'put']
-
-    def destroy(self, request, *args, **kwargs):
-        return Response({"detail": "Method 'DELETE' not allowed for profiles."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
