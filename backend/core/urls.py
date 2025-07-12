@@ -35,5 +35,6 @@ urlpatterns = [
     path('api/v1/auth/', include('authentication.urls')),
     path('api/v1/profiles/', include('profiles.urls')),
     path('api/v1/groups/', include('groups.urls')),
+    path('api/v1/workouts/', include('workouts.urls')),
     path('admin/', admin.site.urls),
 ]
