@@ -28,6 +28,9 @@ class WorkoutCheckinsAPIView(ListCreateAPIView):
     serializer_class = WorkoutCheckinSerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 
 class WorkoutCheckinAPIView(RetrieveUpdateDestroyAPIView):
     queryset = WorkoutCheckin.objects.all()
