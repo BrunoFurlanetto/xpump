@@ -38,3 +38,17 @@ class WorkoutCheckinProof(models.Model):
         upload_to='workout_checkins/',
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'mp4'])]
     )
+
+
+class WorkoutPlan(models.Model):
+    # user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # group = models.ManyToManyField(Group)
+    title = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    pdf_file = models.FileField(upload_to='workout_plans/', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
+    start_plan = models.DateField()
+    end_plan = models.DateField()
+    lifetime = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
