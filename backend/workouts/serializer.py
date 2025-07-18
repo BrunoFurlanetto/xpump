@@ -1,7 +1,7 @@
 from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 
-from workouts.models import WorkoutCheckin, WorkoutCheckinProof
+from workouts.models import WorkoutCheckin, WorkoutCheckinProof, WorkoutPlan
 
 
 class WorkoutCheckinProofSerializer(serializers.ModelSerializer):
@@ -48,3 +48,16 @@ class WorkoutCheckinSerializer(serializers.ModelSerializer):
         validated_data = {key: value for key, value in validated_data.items() if key == 'comments'}
 
         return super().update(instance, validated_data)
+
+
+class WorkoutPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkoutPlan
+        fields = '__all__'
+        read_only_fields = ['id']
+
+    def validate_pdf_file(self, value):
+        if not value.name.endswith('.pdf'):
+            raise serializers.ValidationError('The file must be a PDF.')
+
+        return value
