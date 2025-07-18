@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .models import WorkoutCheckin
-from .serializer import WorkoutCheckinSerializer
+from .models import WorkoutCheckin, WorkoutPlan
+from .serializer import WorkoutCheckinSerializer, WorkoutPlanSerializer
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -45,3 +45,33 @@ class WorkoutCheckinsByUserAPIView(ListAPIView):
 
     def get_queryset(self):
         return WorkoutCheckin.objects.filter(user=self.request.user).order_by('-workout_date')
+
+
+class WorkoutPlansAPIView(ListAPIView):
+    queryset = WorkoutPlan.objects.all()
+    serializer_class = WorkoutPlanSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class WorkoutPlanAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = WorkoutPlan.objects.all()
+    serializer_class = WorkoutPlanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            return super().update(request, *args, **kwargs)
+        else:
+            return Response(
+                {"detail": "You do not have permission to update this resource."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            return super().destroy(request, *args, **kwargs)
+        else:
+            return Response(
+                {"detail": "You do not have permission to delete this resource."},
+                status=status.HTTP_403_FORBIDDEN
+            )
