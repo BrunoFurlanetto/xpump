@@ -27,6 +27,19 @@ class WorkoutCheckin(models.Model):
 
         super().save(*args, **kwargs)
 
+    def update_multiplier(self):
+        """
+        The multiplier will be updated based on the check-in sequence. In the first scenario, the multiplier will increase according to the following rule.
+            1. Minor 5 check-ins the multiplier will be 1 (defult value);
+            2. Between 5 and 10: check-ins:  Multiplier recieve 1.25 (increase of the 25%);
+            3. Between 10 and 20 check-ins: Multiplier recieve 1.50 (increase of the 20%)
+            4. Between 20 and 40: Multiplier recieve 1.75 (increase o the 16% approximately)
+            5. Between 40 and 80 check-ins: Multiplier recieve 2.0 (Increase of the 14% approximately)
+        At first, multiplier equal 2.0 is the roof, but this value can be altered, base on the first test version app.
+        """
+
+        return self.multiplier
+
 
 class WorkoutCheckinProof(models.Model):
     checkin = models.ForeignKey(
