@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { subscribeUser, unsubscribeUser, sendNotification } from "./actions";
+import { Button } from "@/components/ui/button";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -74,20 +75,20 @@ export function PushNotificationManager() {
       {subscription ? (
         <>
           <p>You are subscribed to push notifications.</p>
-          <button onClick={unsubscribeFromPush}>Unsubscribe</button>
+          <Button onClick={unsubscribeFromPush}>Unsubscribe</Button>
           <input
             type="text"
             placeholder="Enter notification message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
-          <button onClick={sendTestNotification}>Send Test</button>
+          <Button onClick={sendTestNotification}>Send Test</Button>
         </>
       ) : (
         <>
           <p>You are not subscribed to push notifications.</p>
 
-          <button onClick={subscribeToPush}>Subscribe</button>
+          <Button onClick={subscribeToPush}>Subscribe</Button>
         </>
       )}
     </div>
