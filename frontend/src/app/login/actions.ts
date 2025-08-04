@@ -1,11 +1,12 @@
 "use server";
 
-import { createSession } from "@/lib/session";
+import { BACKEND_URL } from "@/lib/constants";
+import { createSession, deleteSession, updateToken } from "@/lib/session";
 import { z } from "zod";
 
 const LoginSchema = z.object({
-    user: z.string().min(3, { message: "Informe o usuário" }),
-    passwd: z.string().min(3, { message: "Informe a senha" }),
+    username: z.string().min(3, { message: "Informe o usuário" }),
+    password: z.string().min(3, { message: "Informe a senha" }),
 });
 
 type LoginData = z.infer<typeof LoginSchema>;
@@ -23,8 +24,8 @@ export async function submitLogin(
     formData: FormData,
 ): Promise<ActionResponse> {
     const validateFormData = LoginSchema.safeParse({
-        user: formData.get("user") as string,
-        passwd: formData.get("passwd") as string,
+        username: formData.get("username") as string,
+        password: formData.get("password") as string,
     });
 
     if (!validateFormData.success) {
@@ -36,7 +37,7 @@ export async function submitLogin(
     }
 
     // 2. login
-    const userResponse = await fetch("/api/login", {
+    const userResponse = await fetch(`${BACKEND_URL}/auth/token/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -44,8 +45,19 @@ export async function submitLogin(
         body: JSON.stringify(validateFormData.data),
     });
 
+    console.log("userResponse", userResponse);
+
+    if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        return {
+            success: false,
+            message: errorData.error || "Erro ao logar, tente novamente!",
+        };
+    }
+
     const user = await userResponse.json();
-    if (user.error || !user.user)
+    console.log("user", user);
+    if (user.error || !user.access)
         return {
             success: false,
             message: user.error || "Erro ao logar, tente novamente!",
@@ -59,3 +71,22 @@ export async function submitLogin(
     };
 }
 
+
+export const refreshToken = async (oldRefreshToken: string) => {
+    try {
+        const response = await fetch(`${BACKEND_URL}/auth/refresh/`, {
+            method: "POST",
+            body: JSON.stringify({ refresh: oldRefreshToken }),
+        })
+
+        const { accessToken } = await response.json();
+        await updateToken({ accessToken, refreshToken: oldRefreshToken });
+        return accessToken;
+    } catch {
+        return null;
+    }
+}
+
+export const logout = async () => {
+    await deleteSession();
+}
