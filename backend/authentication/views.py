@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.views import (
@@ -19,7 +19,7 @@ from profiles.models import Profile
 class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
