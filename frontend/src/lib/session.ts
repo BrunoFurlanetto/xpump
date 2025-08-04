@@ -89,8 +89,8 @@ export async function updateToken({ accessToken, refreshToken }: {
   const expires = new Date(Date.now() + cookie.duration);
   const newSession = await encrypt({
     ...session,
-    accessToken,
-    refreshToken,
+    access: accessToken,
+    refresh: refreshToken,
     expires
   });
   (await cookies()).set(cookie.name, newSession, { ...cookie.options, expires });

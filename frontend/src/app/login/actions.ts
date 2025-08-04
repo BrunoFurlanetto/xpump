@@ -79,9 +79,9 @@ export const refreshToken = async (oldRefreshToken: string) => {
             body: JSON.stringify({ refresh: oldRefreshToken }),
         })
 
-        const { accessToken } = await response.json();
-        await updateToken({ accessToken, refreshToken: oldRefreshToken });
-        return accessToken;
+        const { access } = await response.json();
+        await updateToken({ accessToken: access, refreshToken: oldRefreshToken });
+        return access;
     } catch {
         return null;
     }

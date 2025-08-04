@@ -12,12 +12,12 @@ export const authFetch = async (url: string | URL, options: FetchOptions = {}) =
     const session = await verifySession();
     options.headers = {
         ...options.headers,
-        Authorization: `Bearer ${session?.accessToken}`,
+        Authorization: `Bearer ${session?.access}`,
     }
     let response = await fetch(url, options);
     if (response.status === 401) {
-        if (session == null || !session?.refreshToken) throw new Error("Refresh token não encontrado");
-        const newAccessToken = await refreshToken(session.refreshToken);
+        if (session == null || !session?.refresh) throw new Error("Refresh token não encontrado");
+        const newAccessToken = await refreshToken(session.refresh);
         if (newAccessToken) {
             options.headers.Authorization = `Bearer ${newAccessToken}`;
             response = await fetch(url, options);
