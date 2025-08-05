@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useActionState, useEffect } from "react";
 import { ActionResponse, submitLogin } from "./actions";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+
 
 const initialState: ActionResponse = {
   success: false,
@@ -19,39 +21,53 @@ export default function LoginForm() {
       });
     }
   }, [state]);
+
   return (
-    <form action={action} className="w-96 flex-col flex justify-center mt-4 items-center">
-      <label className="w-full mt-16 mb-5">
-        <span className="text-white">Usuário:</span>
-        <input
+    <motion.form
+      action={action}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-96 flex-col flex justify-center mt-1 items-center  p-6 rounded-lg shadow-lg"
+    >
+      <label className="w-full mt-2 mb-5 relative">
+        <span className="  text-white">Usuário:</span>
+        <motion.input
           name="username"
           type="text"
-          className="outline-none border-b text-white border-[#6a7282] focus:bg-background w-full p-4 rounded-md"
+          autoComplete="username"
+          className=" outline-none bg-transparent  text-white w-full p-4 rounded-md border-b-2 border-orange-500"
           placeholder="seu usuário..."
         />
-        {state?.errors && <p className="text-red-400 text-end">{state.errors.username}</p>}
+        {state?.errors && <p className="text-red-400 text-end absolute bottom-[-20px]">{state.errors.username}</p>}
       </label>
-      <label className="w-full mb-5">
+      <label className="w-full mb-5 relative">
         <span className="text-white">Senha:</span>
-        <input
+        <motion.input
           name="password"
           type="password"
-          className="outline-none border-b text-white border-[#6a7282] autofill:bg-transparent focus:bg-background w-full p-4 rounded-md"
+          autoComplete="current-password"
+          className=" outline-none bg-transparent text-white w-full p-4 rounded-md border-b-2 border-orange-500"
           placeholder="sua senha..."
         />
-        {state?.errors && <p className="text-red-400 text-end">{state.errors.password}</p>}
+        {state?.errors && <p className="text-red-400 text-end absolute bottom-[-20px]">{state.errors.password}</p>}
       </label>
-      <div className="flex w-full justify-end border-b-gray-500 border-b-2 pb-3">
+      <motion.div
+        className="flex w-full justify-end relative"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
         <Button
           disabled={isPending}
           isLoading={isPending}
           loadingText="carregando"
           variant="default"
-          className="bg-green-600 hover:bg-green-700 text-white"
+          className="bg-orange-500 hover:bg-orange-700 text-white"
         >
           Logar-se
         </Button>
-      </div>
-    </form>
+      </motion.div>
+    </motion.form>
   );
 }
