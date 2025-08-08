@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUserAuth } from "@/context/userAuthContext";
 import { useNavigation } from "@/context/navigationContext";
 import { Home, Dumbbell, Users, BarChart3, Menu, User } from "lucide-react";
 
@@ -49,7 +48,6 @@ const navigationItems: NavItem[] = [
 
 export function MobileNavbar({ className }: MobileNavbarProps) {
   const pathname = usePathname();
-  const user = useUserAuth();
   const { toggleMobileMenu } = useNavigation();
 
   return (
