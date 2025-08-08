@@ -7,12 +7,17 @@ export default function manifest(): MetadataRoute.Manifest {
         description: 'A gamification app for gyms with social media features and rankings.',
         start_url: '/',
         display: 'standalone',
-        background_color: '#ff8d46',
+        background_color: '#1a1a1a',
         theme_color: '#011b2a',
         icons: [
             {
-                src: '/apple-icon.png',
-                sizes: '200x200',
+                src: '/logo/x192x192.png',
+                sizes: '192x192',
+                type: 'image/png',
+            },
+            {
+                src: '/logo/x512x512.png',
+                sizes: '512x512',
                 type: 'image/png',
             },
         ],
