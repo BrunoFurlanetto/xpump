@@ -1,5 +1,6 @@
 "use server";
 
+import { authFetch } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 import { createSession, deleteSession, updateToken } from "@/lib/session";
 import { z } from "zod";
@@ -86,6 +87,34 @@ export const refreshToken = async (oldRefreshToken: string) => {
         return null;
     }
 }
+
+type userAuth = {
+    id: string;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    photo: string | null;
+} | null
+
+export const getUserById = async (userId: string): Promise<userAuth> => {
+    const response = await authFetch(`${BACKEND_URL}/auth/users/${userId}/`);
+    if (!response.ok) {
+        return null
+    }
+    const user = await response.json();
+    const profileResponse = await authFetch(`${BACKEND_URL}/auth/profile/${user.profileId}/`);
+    const profile = await profileResponse.json();
+    // TODO : API PRECISA BUSCAR O PROFILE APARTIR DO USUÁRIO
+    return {
+        id: userId,
+        username: user.username,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        photo: profile?.photo || null,
+    } as userAuth;
+};
 
 export const logout = async () => {
     await deleteSession();

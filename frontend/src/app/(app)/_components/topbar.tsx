@@ -1,10 +1,14 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Menu } from "lucide-react";
+import { useUserAuth } from "@/context/userAuthContext";
 
 const TopBar = () => {
+  const user = useUserAuth();
+
   return (
     <section className="topbar">
       <div className="flex justify-between py-4 px-5 bg-black/20">
@@ -17,9 +21,9 @@ const TopBar = () => {
             <Menu className="text-primary" />
           </Button>
 
-          {/* <Link href={`/profile/${user.id}`} className="flex items-center">
-            Profile
-          </Link> */}
+          <Link href={`/profile`} className="flex items-center">
+            {user.first_name} {user.last_name}
+          </Link>
         </div>
       </div>
     </section>
