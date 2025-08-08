@@ -103,8 +103,13 @@ export const getUserById = async (userId: string): Promise<userAuth> => {
         return null
     }
     const user = await response.json();
-    const profileResponse = await authFetch(`${BACKEND_URL}/auth/profile/${user.profileId}/`);
-    const profile = await profileResponse.json();
+    const profileResponse = await authFetch(`${BACKEND_URL}/profiles/${user.profile_id}/`);
+    let photo = null;
+    if (profileResponse.ok) {
+        const profile = await profileResponse.json();
+        photo = profile.photo || null;
+        console.log("profile", profile);
+    }
     // TODO : API PRECISA BUSCAR O PROFILE APARTIR DO USUÁRIO
     return {
         id: userId,
@@ -112,7 +117,7 @@ export const getUserById = async (userId: string): Promise<userAuth> => {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        photo: profile?.photo || null,
+        photo
     } as userAuth;
 };
 

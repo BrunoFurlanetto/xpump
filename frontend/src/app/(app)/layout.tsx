@@ -1,8 +1,9 @@
 import { verifySession } from "@/lib/session";
-import TopBar from "./_components/topbar";
 import { redirect } from "next/navigation";
 import { getUserById } from "../login/actions";
 import { UserAuthProvider } from "@/context/userAuthContext";
+import { NavigationProvider } from "@/context/navigationContext";
+import { AppNavigation } from "./_components/app-navigation";
 
 export default async function AppLayout({
   children,
@@ -10,7 +11,6 @@ export default async function AppLayout({
   children: React.ReactNode;
 }>) {
   const session = await verifySession();
-  console.log("session", session);
   if (!session) redirect("/login");
 
   const user = await getUserById(session?.user_id || "");
@@ -18,11 +18,12 @@ export default async function AppLayout({
   if (!user) redirect("/login");
 
   return (
-    <main className="bg-background min-h-screen flex flex-col">
+    <div className="bg-background min-h-screen">
       <UserAuthProvider user={user}>
-        <TopBar />
-        {children}
+        <NavigationProvider>
+          <AppNavigation>{children}</AppNavigation>
+        </NavigationProvider>
       </UserAuthProvider>
-    </main>
+    </div>
   );
 }
