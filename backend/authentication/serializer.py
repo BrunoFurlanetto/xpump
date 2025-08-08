@@ -5,14 +5,20 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
+    profile_id = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         # Campos padrão (evita expor senha e outros dados sensíveis)
-        fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name']
+        fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name', 'profile_id']
         extra_kwargs = {
             'email': {'required': True},
         }
+
+    def get_profile_id(self, obj):
+        profile = getattr(obj, 'profile', None)
+
+        return getattr(profile, 'id', None) if profile else None
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
