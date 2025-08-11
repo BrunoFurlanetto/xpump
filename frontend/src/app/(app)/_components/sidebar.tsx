@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity } from "lucide-react";
+import { logout } from "@/app/login/actions";
 
 interface SidebarProps {
   className?: string;
@@ -62,7 +63,11 @@ const bottomItems: NavItem[] = [
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+
   const user = useUserAuth();
+  async function handleLogout() {
+    await logout();
+  }
 
   return (
     <div className={cn("pb-12 h-full", className)}>
@@ -143,12 +148,10 @@ export function Sidebar({ className }: SidebarProps) {
               <Button
                 variant="ghost"
                 className="w-full justify-start h-10 text-red-600 hover:text-red-700 hover:bg-red-50"
-                asChild
+                onClick={handleLogout}
               >
-                <Link href="/logout">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </Link>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
               </Button>
             </div>
           </div>

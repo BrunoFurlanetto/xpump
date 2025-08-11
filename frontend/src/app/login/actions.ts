@@ -115,17 +115,28 @@ type userAuth = {
 
 export const getUserById = async (userId: string): Promise<userAuth | null> => {
     try {
+        console.log(`Buscando usuário: ${userId}`);
         const response = await authFetch(`${BACKEND_URL}/auth/users/${userId}/`);
+
         if (!response.ok) {
-            return null
+            console.log(`Erro na resposta do usuário: ${response.status}`);
+            return null;
         }
+
         const user = await response.json();
+        console.log("Usuário encontrado, buscando perfil...");
+
         const profileResponse = await authFetch(`${BACKEND_URL}/profiles/${user.profile_id}/`);
         let photo = null;
+
         if (profileResponse.ok) {
             const profile = await profileResponse.json();
             photo = profile.photo || null;
+            console.log("Perfil carregado com sucesso");
+        } else {
+            console.log("Erro ao carregar perfil, continuando sem foto");
         }
+
         return {
             id: userId,
             username: user.username,

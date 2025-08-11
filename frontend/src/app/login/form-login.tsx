@@ -5,19 +5,20 @@ import { useActionState, useEffect } from "react";
 import { ActionResponse, submitLogin } from "./actions";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-
+import { User, Lock, ArrowRight } from "lucide-react";
 
 const initialState: ActionResponse = {
   success: false,
   message: "",
 };
+
 export default function LoginForm() {
   const [state, action, isPending] = useActionState(submitLogin, initialState);
 
   useEffect(() => {
     if (state.message && !state.success) {
       toast.error(state.message, {
-        description: "Tente novamente!",
+        description: "Verifique suas credenciais e tente novamente",
       });
     }
   }, [state]);
@@ -25,47 +26,81 @@ export default function LoginForm() {
   return (
     <motion.form
       action={action}
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="w-96 flex-col flex justify-center mt-1 items-center  p-6 rounded-lg shadow-lg"
+      className="space-y-6"
     >
-      <label className="w-full mt-2 mb-5 relative">
-        <span className="  text-white">Usuário:</span>
-        <motion.input
-          name="username"
-          type="text"
-          autoComplete="username"
-          className=" outline-none bg-transparent  text-white w-full p-4 rounded-md border-b-2 border-orange-500"
-          placeholder="seu usuário..."
-        />
-        {state?.errors && <p className="text-red-400 text-end absolute bottom-[-20px]">{state.errors.username}</p>}
-      </label>
-      <label className="w-full mb-5 relative">
-        <span className="text-white">Senha:</span>
-        <motion.input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className=" outline-none bg-transparent text-white w-full p-4 rounded-md border-b-2 border-orange-500"
-          placeholder="sua senha..."
-        />
-        {state?.errors && <p className="text-red-400 text-end absolute bottom-[-20px]">{state.errors.password}</p>}
-      </label>
+      {/* Campo de Usuário */}
       <motion.div
-        className="flex w-full justify-end relative"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        className="space-y-2"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
       >
+        <label htmlFor="username" className="text-sm font-medium text-white">
+          Usuário
+        </label>
+        <div className="relative">
+          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autoComplete="username"
+            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="Digite seu usuário"
+          />
+        </div>
+        {state?.errors?.username && (
+          <p className="text-red-400 text-sm flex items-center gap-1">{state.errors.username}</p>
+        )}
+      </motion.div>
+
+      {/* Campo de Senha */}
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <label htmlFor="password" className="text-sm font-medium text-white">
+          Senha
+        </label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="Digite sua senha"
+          />
+        </div>
+        {state?.errors?.password && (
+          <p className="text-red-400 text-sm flex items-center gap-1">{state.errors.password}</p>
+        )}
+      </motion.div>
+
+      {/* Botão de Login */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         <Button
           disabled={isPending}
-          isLoading={isPending}
-          loadingText="carregando"
-          variant="default"
-          className="bg-orange-500 hover:bg-orange-700 text-white"
+          type="submit"
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:scale-100"
         >
-          Logar-se
+          {isPending ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Entrando...
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              Entrar na plataforma
+              <ArrowRight className="h-4 w-4" />
+            </div>
+          )}
         </Button>
       </motion.div>
     </motion.form>

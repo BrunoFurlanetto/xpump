@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User } from "lucide-react";
+import { logout } from "@/app/login/actions";
 
 interface NavItem {
   title: string;
@@ -64,6 +65,10 @@ export function MobileMenu() {
     setIsMobileMenuOpen(false);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setIsMobileMenuOpen(false);
+  };
   return (
     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
       <SheetContent side="right" className="w-[300px] sm:w-[400px]">
@@ -112,11 +117,10 @@ export function MobileMenu() {
             variant="outline"
             className="w-full justify-start text-red-600 border-none hover:bg-red-900 hover:text-red-300"
             asChild
+            onClick={handleLogout}
           >
-            <Link href="/logout" onClick={handleLinkClick}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair da conta
-            </Link>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair da conta
           </Button>
         </div>
       </SheetContent>
