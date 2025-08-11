@@ -1,5 +1,6 @@
 "use server";
 
+import { authFetch } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 import { createSession, deleteSession, updateToken } from "@/lib/session";
 import { z } from "zod";
@@ -74,18 +75,73 @@ export async function submitLogin(
 
 export const refreshToken = async (oldRefreshToken: string) => {
     try {
+        console.log("🔄 Tentando renovar token...");
+
         const response = await fetch(`${BACKEND_URL}/auth/refresh/`, {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
             body: JSON.stringify({ refresh: oldRefreshToken }),
-        })
+        });
 
-        const { access } = await response.json();
-        await updateToken({ accessToken: access, refreshToken: oldRefreshToken });
-        return access;
-    } catch {
+        if (!response.ok) {
+            console.log("❌ Falha ao renovar token:", response.status);
+            return null;
+        }
+
+        const data = await response.json();
+
+        if (!data.access) {
+            console.log("❌ Token de acesso não retornado");
+            return null;
+        }
+
+        await updateToken({
+            accessToken: data.access,
+            refreshToken: oldRefreshToken
+        });
+
+        console.log("✅ Token renovado com sucesso");
+        return data.access;
+    } catch (error) {
+        console.error("❌ Erro ao renovar token:", error);
         return null;
     }
 }
+
+type userAuth = {
+    id: string;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    photo: string | null;
+} | null
+
+export const getUserById = async (userId: string): Promise<userAuth> => {
+    const response = await authFetch(`${BACKEND_URL}/auth/users/${userId}/`);
+    if (!response.ok) {
+        return null
+    }
+    const user = await response.json();
+    const profileResponse = await authFetch(`${BACKEND_URL}/profiles/${user.profile_id}/`);
+    let photo = null;
+    if (profileResponse.ok) {
+        const profile = await profileResponse.json();
+        photo = profile.photo || null;
+        console.log("profile", profile);
+    }
+    // TODO : API PRECISA BUSCAR O PROFILE APARTIR DO USUÁRIO
+    return {
+        id: userId,
+        username: user.username,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        photo
+    } as userAuth;
+};
 
 export const logout = async () => {
     await deleteSession();
