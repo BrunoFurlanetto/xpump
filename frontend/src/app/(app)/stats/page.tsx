@@ -2,7 +2,7 @@ export default function StatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Estatísticas</h1>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Estatísticas</h1>
         <p className="text-muted-foreground">Acompanhe seu progresso e desempenho.</p>
       </div>
 

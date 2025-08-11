@@ -14,7 +14,6 @@ export default async function AppLayout({
   if (!session) redirect("/login");
 
   const user = await getUserById(session?.user_id || "");
-  console.log("user", user);
   if (!user) redirect("/login");
 
   return (

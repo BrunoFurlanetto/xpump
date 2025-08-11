@@ -2,7 +2,7 @@ export default function GroupsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Grupos</h1>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Grupos</h1>
         <p className="text-muted-foreground">Conecte-se e treine com outros atletas.</p>
       </div>
 

@@ -68,9 +68,7 @@ export async function verifySession(redirectToLogin = true) {
 
     // Verificar se a sessão é válida e não expirou
     if (!session?.user_id || !session?.expires) {
-      console.log("❌ Sessão inválida ou sem data de expiração");
       if (redirectToLogin) {
-        await deleteSession();
         redirect("/login");
       }
       return null;
@@ -81,20 +79,15 @@ export async function verifySession(redirectToLogin = true) {
     const expiresAt = new Date(session.expires as string).getTime();
 
     if (now > expiresAt) {
-      console.log("❌ Sessão expirada");
       if (redirectToLogin) {
-        await deleteSession();
         redirect("/login");
       }
       return null;
     }
 
-    console.log("✅ Sessão válida");
     return session as Session;
-  } catch (error) {
-    console.error("❌ Erro ao verificar sessão:", error);
+  } catch {
     if (redirectToLogin) {
-      await deleteSession();
       redirect("/login");
     }
     return null;

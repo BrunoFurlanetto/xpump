@@ -1,5 +1,5 @@
 import { RequestInit } from "next/dist/server/web/spec-extension/request";
-import { verifySession, deleteSession } from "./session";
+import { verifySession } from "./session";
 import { refreshToken } from "@/app/login/actions";
 
 export type VerifySessionType = Awaited<ReturnType<typeof verifySession>>;
@@ -8,11 +8,18 @@ export interface FetchOptions extends RequestInit {
     skipRefresh?: boolean; // Para evitar loops infinitos
 }
 
+export class AuthError extends Error {
+    constructor(message: string, public shouldLogout = false) {
+        super(message);
+        this.name = 'AuthError';
+    }
+}
+
 export const authFetch = async (url: string | URL, options: FetchOptions = {}) => {
     const session = await verifySession(false);
 
     if (!session?.access) {
-        throw new Error("Sessão não encontrada");
+        throw new AuthError("Sessão não encontrada", true);
     }
 
     options.headers = {
@@ -25,29 +32,21 @@ export const authFetch = async (url: string | URL, options: FetchOptions = {}) =
 
     // Se receber 401 e não for uma tentativa de refresh, tentar renovar o token
     if (response.status === 401 && !options.skipRefresh) {
-        console.log("🔄 Token expirado, tentando renovar...");
 
         if (!session.refresh) {
-            console.log("❌ Refresh token não encontrado, fazendo logout");
-            await deleteSession();
-            throw new Error("Sessão expirada");
+            throw new AuthError("Sessão expirada", true);
         }
 
         try {
             const newAccessToken = await refreshToken(session.refresh);
             if (newAccessToken) {
-                console.log("✅ Token renovado com sucesso");
                 options.headers.Authorization = `Bearer ${newAccessToken}`;
                 response = await fetch(url, options);
             } else {
-                console.log("❌ Falha ao renovar token, fazendo logout");
-                await deleteSession();
-                throw new Error("Falha ao renovar sessão");
+                throw new AuthError("Falha ao renovar sessão", true);
             }
-        } catch (error) {
-            console.error("❌ Erro ao renovar token:", error);
-            await deleteSession();
-            throw new Error("Erro de autenticação");
+        } catch {
+            throw new AuthError("Erro de autenticação", true);
         }
     }
 
