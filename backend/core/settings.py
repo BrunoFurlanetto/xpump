@@ -42,7 +42,7 @@ if 'SECRET_KEY' in os.environ:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'xpump.up.railway.app']
+ALLOWED_HOSTS = ['127.0.0.1', 'xpump.up.railway.app', 'xpump.onrender.com']
 
 # Application definition
 INSTALLED_APPS = [
