@@ -75,15 +75,37 @@ export async function submitLogin(
 
 export const refreshToken = async (oldRefreshToken: string) => {
     try {
+        console.log("🔄 Tentando renovar token...");
+
         const response = await fetch(`${BACKEND_URL}/auth/refresh/`, {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
             body: JSON.stringify({ refresh: oldRefreshToken }),
-        })
+        });
 
-        const { access } = await response.json();
-        await updateToken({ accessToken: access, refreshToken: oldRefreshToken });
-        return access;
-    } catch {
+        if (!response.ok) {
+            console.log("❌ Falha ao renovar token:", response.status);
+            return null;
+        }
+
+        const data = await response.json();
+
+        if (!data.access) {
+            console.log("❌ Token de acesso não retornado");
+            return null;
+        }
+
+        await updateToken({
+            accessToken: data.access,
+            refreshToken: oldRefreshToken
+        });
+
+        console.log("✅ Token renovado com sucesso");
+        return data.access;
+    } catch (error) {
+        console.error("❌ Erro ao renovar token:", error);
         return null;
     }
 }

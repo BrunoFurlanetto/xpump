@@ -56,16 +56,49 @@ export async function createSession(payload: Session) {
 }
 
 export async function verifySession(redirectToLogin = true) {
-  const ck = (await cookies()).get(cookie.name)?.value || "";
-  const session = await decrypt(ck);
+  try {
+    const ck = (await cookies()).get(cookie.name)?.value || "";
 
-  console.log("Session:", session);
-  if (!session?.user_id) {
-    if (redirectToLogin) redirect("/login");
+    if (!ck) {
+      if (redirectToLogin) redirect("/login");
+      return null;
+    }
+
+    const session = await decrypt(ck);
+
+    // Verificar se a sessão é válida e não expirou
+    if (!session?.user_id || !session?.expires) {
+      console.log("❌ Sessão inválida ou sem data de expiração");
+      if (redirectToLogin) {
+        await deleteSession();
+        redirect("/login");
+      }
+      return null;
+    }
+
+    // Verificar se a sessão expirou
+    const now = Date.now();
+    const expiresAt = new Date(session.expires as string).getTime();
+
+    if (now > expiresAt) {
+      console.log("❌ Sessão expirada");
+      if (redirectToLogin) {
+        await deleteSession();
+        redirect("/login");
+      }
+      return null;
+    }
+
+    console.log("✅ Sessão válida");
+    return session as Session;
+  } catch (error) {
+    console.error("❌ Erro ao verificar sessão:", error);
+    if (redirectToLogin) {
+      await deleteSession();
+      redirect("/login");
+    }
     return null;
   }
-
-  return session as Session;
 }
 
 export async function deleteSession() {

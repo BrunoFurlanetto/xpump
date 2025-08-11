@@ -3,20 +3,43 @@ import { verifySession } from "./lib/session";
 import { PublicPages } from "./lib/authorization";
 
 export default async function middleware(req: NextRequest) {
-    // 1. Check if router is protected
-    // const protectedRoutes = ["/panel"];
-    const freeRoutes = PublicPages;
     const currentPath = req.nextUrl.pathname;
-    const isProtectedRoute = !freeRoutes.includes(currentPath);
+    const isPublicRoute = PublicPages.includes(currentPath);
 
-    // 2. check for valid 
-    const session = await verifySession(false);
-    // 3. redirect unauthorized users
-    if (isProtectedRoute && !session?.user_id) {
-        return NextResponse.redirect(new URL("/login", req.nextUrl));
-    }
-    if (currentPath === "/login" && session?.user_id) {
-        return NextResponse.redirect(new URL("/profile", req.nextUrl));
+    console.log(`🔍 Middleware: ${currentPath} - Public: ${isPublicRoute}`);
+
+    try {
+        // Verificar sessão sem redirecionar
+        const session = await verifySession(false);
+
+        // Se a rota é pública, deixar passar
+        if (isPublicRoute) {
+            // Se está logado e tentando acessar login, redirecionar para home
+            if (currentPath === "/login" && session?.user_id) {
+                console.log("🔄 Redirecting logged user from login to home");
+                return NextResponse.redirect(new URL("/", req.nextUrl));
+            }
+            return NextResponse.next();
+        }
+
+        // Se a rota é protegida e não tem sessão válida
+        if (!session?.user_id) {
+            console.log("🚫 Unauthorized access, redirecting to login");
+            const loginUrl = new URL("/login", req.nextUrl);
+            loginUrl.searchParams.set("returnTo", currentPath);
+            return NextResponse.redirect(loginUrl);
+        }
+
+        console.log("✅ Authorized access");
+        return NextResponse.next();
+
+    } catch (error) {
+        console.error("❌ Middleware error:", error);
+        // Em caso de erro, redirecionar para login se a rota for protegida
+        if (!isPublicRoute) {
+            return NextResponse.redirect(new URL("/login", req.nextUrl));
+        }
+        return NextResponse.next();
     }
 
     // 4. check if user has access to the page

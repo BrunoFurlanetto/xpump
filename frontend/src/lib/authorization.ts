@@ -9,9 +9,9 @@ export const canAccessPage = ({ role, page }: { role: string; page: string }) =>
 }
 
 export const PublicPages = [
-  "/",
   "/login",
   "/not-permitted",
+  "/register", // se você tiver uma página de registro
 ]
 
 const AdminPages = [
