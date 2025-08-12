@@ -4,20 +4,25 @@ import { verifySession } from "@/lib/session";
 import { createContext, use, useEffect, useState } from "react";
 
 interface UserAuthContext {
-  id: string;
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
+  user?: {
+    id: string;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  isFetching: boolean;
 }
 
 export const UserAuthContext = createContext<UserAuthContext | undefined>(undefined);
 
 export function UserAuthProvider({ children }: { readonly children: React.ReactNode }) {
-  const [user, setUser] = useState<UserAuthContext | undefined>(undefined);
+  const [user, setUser] = useState<UserAuthContext["user"] | undefined>(undefined);
+  const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
     const getUser = async () => {
+      setIsFetching(true);
       try {
         const sessionUser = await verifySession();
         if (!sessionUser) {
@@ -29,13 +34,15 @@ export function UserAuthProvider({ children }: { readonly children: React.ReactN
       } catch (error) {
         console.error("Failed to verify session:", error);
         setUser(undefined);
+      } finally {
+        setIsFetching(false);
       }
     };
 
     getUser();
   }, []);
 
-  return <UserAuthContext value={user}>{children}</UserAuthContext>;
+  return <UserAuthContext value={{ user, isFetching }}>{children}</UserAuthContext>;
 }
 
 export function useUserAuth() {

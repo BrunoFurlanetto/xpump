@@ -58,7 +58,7 @@ const menuItems: NavItem[] = [
 
 export function MobileMenu() {
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useNavigation();
-  const user = useUserAuth();
+  const { user } = useUserAuth();
   const pathname = usePathname();
 
   const handleLinkClick = () => {
@@ -79,9 +79,9 @@ export function MobileMenu() {
             </div>
             <div className="text-left">
               <p className="font-medium">
-                {user.first_name} {user.last_name}
+                {user?.first_name} {user?.last_name}
               </p>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </SheetTitle>
         </SheetHeader>

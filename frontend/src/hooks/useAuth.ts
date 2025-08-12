@@ -6,7 +6,7 @@ import { logout } from "@/app/login/actions";
 import { toast } from "sonner";
 
 export function useAuth() {
-    const user = useUserAuth();
+    const { user } = useUserAuth();
     const router = useRouter();
 
     const handleLogout = async () => {
