@@ -32,7 +32,11 @@ export function UserAuthProvider({ children }: { readonly children: React.ReactN
           return;
         }
         const aUser = await getUserById(sessionUser.user_id || "");
-        if (aUser) setUser(aUser);
+        if (aUser) {
+          setUser({
+            ...aUser,
+          });
+        }
       } catch (error) {
         console.error("Failed to verify session:", error);
         setUser(undefined);

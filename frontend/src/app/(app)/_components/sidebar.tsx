@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
-import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity } from "lucide-react";
+import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare } from "lucide-react";
 import { logout } from "@/app/login/actions";
 
 interface SidebarProps {
@@ -25,6 +25,11 @@ const navigationItems: NavItem[] = [
     title: "Dashboard",
     href: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Feed",
+    href: "/feed",
+    icon: MessageSquare,
   },
   {
     title: "Treinos",
