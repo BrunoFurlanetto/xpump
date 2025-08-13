@@ -23,7 +23,7 @@ interface NavItem {
 const navigationItems: NavItem[] = [
   {
     title: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: Home,
   },
   {

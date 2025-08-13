@@ -6,7 +6,7 @@ import { logout } from "@/app/login/actions";
 import { toast } from "sonner";
 
 export function useAuth() {
-    const { user } = useUserAuth();
+    const { user, isFetching } = useUserAuth();
     const router = useRouter();
 
     const handleLogout = async () => {
@@ -22,8 +22,11 @@ export function useAuth() {
 
     const isAuthenticated = !!user?.id;
 
+    if (!isFetching && !user) handleLogout();
+
     return {
         user,
+        isFetching,
         isAuthenticated,
         logout: handleLogout,
     };
