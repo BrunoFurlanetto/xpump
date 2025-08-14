@@ -76,7 +76,7 @@ class IsOwnerOrReadOnlyPermissionTest(TestCase):
 
         class MockRequest:
             def __init__(self, method_name, user):
-                self.method = method
+                self.method = method_name
                 self.user = user
 
         permission = IsOwnerOrReadOnly()
