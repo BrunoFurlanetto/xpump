@@ -13,6 +13,12 @@ from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExi
 
 
 class WorkoutCheckin(models.Model):
+    """
+    Model representing a workout check-in by a user.
+    Stores details about the workout, including user, location, comments,
+    workout date, duration, validation status, and points.
+    Automatically calculates points based on workout duration and streak multiplier.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     location = models.CharField(max_length=100, null=True, blank=True)
     comments = models.TextField(blank=True)
@@ -26,13 +32,20 @@ class WorkoutCheckin(models.Model):
         return f'Workout check-in for {self.user}'
 
     def save(self, *args, **kwargs):
+        """
+        Override save method to handle validation, streak updates, and point calculations.
+        Automatically sets validation status and updates user's score.
+        """
         self.clean()
         self.duration = self.duration
+        # Set validation status to published for workouts
         self.validation_status = Status.objects.filter(app_name='WORKOUT', action='PUBLISHED', is_active=True).first()
 
         try:
+            # Update user's workout streak
             self.user.workout_streak.update_streak(self.workout_date)
         except RelatedObjectDoesNotExist:
+            # Create workout streak if it doesn't exist
             WorkoutStreak.objects.create(
                 user=self.user,
                 current_streak=1,
@@ -40,6 +53,7 @@ class WorkoutCheckin(models.Model):
                 last_workout_datetime=self.workout_date,
             )
 
+        # Calculate multiplier and points based on streak and duration
         self.multiplier = self.update_multiplier()
         self.base_points = float(10 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
 
@@ -50,9 +64,15 @@ class WorkoutCheckin(models.Model):
         self.user.profile.save()
 
     def clean(self):
+        """
+        Validate workout check-in data to ensure logical consistency.
+        Prevents future dates, negative durations, and overlapping workouts.
+        """
+        # Prevent future workout dates
         if self.workout_date > timezone.now():
             raise ValidationError("Workout date cannot be in the future.")
 
+        # Ensure positive duration
         if self.duration.total_seconds() <= 0:
             raise ValidationError("Duration must be a positive value.")
 
@@ -101,6 +121,10 @@ class WorkoutCheckin(models.Model):
 
 
 class WorkoutCheckinProof(models.Model):
+    """
+    Model for storing proof files (images/videos) attached to workout check-ins.
+    Supports validation of file types to ensure only allowed media formats.
+    """
     checkin = models.ForeignKey(
         WorkoutCheckin,
         related_name='proofs',
@@ -113,6 +137,10 @@ class WorkoutCheckinProof(models.Model):
 
 
 class WorkoutPlan(models.Model):
+    """
+    Model representing a workout plan that can be assigned to users. Contains PDF files with workout instructions and
+    has defined start/end dates. Can be set as lifetime plans or have specific duration periods
+    """
     # user = models.ForeignKey(User, on_delete=models.CASCADE)
     # group = models.ManyToManyField(Group)
     title = models.CharField(max_length=100)
@@ -128,6 +156,11 @@ class WorkoutPlan(models.Model):
 
 
 class WorkoutStreak(models.Model):
+    """
+    odel representing a user's workout streak tracking system. Tracks current streak, longest streak achieved, last
+    workout date, and frequency requirements. Automatically manages streak calculations based on weekly workout frequency
+    goals.
+    """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='workout_streak')
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
@@ -138,15 +171,23 @@ class WorkoutStreak(models.Model):
         return f"Streak of {self.user.username}: {self.current_streak} (Máx: {self.longest_streak})"
 
     def update_streak(self, workout_date):
+        """
+        Update the user's workout streak based on a new workout.
+        Increments streak if requirements are met, resets if not.
+        """
         if not self.last_workout_datetime:
+            # First workout ever
             self.current_streak = 1
             self.longest_streak = 1
         else:
             if not self.check_streak_ended(workout_date):
+                # Streak continues
                 self.current_streak += 1
             else:
+                # Streak broken, start new one
                 self.current_streak = 1
 
+        # Update longest streak if current is better
         if self.current_streak > self.longest_streak:
             self.longest_streak = self.current_streak
 
@@ -216,6 +257,15 @@ class WorkoutStreak(models.Model):
         return False
 
     def check_and_reset_streak_if_ended(self, current_date=None):
+        """
+        Check if streak has ended and reset it to 0 if necessary.
+
+        Args:
+            current_date: Date to check against
+
+        Returns:
+            bool: True if streak was reset, False if still active
+        """
         if not self.check_streak_ended(current_date):
             self.current_streak = 0
             self.save()
