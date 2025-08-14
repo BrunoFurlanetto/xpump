@@ -266,7 +266,7 @@ class WorkoutStreak(models.Model):
         Returns:
             bool: True if streak was reset, False if still active
         """
-        if not self.check_streak_ended(current_date):
+        if self.check_streak_ended(current_date):
             self.current_streak = 0
             self.save()
 
