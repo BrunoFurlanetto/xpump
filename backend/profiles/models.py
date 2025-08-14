@@ -5,6 +5,10 @@ from groups.models import Group
 
 
 class Profile(models.Model):
+    """
+    User profile model that extends Django's User model with additional information.
+    Stores fitness-related data, preferences, and group memberships for each user.
+    """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     height = models.PositiveSmallIntegerField(null=True, blank=True)
     weight = models.PositiveSmallIntegerField(null=True, blank=True)
