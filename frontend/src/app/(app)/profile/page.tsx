@@ -20,7 +20,6 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserAuth } from "@/context/userAuthContext";
 
 // Mock data - em um app real, isso viria de uma API
 const mockUserData = {
