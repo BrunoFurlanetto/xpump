@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNavigation } from "@/context/navigationContext";
-import { Home, Dumbbell, Users, BarChart3, Menu, User } from "lucide-react";
+import { Home, Dumbbell, Users, Menu, User, MessageSquare } from "lucide-react";
 
 interface MobileNavbarProps {
   className?: string;
@@ -21,8 +21,13 @@ interface NavItem {
 const navigationItems: NavItem[] = [
   {
     title: "Home",
-    href: "/",
+    href: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Feed",
+    href: "/feed",
+    icon: MessageSquare,
   },
   {
     title: "Treinos",
@@ -33,11 +38,6 @@ const navigationItems: NavItem[] = [
     title: "Grupos",
     href: "/groups",
     icon: Users,
-  },
-  {
-    title: "Stats",
-    href: "/stats",
-    icon: BarChart3,
   },
   {
     title: "Perfil",

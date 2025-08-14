@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { logout } from "@/app/login/actions";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export function useAuth() {
-    const { user } = useUserAuth();
+    const { user, isFetching } = useUserAuth();
     const router = useRouter();
 
     const handleLogout = async () => {
@@ -22,8 +23,16 @@ export function useAuth() {
 
     const isAuthenticated = !!user?.id;
 
+    // Move a verificação de autenticação para useEffect para evitar setState durante render
+    useEffect(() => {
+        if (!isFetching && !user) {
+            handleLogout();
+        }
+    }, [isFetching, user]);
+
     return {
         user,
+        isFetching,
         isAuthenticated,
         logout: handleLogout,
     };

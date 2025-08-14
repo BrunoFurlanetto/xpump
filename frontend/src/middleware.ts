@@ -6,15 +6,9 @@ export default async function middleware(req: NextRequest) {
     const currentPath = req.nextUrl.pathname;
     const isPublicRoute = PublicPages.includes(currentPath);
 
-    if (process.env.NODE_ENV === 'development') {
-        console.log(`Middleware: ${currentPath}, isPublic: ${isPublicRoute}`);
-    }
-
     // Evitar loop de redirecionamento
     if (currentPath === "/login" && req.nextUrl.searchParams.get("returnTo") === "/login") {
-        if (process.env.NODE_ENV === 'development') {
-            console.log("Loop de redirecionamento detectado, limpando returnTo");
-        }
+
         const cleanUrl = new URL("/login", req.nextUrl);
         return NextResponse.redirect(cleanUrl);
     }
@@ -27,9 +21,7 @@ export default async function middleware(req: NextRequest) {
         if (isPublicRoute) {
             // Se está logado e tentando acessar login, redirecionar para profile ao invés de /
             if (currentPath === "/login" && session?.user_id) {
-                if (process.env.NODE_ENV === 'development') {
-                    console.log("Usuário logado tentando acessar login, redirecionando para /profile");
-                }
+
                 return NextResponse.redirect(new URL("/profile", req.nextUrl));
             }
             return NextResponse.next();
@@ -37,9 +29,7 @@ export default async function middleware(req: NextRequest) {
 
         // Se a rota é protegida e não tem sessão válida
         if (!session?.user_id) {
-            if (process.env.NODE_ENV === 'development') {
-                console.log("Sessão inválida para rota protegida, redirecionando para login");
-            }
+
             const loginUrl = new URL("/login", req.nextUrl);
             // Só adicionar returnTo se não for a página raiz
             if (currentPath !== "/") {
@@ -48,15 +38,9 @@ export default async function middleware(req: NextRequest) {
             return NextResponse.redirect(loginUrl);
         }
 
-        if (process.env.NODE_ENV === 'development') {
-            console.log("Sessão válida, permitindo acesso");
-        }
         return NextResponse.next();
 
-    } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-            console.log("Erro no middleware:", error);
-        }
+    } catch {
         // Em caso de erro, redirecionar para login se a rota for protegida
         if (!isPublicRoute) {
             return NextResponse.redirect(new URL("/login", req.nextUrl));
