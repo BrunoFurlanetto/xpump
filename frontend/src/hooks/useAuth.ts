@@ -4,13 +4,13 @@ import { useRouter } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { logout } from "@/app/login/actions";
 import { toast } from "sonner";
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 
 export function useAuth() {
     const { user, isFetching } = useUserAuth();
     const router = useRouter();
 
-    const handleLogout = useCallback(async () => {
+    const handleLogout = async () => {
         try {
             await logout();
             toast.success("Logout realizado com sucesso");
@@ -19,7 +19,7 @@ export function useAuth() {
             console.error("Erro ao fazer logout:", error);
             toast.error("Erro ao fazer logout");
         }
-    }, [router]);
+    };
 
     const isAuthenticated = !!user?.id;
 
@@ -28,7 +28,7 @@ export function useAuth() {
         if (!isFetching && !user) {
             handleLogout();
         }
-    }, [isFetching, user, handleLogout]);
+    }, [isFetching, user]);
 
     return {
         user,
