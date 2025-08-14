@@ -24,7 +24,7 @@ export function AppNavigation({ children }: AppNavigationProps) {
       {/* Mobile Layout */}
       <div className="md:hidden">
         <MobileNavbar />
-        <main className="pt-4 pb-20 px-4">{children}</main>
+        <main className="pt-4 pb-20 px-2">{children}</main>
         <MobileMenu />
       </div>
     </>

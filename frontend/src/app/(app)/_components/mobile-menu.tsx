@@ -116,7 +116,6 @@ export function MobileMenu() {
           <Button
             variant="outline"
             className="w-full justify-start text-red-600 border-none hover:bg-red-900 hover:text-red-300"
-            asChild
             onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />

@@ -1,3 +1,4 @@
+"use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -18,6 +19,7 @@ import {
   Dumbbell,
   User,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 // Mock data - em um app real, isso viria de uma API
 const mockUserData = {
@@ -51,12 +53,17 @@ const mockUserData = {
 };
 
 export default function ProfilePage() {
+  const { user, isFetching } = useAuth();
+
+  if (isFetching || !user) {
+    return <div className="text-center text-muted-foreground">Buscando usuário...</div>;
+  }
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header do Perfil */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 rounded-lg border bg-gradient-to-r from-blue-500/10 to-purple-500/10">
         <Avatar className="h-20 w-20 ring-2 ring-white/20">
-          {mockUserData.avatar ? <AvatarImage src={mockUserData.avatar} alt={mockUserData.name} /> : null}
+          {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
             <User className="h-10 w-10" />
           </AvatarFallback>
@@ -64,12 +71,12 @@ export default function ProfilePage() {
 
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-white">{mockUserData.name}</h1>
+            <h1 className="text-3xl font-bold text-white">{user.name}</h1>
             <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400">
               Nível {mockUserData.level}
             </Badge>
           </div>
-          <p className="text-muted-foreground">{mockUserData.email}</p>
+          <p className="text-muted-foreground">{user.email}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />

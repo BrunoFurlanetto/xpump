@@ -110,31 +110,26 @@ type userAuth = {
     email: string;
     first_name: string;
     last_name: string;
-    photo: string | null;
+    name: string;
+    avatar: string | null;
 } | null
 
 export const getUserById = async (userId: string): Promise<userAuth | null> => {
     try {
-        console.log(`Buscando usuário: ${userId}`);
         const response = await authFetch(`${BACKEND_URL}/auth/users/${userId}/`);
 
         if (!response.ok) {
-            console.log(`Erro na resposta do usuário: ${response.status}`);
             return null;
         }
 
         const user = await response.json();
-        console.log("Usuário encontrado, buscando perfil...");
 
         const profileResponse = await authFetch(`${BACKEND_URL}/profiles/${user.profile_id}/`);
-        let photo = null;
+        let avatar = null;
 
         if (profileResponse.ok) {
             const profile = await profileResponse.json();
-            photo = profile.photo || null;
-            console.log("Perfil carregado com sucesso");
-        } else {
-            console.log("Erro ao carregar perfil, continuando sem foto");
+            avatar = profile.photo || null;
         }
 
         return {
@@ -143,12 +138,10 @@ export const getUserById = async (userId: string): Promise<userAuth | null> => {
             email: user.email,
             first_name: user.first_name,
             last_name: user.last_name,
-            photo
+            name: `${user.first_name} ${user.last_name}`,
+            avatar
         } as userAuth;
-    } catch (error) {
-        // Em caso de erro de autenticação, retornamos null
-        // O layout irá redirecionar para login automaticamente
-        console.error("Erro ao buscar usuário:", error);
+    } catch {
         return null;
     }
 };
