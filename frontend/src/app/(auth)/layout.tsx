@@ -1,44 +1,19 @@
 import Image from "next/image";
 import React from "react";
-import LoginForm from "./form-login";
+import Link from "next/link";
 import { Trophy, Flame, Target, Users } from "lucide-react";
-import { RegistrationSuccess } from "./registration-success";
 
-const Page = () => {
+export default function LayoutAuth({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
-      <RegistrationSuccess />
       <div className="w-full max-w-6xl">
-        {/* Layout Mobile: Formulário primeiro, depois conteúdo */}
         <div className="flex flex-col lg:hidden space-y-8">
-          {/* Logo Mobile */}
           <div className="text-center">
             <Image src="/logo/logo.png" alt="XPump Logo" width={180} height={45} className="brightness-110 mx-auto" />
           </div>
 
-          {/* Formulário Mobile */}
           <div className="w-full max-w-sm mx-auto">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-white mb-2">Bem-vindo de volta!</h3>
-                <p className="text-slate-300 text-sm">Entre e continue sua jornada fitness</p>
-              </div>
-
-              <LoginForm />
-
-              {/* Links Adicionais Mobile */}
-              <div className="mt-4 text-center space-y-2">
-                <button className="text-blue-400 hover:text-blue-300 text-sm transition-colors bg-transparent border-none cursor-pointer">
-                  Esqueceu sua senha?
-                </button>
-                <div className="text-slate-300 text-sm">
-                  Novo por aqui?{" "}
-                  <a href="/register" className="text-purple-400 hover:text-purple-300 transition-colors">
-                    Solicite acesso
-                  </a>
-                </div>
-              </div>
-            </div>
+            {children}
 
             {/* Badge de Segurança Mobile */}
             <div className="mt-3 text-center">
@@ -162,40 +137,7 @@ const Page = () => {
           </div>
 
           {/* Lado Direito - Formulário de Login */}
-          <div className="flex justify-end">
-            <div className="w-full max-w-md">
-              {/* Card do Formulário */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">Bem-vindo de volta!</h3>
-                  <p className="text-slate-300">Entre e continue sua jornada fitness</p>
-                </div>
-
-                <LoginForm />
-
-                {/* Links Adicionais */}
-                <div className="mt-6 text-center space-y-2">
-                  <button className="text-blue-400 hover:text-blue-300 text-sm transition-colors bg-transparent border-none cursor-pointer">
-                    Esqueceu sua senha?
-                  </button>
-                  <div className="text-slate-300 text-sm">
-                    Novo por aqui?{" "}
-                    <a href="/register" className="text-purple-400 hover:text-purple-300 transition-colors">
-                      Solicite acesso
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Badge de Segurança */}
-              <div className="mt-4 text-center">
-                <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  Conexão segura e privada
-                </div>
-              </div>
-            </div>
-          </div>
+          <div className="flex justify-end">{children}</div>
         </div>
       </div>
 
@@ -206,6 +148,4 @@ const Page = () => {
       </div>
     </div>
   );
-};
-
-export default Page;
+}
