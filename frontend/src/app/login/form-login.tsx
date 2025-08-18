@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { ActionResponse, submitLogin } from "./actions";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -15,10 +15,31 @@ const initialState: ActionResponse = {
 export default function LoginForm() {
   const [state, action, isPending] = useActionState(submitLogin, initialState);
 
+  // Estado para manter os valores do formulário
+  const [formValues, setFormValues] = useState({
+    username: "",
+    password: "",
+  });
+
+  // Função para atualizar valores do formulário
+  const handleInputChange = (field: string, value: string) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   useEffect(() => {
     if (state.message && !state.success) {
       toast.error(state.message, {
         description: "Verifique suas credenciais e tente novamente",
+      });
+    }
+    if (state.message && state.success) {
+      // Limpar formulário apenas quando há sucesso
+      setFormValues({
+        username: "",
+        password: "",
       });
     }
   }, [state]);
@@ -48,6 +69,8 @@ export default function LoginForm() {
             name="username"
             type="text"
             autoComplete="username"
+            value={formValues.username}
+            onChange={(e) => handleInputChange("username", e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Digite seu usuário"
           />
@@ -74,6 +97,8 @@ export default function LoginForm() {
             name="password"
             type="password"
             autoComplete="current-password"
+            value={formValues.password}
+            onChange={(e) => handleInputChange("password", e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Digite sua senha"
           />
