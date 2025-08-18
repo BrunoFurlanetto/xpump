@@ -55,7 +55,7 @@ class WorkoutCheckin(models.Model):
 
         # Calculate multiplier and points based on streak and duration
         self.multiplier = self.update_multiplier()
-        self.base_points = float(10 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
+        self.base_points = float(40 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
 
         super().save(*args, **kwargs)
 
@@ -114,7 +114,7 @@ class WorkoutCheckin(models.Model):
             self.multiplier = 1.50
         elif 20 <= streak < 40:
             self.multiplier = 1.75
-        elif 40 <= streak < 80:
+        elif streak >= 40:
             self.multiplier = 2.0
 
         return self.multiplier
@@ -259,6 +259,7 @@ class WorkoutStreak(models.Model):
     def check_and_reset_streak_if_ended(self, current_date=None):
         """
         Check if streak has ended and reset it to 0 if necessary.
+        WARNING: THIS METHOD, ONLY USE IN THE SCHEDULED TASKS
 
         Args:
             current_date: Date to check against
@@ -269,7 +270,3 @@ class WorkoutStreak(models.Model):
         if self.check_streak_ended(current_date):
             self.current_streak = 0
             self.save()
-
-            return True
-
-        return False
