@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'groups.apps.GroupsConfig',
     'workouts.apps.WorkoutsConfig',
     'status.apps.StatusConfig',
+    'nutrition.apps.NutritionConfig',
 ]
 
 MIDDLEWARE = [
