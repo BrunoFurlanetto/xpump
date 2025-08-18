@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
-import { logout } from "@/app/login/actions";
+import { logout } from "@/app/(auth)/login/actions";
 import { toast } from "sonner";
 import { useEffect } from "react";
 

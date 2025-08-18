@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { logout } from "../login/actions";
+import { logout } from "../(auth)/login/actions";
 
 interface LogoutHandlerProps {
   logout?: boolean;

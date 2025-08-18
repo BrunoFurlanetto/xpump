@@ -1,6 +1,6 @@
 import { RequestInit } from "next/dist/server/web/spec-extension/request";
 import { verifySession } from "./session";
-import { refreshToken } from "@/app/login/actions";
+import { refreshToken } from "@/app/(auth)/login/actions";
 
 export type VerifySessionType = Awaited<ReturnType<typeof verifySession>>;
 export interface FetchOptions extends RequestInit {

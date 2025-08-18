@@ -1,5 +1,5 @@
 "use client";
-import { getUserById } from "@/app/login/actions";
+import { getUserById } from "@/app/(auth)/login/actions";
 import { verifySession } from "@/lib/session";
 import { createContext, use, useEffect, useState } from "react";
 
