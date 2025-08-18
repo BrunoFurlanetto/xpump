@@ -32,7 +32,6 @@ export async function submitForgotPassword(
         return {
             success: false,
             message: "Erro ao validar os dados",
-            // @ts-ignore - flatten() está deprecated mas ainda funciona
             errors: validateFormData.error.flatten().fieldErrors,
         };
     }

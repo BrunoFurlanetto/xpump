@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare } from "lucide-react";
-import { logout } from "@/app/login/actions";
+import { logout } from "@/app/(auth)/login/actions";
 
 interface SidebarProps {
   className?: string;

@@ -1,8 +1,6 @@
-import Image from "next/image";
 import React from "react";
 import Link from "next/link";
 import LoginForm from "./form-login";
-import { Trophy, Flame, Target, Users } from "lucide-react";
 import { RegistrationSuccess } from "./registration-success";
 
 const Page = () => {

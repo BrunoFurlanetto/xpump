@@ -1,6 +1,5 @@
 import Image from "next/image";
 import React from "react";
-import Link from "next/link";
 import { Trophy, Flame, Target, Users } from "lucide-react";
 
 export default function LayoutAuth({ children }: { children: React.ReactNode }) {

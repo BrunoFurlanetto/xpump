@@ -21,6 +21,7 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 // Tipos para TypeScript
 interface User {
@@ -588,7 +589,8 @@ export default function FeedPage() {
                             key={index}
                             className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100"
                           >
-                            <img
+                            <Image
+                              layout="fill"
                               src={image}
                               alt={`Post image ${index + 1}`}
                               className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity"

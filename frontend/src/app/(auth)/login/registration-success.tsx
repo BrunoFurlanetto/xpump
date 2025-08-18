@@ -1,11 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
 
-export function RegistrationSuccess() {
+function RegistrationSuccessContent() {
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
 
@@ -20,4 +20,12 @@ export function RegistrationSuccess() {
   }, [registered]);
 
   return null;
+}
+
+export function RegistrationSuccess() {
+  return (
+    <Suspense fallback={null}>
+      <RegistrationSuccessContent />
+    </Suspense>
+  );
 }
