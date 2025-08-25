@@ -30,15 +30,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/backend/groups/serializer.py">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/backend/groups/serializer.py" />
-              <option name="originalContent" value="from rest_framework import serializers&#10;&#10;from groups.models import Group, GroupMembers&#10;&#10;&#10;class GroupSerializer(serializers.ModelSerializer):&#10;    class Meta:&#10;        model = Group&#10;        fields = '__all__'&#10;&#10;&#10;class GroupMemberSerializer(serializers.ModelSerializer):&#10;    class Meta:&#10;        model = GroupMembers&#10;        fields = ['member', 'joined_at', 'is_admin']&#10;        read_only_fields = ['member', 'joined_at']&#10;&#10;    def validate(self, attrs):&#10;        &quot;&quot;&quot;&#10;        Custom validation to check that read-only fields are not provided.&#10;        &quot;&quot;&quot;&#10;        if 'joined_at' in self.initial_data:&#10;            raise serializers.ValidationError({&#10;                &quot;joined_at&quot;: &quot;This field is read-only and cannot be modified.&quot;&#10;            })&#10;&#10;        return attrs&#10;" />
-              <option name="updatedContent" value="from rest_framework import serializers&#10;&#10;from groups.models import Group, GroupMembers&#10;&#10;&#10;class GroupSerializer(serializers.ModelSerializer):&#10;    &quot;&quot;&quot;&#10;    Serializer for Group model.&#10;    Handles serialization/deserialization of group data for API endpoints.&#10;    &quot;&quot;&quot;&#10;    class Meta:&#10;        model = Group&#10;        fields = '__all__'  # Include all model fields in serialization&#10;&#10;&#10;class GroupMemberSerializer(serializers.ModelSerializer):&#10;    &quot;&quot;&quot;&#10;    Serializer for GroupMembers model.&#10;    Controls which fields can be modified and validates member data.&#10;    Only allows updating admin status, while member and join date are read-only.&#10;    &quot;&quot;&quot;&#10;    class Meta:&#10;        model = GroupMembers&#10;        fields = ['member', 'joined_at', 'is_admin']&#10;        read_only_fields = ['member', 'joined_at']  # Prevent modification of member and join date&#10;&#10;    def validate(self, attrs):&#10;        &quot;&quot;&quot;&#10;        Custom validation to ensure read-only fields are not provided in requests.&#10;        Prevents clients from attempting to modify protected fields.&#10;        &quot;&quot;&quot;&#10;        if 'joined_at' in self.initial_data:&#10;            raise serializers.ValidationError({&#10;                &quot;joined_at&quot;: &quot;This field is read-only and cannot be modified.&quot;&#10;            })&#10;&#10;        return attrs" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/backend/groups/views.py">
           <value>
             <PendingDiffInfo>
