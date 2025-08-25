@@ -317,12 +317,18 @@ class WorkoutStreakModelTest(TestCase):
         """Testa atualização de streak em treinos consecutivos"""
         streak = WorkoutStreak.objects.create(user=self.user)
 
-        # Primeiro treino
-        first_workout = timezone.now() - timedelta(days=2)
+        # Calcular a quarta-feira mais próxima no passado
+        today = timezone.now()
+        days_since_wednesday = (today.weekday() - 2) % 7  # 2 = quarta-feira (0=segunda, 1=terça, 2=quarta...)
+        if days_since_wednesday == 0:  # Se hoje é quarta, pegar quarta da semana passada
+            days_since_wednesday = 7
+
+        # Primeiro treino - sempre numa quarta-feira
+        first_workout = today - timedelta(days=days_since_wednesday)
         streak.update_streak(first_workout)
 
-        # Segundo treino
-        second_workout = timezone.now() - timedelta(days=1)
+        # Segundo treino - dia seguinte (quinta-feira)
+        second_workout = first_workout + timedelta(days=1)
         result = streak.update_streak(second_workout)
 
         self.assertEqual(result, 2)
