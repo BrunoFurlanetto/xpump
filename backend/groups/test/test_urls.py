@@ -12,10 +12,6 @@ class TestUrls(TestCase):
         url = reverse('groups-detail', kwargs={'pk': 1})
         self.assertEqual(resolve(url).view_name, 'groups-detail')
 
-    def test_group_members_url(self):
-        url = reverse('group-members-list', kwargs={'group_id': 1})
-        self.assertEqual(resolve(url).view_name, 'group-members-list')
-
     def test_group_member_url(self):
         url = reverse('group-members-detail', kwargs={'group_id': 1, 'member_id': 1})
         self.assertEqual(resolve(url).view_name, 'group-members-detail')

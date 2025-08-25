@@ -7,7 +7,6 @@ from groups.models import Group, GroupMembers
 from groups.views import (
     GroupsAPIView,
     GroupAPIView,
-    GroupMembersAPIView,
     GroupMemberAPIView,
     JoinGroupAPIView
 )
@@ -78,14 +77,6 @@ class GroupViewsTest(TestCase):
         response = GroupAPIView.as_view()(request, pk=self.group.id)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Group.objects.filter(id=self.group.id).exists())
-
-    def test_list_group_members(self):
-        request = self.factory.get(f'/groups/{self.group.id}/members/')
-        force_authenticate(request, user=self.user1)
-        response = GroupMembersAPIView.as_view()(request, group_id=self.group.id)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Two members: user1 (admin) and user2
-        self.assertEqual(len(response.data), 2)
 
     def test_retrieve_group_member(self):
         request = self.factory.get(f'/groups/{self.group.id}/members/{self.user2.id}/')

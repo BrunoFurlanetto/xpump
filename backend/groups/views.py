@@ -55,24 +55,6 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
 
 
 @extend_schema(tags=['Groups'])
-class GroupMembersAPIView(ListAPIView):
-    """
-    API view for listing all members of a specific group.
-    Read-only endpoint that returns group membership information.
-    """
-    serializer_class = GroupMemberSerializer
-    permission_classes = [IsAuthenticated]
-    http_method_names = ['get']  # Only allow GET requests
-
-    def get_queryset(self):
-        """
-        Return all members for the specified group.
-        Filters members by group ID from URL parameters.
-        """
-        return GroupMembers.objects.filter(group_id=self.kwargs['group_id'])
-
-
-@extend_schema(tags=['Groups'])
 class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
     """
     API view for individual group member operations.
