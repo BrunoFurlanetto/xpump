@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from groups.models import GroupMembers
 from workouts.models import WorkoutStreak
 from .models import Profile
 
@@ -10,6 +11,7 @@ class ProfilesSerialializer(serializers.ModelSerializer):
     Includes computed field for user's workout streak data.
     """
     streak = serializers.SerializerMethodField()  # Read-only field for workout streak information
+    groups = serializers.SerializerMethodField()  # Override groups field to return detailed information
 
     class Meta:
         model = Profile
@@ -24,6 +26,34 @@ class ProfilesSerialializer(serializers.ModelSerializer):
             'groups',
             'streak'  # Computed field with workout streak data
         )
+
+    def get_groups(self, obj):
+        """
+        Get detailed information about groups the user participates in.
+        Returns list with id, name, member count, and user's position based on score.
+        """
+        user_groups = obj.groups.all()
+        groups_data = []
+
+        for group in user_groups:
+            # Count total members in the group
+            group_members = GroupMembers.objects.filter(group=group)
+            member_count = group_members.count()
+
+            # Get user's position in the group based on score
+            members_positions = group_members.order_by('-member__profile__score')
+            user_position = list(members_positions).index(
+                next((gm for gm in group_members if gm.member == obj.user), None)
+            ) + 1
+
+            groups_data.append({
+                'id': group.id,
+                'name': group.name,
+                'member_count': member_count,
+                'position': user_position
+            })
+
+        return groups_data
 
     def get_streak(self, obj):
         """
