@@ -21,17 +21,16 @@ class GroupSerializer(serializers.ModelSerializer):
             'owner',
             'invite_code',
             'created_at',
-            'created_by',
             'members'
         ]  # Include all model fields in serialization
-        read_only_fields = ['created_by', 'invite_code', 'created_at', 'created_by', 'members']  # Prevent modification of read-only fields
+        read_only_fields = ['created_by', 'invite_code', 'created_at', 'members']  # Prevent modification of read-only fields
 
     def get_members(self, obj):
         """
         Retrieve and serialize the members of the group.
         Uses GroupMemberSerializer to represent each member.
         """
-        members = GroupMembers.objects.filter(group=obj).select_related('member')
+        members = obj.groupmembers_set.all().select_related('member')
 
         return [{
                 "id": member.member.id,
