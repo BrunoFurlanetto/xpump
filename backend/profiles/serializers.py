@@ -1,3 +1,7 @@
+from collections import defaultdict
+
+from django.db.models import Window, F
+from django.db.models.functions.window import Rank
 from rest_framework import serializers
 
 from groups.models import GroupMembers
@@ -33,18 +37,34 @@ class ProfilesSerialializer(serializers.ModelSerializer):
         Returns list with id, name, member count, and user's position based on score.
         """
         user_groups = obj.groups.all()
+        group_ids = list(user_groups.values_list('id', flat=True))
         groups_data = []
 
-        for group in user_groups:
-            # Count total members in the group
-            group_members = GroupMembers.objects.filter(group=group)
-            member_count = group_members.count()
+        members_qs = (
+            GroupMembers.objects
+            .filter(group_id__in=group_ids)
+            .select_related('group', 'member__profile')
+            .annotate(
+                rank=Window(
+                    expression=Rank(),
+                    partition_by=[F('group')],
+                    order_by=F('member__profile__score').desc()
+                )
+            )
+        )
 
-            # Get user's position in the group based on score
-            members_positions = group_members.order_by('-member__profile__score')
-            user_position = list(members_positions).index(
-                next((gm for gm in group_members if gm.member == obj.user), None)
-            ) + 1
+        # Build a mapping: group_id -> list of members (with rank)
+        group_members_map = defaultdict(list)
+
+        for gm in members_qs:
+            group_members_map[gm.group_id].append(gm)
+
+        for group in user_groups:
+            members = group_members_map[group.id]
+            member_count = len(members)
+            # Find the user's position in this group
+            user_member = next((gm for gm in members if gm.member_id == obj.user.id), None)
+            user_position = user_member.rank if user_member else None
 
             groups_data.append({
                 'id': group.id,
