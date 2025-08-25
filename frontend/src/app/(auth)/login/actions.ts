@@ -112,6 +112,7 @@ type userAuth = {
     last_name: string;
     name: string;
     avatar: string | null;
+    profile_id: string;
 } | null
 
 export const getUserById = async (userId: string): Promise<userAuth | null> => {
@@ -132,15 +133,17 @@ export const getUserById = async (userId: string): Promise<userAuth | null> => {
             avatar = profile.photo || null;
         }
 
-        return {
+        const aUser: userAuth = {
             id: userId,
             username: user.username,
             email: user.email,
             first_name: user.first_name,
             last_name: user.last_name,
             name: `${user.first_name} ${user.last_name}`,
+            profile_id: user.profile_id,
             avatar
-        } as userAuth;
+        };
+        return aUser;
     } catch {
         return null;
     }
