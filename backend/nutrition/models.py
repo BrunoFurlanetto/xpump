@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.db.models.fields.related_descriptors.ForwardManyToOneDescriptor import RelatedObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist
 
 from status.models import Status
 
@@ -49,7 +49,7 @@ class Meal(models.Model):
                 user=self.user,
                 current_streak=1,
                 longest_streak=1,
-                last_workout_datetime=self.meal_time,
+                last_meal_datetime=self.meal_time,
             )
 
         # Calculate multiplier and points based on streak
@@ -63,7 +63,7 @@ class Meal(models.Model):
         self.user.profile.save()
 
     def clean(self):
-        if self.meal_type.interval_start < self.meal_time.time() < self.meal_type.interval_end:
+        if not (self.meal_type.interval_start < self.meal_time.time() < self.meal_type.interval_end):
             raise ValueError("Meal time must be within the configured interval for this meal type.")
 
         if Meal.objects.filter(user=self.user, meal_type=self.meal_type, meal_time__date=self.meal_time.date()).exists():
@@ -147,6 +147,7 @@ class MealStreak(models.Model):
 
         self.last_meal_datetime = meal_datetime
 
+        self.save()
         return self.current_streak
 
     def check_streak_ended(self, meal_datetime):
