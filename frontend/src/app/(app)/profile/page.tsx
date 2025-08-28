@@ -18,6 +18,7 @@ import {
   Utensils,
   Dumbbell,
   User,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -255,14 +256,43 @@ export default function ProfilePage() {
       {/* Grupos */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Meus Grupos
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              <CardTitle>Meus Grupos</CardTitle>
+            </div>
+            <Button variant="outline" size="sm">
+              <Users className="h-4 w-4 mr-2" />
+              Gerenciar Grupos
+            </Button>
+          </div>
           <CardDescription>Grupos que você participa e seu ranking</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Grupo da empresa sempre presente */}
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
+                  <Crown className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-semibold flex items-center gap-2">
+                    XPump Company
+                    <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 text-xs">
+                      Oficial
+                    </Badge>
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Grupo da empresa • 12 membros</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-yellow-400" />
+                <span className="font-semibold">#3</span>
+              </div>
+            </div>
+
+            {/* Outros grupos */}
             {mockUserData.groups.map((group) => (
               <div key={group.id} className="flex items-center justify-between p-4 rounded-lg border bg-muted/5">
                 <div className="flex items-center gap-3">
