@@ -1,12 +1,12 @@
 from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 
-from nutrition.models import Meal, MealProof, NutritionPlan
+from nutrition.models import Meal, MealProof, NutritionPlan, MealConfig
 
 
 class MealConfigSerializer(serializers.ModelSerializer):
     class Meta:
-        model = 'MealConfig'
+        model = MealConfig
         fields = '__all__'
 
 
@@ -15,6 +15,7 @@ class MealProofSerializer(serializers.ModelSerializer):
     Serializer for workout check-in proof files.
     Handles serialization of uploaded images and videos as workout evidence.
     """
+
     class Meta:
         model = MealProof
         fields = ['id', 'file']
@@ -59,6 +60,53 @@ class MealSerializer(serializers.ModelSerializer):
                 )
 
         return attrs
+
+    def get_current_streak(self, obj):
+        """
+        Get the user's current workout streak.
+        Returns 0 if no streak record exists.
+        """
+        try:
+            return obj.user.meal_streak.current_streak
+        except:
+            return 0
+
+    def get_longest_streak(self, obj):
+        """
+        Get the user's longest workout streak record.
+        Returns 0 if no streak record exists.
+        """
+        try:
+            return obj.user.meal_streak.longest_streak
+        except:
+            return 0
+
+    def create(self, validated_data):
+        """
+        Create a new workout check-in with associated proof files.
+        Handles file uploads and creates proof records.
+        """
+        files = validated_data.pop('proof_files', [])  # Extract proof files
+        checkin = Meal.objects.create(**validated_data)  # Create check-in
+
+        # Create proof file records
+        for f in files:
+            MealProof.objects.create(checkin=checkin, file=f)
+
+        return checkin
+
+    def update(self, instance, validated_data):
+        """
+        Update workout check-in with strict field restrictions.
+        Only allows updating comments to prevent data manipulation.
+        """
+        if validated_data.keys() - {'comments'}:
+            raise serializers.ValidationError('Only comments can be updated.')
+
+        # Filter to only include comments field
+        validated_data = {key: value for key, value in validated_data.items() if key == 'comments'}
+
+        return super().update(instance, validated_data)
 
 
 class NutritionPlanSerializer(serializers.ModelSerializer):
