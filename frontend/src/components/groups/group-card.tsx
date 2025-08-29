@@ -223,10 +223,10 @@ export function GroupCard({
       </Card>
 
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-        <AlertDialogContent className="bg-card border-border">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">Sair do grupo?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
+            <AlertDialogTitle >Sair do grupo?</AlertDialogTitle>
+            <AlertDialogDescription >
               Você tem certeza que deseja sair do grupo "{group.name}"? 
               Você precisará de um novo convite para entrar novamente.
             </AlertDialogDescription>
@@ -234,7 +234,6 @@ export function GroupCard({
           <AlertDialogFooter>
             <AlertDialogCancel 
               disabled={isLeaving}
-              className="border-border text-foreground hover:bg-muted"
             >
               Cancelar
             </AlertDialogCancel>

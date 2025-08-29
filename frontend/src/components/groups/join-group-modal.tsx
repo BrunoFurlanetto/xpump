@@ -61,8 +61,8 @@ export function JoinGroupModal({ isOpen, onClose, onJoinGroup, isLoading = false
   };
 
   const formatInviteCode = (code: string) => {
-    // Remover espaços e caracteres especiais, manter apenas alfanuméricos
-    return code.replace(/[^A-Z0-9]/g, '');
+    // Converte para maiúsculo e remove caracteres especiais, mantendo apenas alfanuméricos
+    return code.toUpperCase().replace(/[^A-Z0-9]/g, '');
   };
 
   return (

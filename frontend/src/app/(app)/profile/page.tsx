@@ -21,6 +21,9 @@ import {
   Crown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { JoinGroupModal } from "@/components/groups/join-group-modal";
+import { useState } from "react";
 
 // Mock data - em um app real, isso viria de uma API
 const mockUserData = {
@@ -55,6 +58,20 @@ const mockUserData = {
 
 export default function ProfilePage() {
   const { user, isFetching } = useAuth();
+  const router = useRouter();
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+
+  // Handler for joining group
+  const handleJoinGroup = async (inviteCode: string) => {
+    setIsJoining(true);
+    try {
+      // TODO: Call your join group API here
+      // await joinGroup(inviteCode);
+    } finally {
+      setIsJoining(false);
+    }
+  };
 
   if (isFetching || !user) {
     return <div className="text-center text-muted-foreground">Buscando usuário...</div>;
@@ -261,7 +278,7 @@ export default function ProfilePage() {
               <Users className="h-5 w-5" />
               <CardTitle>Meus Grupos</CardTitle>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => router.push("/groups")}>
               <Users className="h-4 w-4 mr-2" />
               Gerenciar Grupos
             </Button>
@@ -311,13 +328,19 @@ export default function ProfilePage() {
               </div>
             ))}
 
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => setShowJoinModal(true)}>
               <Users className="h-4 w-4 mr-2" />
               Entrar em Novo Grupo
             </Button>
           </div>
         </CardContent>
       </Card>
+      <JoinGroupModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onJoinGroup={handleJoinGroup}
+        isLoading={isJoining}
+      />
     </div>
   );
 }
