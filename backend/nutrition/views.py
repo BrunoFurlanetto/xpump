@@ -174,6 +174,7 @@ class MealAPIView(RetrieveUpdateDestroyAPIView):
         if serializer.is_valid():
             try:
                 self.perform_update(serializer)
+
                 return Response(serializer.data)
             except ValidationError as e:
                 # Handle model validation errors

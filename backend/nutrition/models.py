@@ -46,7 +46,7 @@ class Meal(models.Model):
 
         try:
             # Update user's workout streak
-            self.user.meal_streak.update_streak(self.meal_time)
+            self.user.meal_streak.update_streak(self.meal_time.astimezone())
         except RelatedObjectDoesNotExist:
             # Create workout streak if it doesn't exist
             MealStreak.objects.create(
@@ -67,11 +67,12 @@ class Meal(models.Model):
         self.user.profile.save()
 
     def clean(self):
-        if not (self.meal_type.interval_start < self.meal_time.time() < self.meal_type.interval_end):
+        if not (self.meal_type.interval_start < self.meal_time.astimezone().time() < self.meal_type.interval_end):
             raise ValidationError({"meal_time": "Meal time must be within the configured interval for this meal type."})
 
-        if Meal.objects.filter(user=self.user, meal_type=self.meal_type, meal_time__date=self.meal_time.date()).exists():
-            raise ValidationError({"meal_type": "A meal of this type has already been recorded for today."})
+        if self.id is None:  # Only check for duplicates on creation
+            if Meal.objects.filter(user=self.user, meal_type=self.meal_type, meal_time__date=self.meal_time.date()).exists():
+                raise ValidationError({"meal_type": "A meal of this type has already been recorded for today."})
 
     def update_multiplier(self):
         streak = self.user.meal_streak.current_streak
@@ -164,7 +165,7 @@ class MealStreak(models.Model):
             if meal.interval_start <= meal_datetime.time() <= meal.interval_end:
                 current_meal_config = meal
 
-            if meal.interval_start <= self.last_meal_datetime.time() <= meal.interval_end:
+            if meal.interval_start <= self.last_meal_datetime.astimezone().time() <= meal.interval_end:
                 last_meal_config = meal
 
         if list_all_meals.index(current_meal_config) == 0 and list_all_meals.index(last_meal_config) == len(list_all_meals) - 1:

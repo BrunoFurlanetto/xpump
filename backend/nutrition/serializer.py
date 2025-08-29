@@ -57,9 +57,8 @@ class MealSerializer(serializers.ModelSerializer):
         if self.instance:  # Update operation (instance exists)
             allowed_fields = {'comments'}  # Only comments can be updated
             provided_fields = set(attrs.keys())
+            forbidden_fields = provided_fields - allowed_fields  # Check for forbidden field updates
 
-            # Check for forbidden field updates
-            forbidden_fields = provided_fields - allowed_fields
             if forbidden_fields:
                 raise serializers.ValidationError(
                     "Only comments can be updated."
@@ -102,17 +101,22 @@ class MealSerializer(serializers.ModelSerializer):
         return checkin
 
     def update(self, instance, validated_data):
-        """
-        Update workout check-in with strict field restrictions.
-        Only allows updating comments to prevent data manipulation.
-        """
-        if validated_data.keys() - {'comments'}:
-            raise serializers.ValidationError('Only comments can be updated.')
+        allowed_fields = {'comments'}
+        provided_fields = set(validated_data.keys())
+        forbidden_fields = provided_fields - allowed_fields
 
-        # Filter to only include comments field
-        validated_data = {key: value for key, value in validated_data.items() if key == 'comments'}
+        if forbidden_fields:
+            raise serializers.ValidationError({
+                "non_field_errors": [
+                    f"Only comments can be updated. Forbidden fields: {', '.join(forbidden_fields)}"
+                ]
+            })
 
-        return super().update(instance, validated_data)
+        if 'comments' in validated_data:
+            instance.comments = validated_data['comments']
+            instance.save()
+
+        return instance
 
 
 class NutritionPlanSerializer(serializers.ModelSerializer):
