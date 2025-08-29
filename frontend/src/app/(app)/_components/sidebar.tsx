@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
-import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare } from "lucide-react";
+import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare, Utensils } from "lucide-react";
 import { logout } from "@/app/(auth)/login/actions";
 
 interface SidebarProps {
@@ -35,6 +35,11 @@ const navigationItems: NavItem[] = [
     title: "Treinos",
     href: "/workouts",
     icon: Dumbbell,
+  },
+  {
+    title: "Refeições",
+    href: "/meals",
+    icon: Utensils,
   },
   {
     title: "Grupos",
