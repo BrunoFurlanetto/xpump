@@ -4,6 +4,12 @@ from rest_framework import serializers
 from nutrition.models import Meal, MealProof, NutritionPlan, MealConfig
 
 
+# serializer.py
+class MealChoicesSerializer(serializers.Serializer):
+    value = serializers.CharField()
+    label = serializers.CharField()
+
+
 class MealConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealConfig

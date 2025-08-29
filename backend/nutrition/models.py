@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist, ValidationError
 
 from status.models import Status
 
@@ -38,7 +38,11 @@ class Meal(models.Model):
 
     def save(self, *args, **kwargs):
         self.clean()
-        self.validation_status = Status.objects.filter(app_name='NUTRITION', action='PUBLISHED', is_active=True).first()
+        self.validation_status, _ = Status.objects.get_or_create(app_name='NUTRITION', action='PUBLISHED', defaults={
+            'name': 'Aceito',
+            'app_name': 'NUTRITION',
+            'action': 'PUPLISHED',
+        })
 
         try:
             # Update user's workout streak
@@ -64,10 +68,10 @@ class Meal(models.Model):
 
     def clean(self):
         if not (self.meal_type.interval_start < self.meal_time.time() < self.meal_type.interval_end):
-            raise ValueError("Meal time must be within the configured interval for this meal type.")
+            raise ValidationError({"meal_time": "Meal time must be within the configured interval for this meal type."})
 
         if Meal.objects.filter(user=self.user, meal_type=self.meal_type, meal_time__date=self.meal_time.date()).exists():
-            raise ValueError("A meal of this type has already been recorded for today.")
+            raise ValidationError({"meal_type": "A meal of this type has already been recorded for today."})
 
     def update_multiplier(self):
         streak = self.user.meal_streak.current_streak

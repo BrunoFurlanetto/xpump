@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.core.exceptions import ValidationError
-from drf_spectacular.utils import extend_schema_view
+from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
@@ -26,7 +26,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         return obj.user == request.user
 
 
-@extend_schema_view(tags=['Workouts'])
+@extend_schema(tags=['Workouts'])
 class WorkoutCheckinsAPIView(ListCreateAPIView):
     """
     API view for listing all workout check-ins and creating new ones.
@@ -71,7 +71,7 @@ class WorkoutCheckinsAPIView(ListCreateAPIView):
         )
 
 
-@extend_schema_view(tags=['Workouts'])
+@extend_schema(tags=['Workouts'])
 class WorkoutCheckinAPIView(RetrieveUpdateDestroyAPIView):
     """
     API view for individual workout check-in operations.
@@ -107,7 +107,7 @@ class WorkoutCheckinAPIView(RetrieveUpdateDestroyAPIView):
         )
 
 
-@extend_schema_view(tags=['Workouts'])
+@extend_schema(tags=['Workouts'])
 class WorkoutCheckinsByUserAPIView(ListAPIView):
     """
     API view for retrieving workout check-ins for a specific user.
@@ -127,7 +127,7 @@ class WorkoutCheckinsByUserAPIView(ListAPIView):
         return WorkoutCheckin.objects.filter(user=user_id).order_by('-workout_date')
 
 
-@extend_schema_view(tags=['Workouts'])
+@extend_schema(tags=['Workouts'])
 class WorkoutPlansAPIView(ListAPIView):
     """
     API view for listing all available workout plans.
@@ -138,7 +138,7 @@ class WorkoutPlansAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
 
-@extend_schema_view(tags=['Workouts'])
+@extend_schema(tags=['Workouts'])
 class WorkoutPlanAPIView(RetrieveUpdateDestroyAPIView):
     """
     API view for individual workout plan operations.
