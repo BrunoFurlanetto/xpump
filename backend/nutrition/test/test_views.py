@@ -203,8 +203,7 @@ class MealsAPIViewTestCase(APITestCase):
 
         # Mock profile for users
         for user in [self.user, self.other_user]:
-            Profile = type('Profile', (), {'score': 0, 'save': Mock()})
-            user.profile = Profile()
+            Profile.objects.create(user=user)
 
         self.meal_config = MealConfig.objects.create(
             meal_name='breakfast',

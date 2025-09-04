@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist, ValidationError
+from django.utils import timezone
 
 from status.models import Status
 
@@ -22,6 +25,10 @@ class MealConfig(models.Model):
 
     def __str__(self):
         return f"{self.get_meal_name_display()} - {self.interval_start} to {self.interval_end}"
+
+    @classmethod
+    def all_meals_count(cls):
+        return cls.objects.count()
 
 
 class Meal(models.Model):
@@ -53,7 +60,7 @@ class Meal(models.Model):
                 user=self.user,
                 current_streak=1,
                 longest_streak=1,
-                last_meal_datetime=self.meal_time,
+                last_meal_datetime=self.meal_time.astimezone(),
             )
 
         # Calculate multiplier and points based on streak
@@ -67,6 +74,12 @@ class Meal(models.Model):
         self.user.profile.save()
 
     def clean(self):
+        if not MealConfig.objects.filter(
+            interval_start__lte=self.meal_time.astimezone().time(),
+            interval_end__gte=self.meal_time.astimezone().time()
+        ).exists():
+            raise ValidationError({"meal_time": "Meal time does not fall within any configured meal intervals."})
+
         if not (self.meal_type.interval_start < self.meal_time.astimezone().time() < self.meal_type.interval_end):
             raise ValidationError({"meal_time": "Meal time must be within the configured interval for this meal type."})
 
@@ -75,7 +88,17 @@ class Meal(models.Model):
                 raise ValidationError({"meal_type": "A meal of this type has already been recorded for today."})
 
     def update_multiplier(self):
-        streak = self.user.meal_streak.current_streak
+        try:
+            streak = self.user.meal_streak.current_streak
+        except RelatedObjectDoesNotExist:
+            MealStreak.objects.create(
+                user=self.user,
+                current_streak=1,
+                longest_streak=1,
+                last_meal_datetime=self.meal_time.astimezone(),
+            )
+            streak = 1
+
         meal_records = MealConfig.objects.count()
 
         if streak < meal_records * 2:
@@ -137,6 +160,39 @@ class MealStreak(models.Model):
     def __str__(self):
         return f"Streak of {self.user.username}: {self.current_streak} (Máx: {self.longest_streak})"
 
+    @property
+    def weekly_remaining(self):
+        if not self.last_meal_datetime:
+            return MealConfig.all_meals_count()
+
+        # Get current date and time
+        now = timezone.now()
+
+        # Calculate the start and end of the week based on the current date
+        # Assuming the week starts on Sunday
+        days_since_sunday = now.weekday() + 1
+
+        if days_since_sunday == 7:
+            days_since_sunday = 0
+
+        # Calculate the start and end of the week
+        # Adjusting to the start of the week (Sunday)
+        week_start = now - timedelta(days=days_since_sunday)
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_end = week_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+        # Count the number of check-ins in the current week
+        checkins_count = Meal.objects.filter(
+            user=self.user,
+            meal_time__gte=week_start,
+            meal_time__lte=week_end
+        ).count()
+
+        # Calculate remaining workouts needed to meet frequency
+        remaining = MealConfig.all_meals_count() - checkins_count
+
+        return max(remaining, 0)
+
     def update_streak(self, meal_datetime):
         if not self.last_meal_datetime:
             self.current_streak = 1
@@ -168,7 +224,8 @@ class MealStreak(models.Model):
             if meal.interval_start <= self.last_meal_datetime.astimezone().time() <= meal.interval_end:
                 last_meal_config = meal
 
-        if list_all_meals.index(current_meal_config) == 0 and list_all_meals.index(last_meal_config) == len(list_all_meals) - 1:
+        if list_all_meals.index(current_meal_config) == 0 and list_all_meals.index(last_meal_config) == len(
+                list_all_meals) - 1:
             return False
         else:
             if list_all_meals.index(current_meal_config) == list_all_meals.index(last_meal_config) + 1:

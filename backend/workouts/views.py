@@ -89,7 +89,7 @@ class WorkoutCheckinAPIView(RetrieveUpdateDestroyAPIView):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
-
+        
         if serializer.is_valid():
             try:
                 self.perform_update(serializer)

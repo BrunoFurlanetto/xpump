@@ -1,10 +1,14 @@
 import os
-from datetime import datetime, time, date
+from datetime import datetime, time, date, timedelta
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
+from django.utils import timezone
+
 from nutrition.models import Meal, MealConfig, MealStreak, MealProof, NutritionPlan
 from status.models import Status
 from profiles.models import Profile
@@ -236,7 +240,7 @@ class MealModelTest(TestCase):
         invalid_meal_data['meal_time'] = datetime(2025, 8, 27, 11, 30)  # 11:30 is outside 7:00-10:00
 
         meal = Meal(**invalid_meal_data)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             meal.clean()
 
     def test_duplicate_meal_type_same_day_validation(self):
@@ -249,7 +253,7 @@ class MealModelTest(TestCase):
         duplicate_meal_data['meal_time'] = datetime(2025, 8, 27, 9, 30)  # Same day, different time
 
         meal = Meal(**duplicate_meal_data)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             meal.clean()
 
     def test_same_meal_type_different_day_allowed(self):
@@ -941,3 +945,120 @@ class MealStreakModelTest(TestCase):
         # Try to create another streak for the same user (should fail)
         with self.assertRaises(IntegrityError):
             MealStreak.objects.create(user=self.user)
+
+
+class MealStreakModelTests(TestCase):
+    """Testes para o modelo MealStreak e property weekly_remaining"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        Profile.objects.create(user=self.user)
+        self.meal_streak = MealStreak.objects.create(
+            user=self.user,
+            last_meal_datetime=(timezone.now() - timedelta(days=7)).replace(hour=20)
+        )
+
+        # Cria alguns tipos de refeição para os testes
+        self.breakfast_config = MealConfig.objects.create(
+            meal_name='breakfast',
+            interval_start=time(6, 0),
+            interval_end=time(10, 0)
+        )
+        self.lunch_config = MealConfig.objects.create(
+            meal_name='lunch',
+            interval_start=time(11, 0),
+            interval_end=time(14, 0)
+        )
+        self.dinner_config = MealConfig.objects.create(
+            meal_name='dinner',
+            interval_start=time(18, 0),
+            interval_end=time(21, 0)
+        )
+
+    def test_weekly_remaining_no_last_meal_datetime(self):
+        """Testa weekly_remaining quando não há last_meal_datetime"""
+        self.meal_streak.last_meal_datetime = None
+        self.meal_streak.save()
+
+        remaining = self.meal_streak.weekly_remaining
+        expected = MealConfig.objects.count()  # 3 tipos de refeição criados
+        self.assertEqual(remaining, expected)
+
+    @patch('django.utils.timezone.now')
+    def test_weekly_remaining_with_meals_this_week(self, mock_now):
+        """Testa weekly_remaining quando há refeições registradas na semana"""
+        # Simula que hoje é quarta-feira (weekday=2)
+        mock_wednesday = timezone.make_aware(datetime(2024, 1, 10, 20, 0, 0))
+        mock_now.return_value = mock_wednesday
+
+        # Calcula início da semana (domingo)
+        week_start = mock_wednesday - timedelta(days=3)  # Volta para domingo
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        self.meal_streak.last_meal_datetime = mock_wednesday
+        self.meal_streak.save()
+
+        # Cria algumas refeições na semana atual (2 refeições)
+        for i in range(2):
+            meal_time = week_start + timedelta(days=i, hours=12)  # 12h (dentro do intervalo do almoço)
+            Meal.objects.create(
+                user=self.user,
+                meal_type=self.lunch_config,
+                meal_time=meal_time,
+                comments='Test meal'
+            )
+
+        remaining = self.meal_streak.weekly_remaining
+        self.assertEqual(remaining, 1)  # 3 - 2 = 1
+
+    @patch('django.utils.timezone.now')
+    def test_weekly_remaining_goal_exceeded(self, mock_now):
+        """Testa weekly_remaining quando a meta já foi superada"""
+        mock_wednesday = timezone.make_aware(datetime(2025, 1, 10, 20, 0, 0))
+        mock_now.return_value = mock_wednesday
+
+        week_start = mock_wednesday - timedelta(days=3)
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        self.meal_streak.last_meal_datetime = mock_wednesday
+        self.meal_streak.save()
+
+        # Cria mais refeições do que tipos configurados (5 > 3)
+        meal_configs = [self.breakfast_config, self.lunch_config, self.dinner_config,
+                        self.breakfast_config, self.lunch_config]  # 5 refeições
+
+        for i, config in enumerate(meal_configs):
+            meal_time = week_start + timedelta(hours=i * 8)  # Espaça as refeições
+
+            # Ajusta hora para estar dentro do intervalo
+            if config == self.breakfast_config:
+                meal_time = meal_time.replace(hour=8)
+            elif config == self.lunch_config:
+                meal_time = meal_time.replace(hour=12)
+            else:  # dinner
+                meal_time = meal_time.replace(hour=19)
+
+            Meal.objects.create(
+                user=self.user,
+                meal_type=config,
+                meal_time=meal_time,
+                comments='Test meal'
+            )
+
+        remaining = self.meal_streak.weekly_remaining
+        self.assertEqual(remaining, 0)  # max(3-5, 0) = 0
+
+    @patch('django.utils.timezone.now')
+    def test_weekly_remaining_sunday_calculation(self, mock_now):
+        """Testa cálculo da semana quando hoje é domingo"""
+        mock_sunday = timezone.make_aware(datetime(2024, 1, 7, 15, 0, 0))  # Domingo
+        mock_now.return_value = mock_sunday
+
+        self.meal_streak.last_meal_datetime = mock_sunday
+        self.meal_streak.save()
+
+        # Verifica que não há erro no cálculo quando weekday+1 = 7
+        remaining = self.meal_streak.weekly_remaining
+        self.assertIsInstance(remaining, int)
+        self.assertGreaterEqual(remaining, 0)
+

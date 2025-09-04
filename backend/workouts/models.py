@@ -170,6 +170,42 @@ class WorkoutStreak(models.Model):
     def __str__(self):
         return f"Streak of {self.user.username}: {self.current_streak} (Máx: {self.longest_streak})"
 
+    @property
+    def weekly_remaining(self):
+        """
+        Calculate the number of workouts remaining for the current week to maintain the streak.
+        """
+        if not self.last_workout_datetime:
+            return self.frequency
+
+        # Get current date and time
+        now = timezone.now()
+
+        # Calculate the start and end of the week based on the current date
+        # Assuming the week starts on Sunday
+        days_since_sunday = now.weekday() + 1
+
+        if days_since_sunday == 7:
+            days_since_sunday = 0
+
+        # Calculate the start and end of the week
+        # Adjusting to the start of the week (Sunday)
+        week_start = now - timedelta(days=days_since_sunday)
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_end = week_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+        # Count the number of check-ins in the current week
+        checkins_count = WorkoutCheckin.objects.filter(
+            user=self.user,
+            workout_date__gte=week_start,
+            workout_date__lte=week_end
+        ).count()
+
+        # Calculate remaining workouts needed to meet frequency
+        remaining = self.frequency - checkins_count
+
+        return max(remaining, 0)
+
     def update_streak(self, workout_date):
         """
         Update the user's workout streak based on a new workout.
