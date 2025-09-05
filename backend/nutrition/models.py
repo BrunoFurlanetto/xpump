@@ -48,7 +48,7 @@ class Meal(models.Model):
         self.validation_status, _ = Status.objects.get_or_create(app_name='NUTRITION', action='PUBLISHED', defaults={
             'name': 'Aceito',
             'app_name': 'NUTRITION',
-            'action': 'PUPLISHED',
+            'action': 'PUBLISHED',
         })
 
         try:

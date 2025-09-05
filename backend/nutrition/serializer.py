@@ -126,7 +126,7 @@ class NutritionPlanSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def validate_pdf_file(self, value):
-        if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError('The file must be a PDF.')
+        validator = FileExtensionValidator(allowed_extensions=['pdf'])
+        validator(value)
 
         return value
