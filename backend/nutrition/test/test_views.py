@@ -614,3 +614,262 @@ class ValidationTestCase(APITestCase):
 
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class MealsByUserByIntervalDateAPIViewTestCase(APITestCase):
+    """Test cases for meals by user filtered by date interval"""
+
+    def setUp(self):
+        """Set up test data for interval date tests"""
+        self.user = User.objects.create_user('testuser', 'test@example.com', 'testpass')
+        self.other_user = User.objects.create_user('otheruser', 'other@example.com', 'otherpass')
+
+        # Create profiles
+        for user in [self.user, self.other_user]:
+            Profile.objects.create(user=user)
+
+        # Create meal configurations
+        self.breakfast_config = MealConfig.objects.create(
+            meal_name='breakfast',
+            interval_start=time(6, 0),
+            interval_end=time(10, 0),
+            description='Morning meal'
+        )
+
+        self.lunch_config = MealConfig.objects.create(
+            meal_name='lunch',
+            interval_start=time(11, 0),
+            interval_end=time(15, 0),
+            description='Afternoon meal'
+        )
+
+        # Create status
+        self.status = Status.objects.create(
+            name='Aceito',
+            app_name='NUTRITION',
+            action='PUBLISHED'
+        )
+
+        # Create meal streaks
+        MealStreak.objects.create(user=self.user, current_streak=1, longest_streak=1)
+        MealStreak.objects.create(user=self.other_user, current_streak=1, longest_streak=1)
+
+        # Create test meals for different dates
+        self.meal1 = Meal.objects.create(
+            user=self.user,
+            meal_type=self.breakfast_config,
+            meal_time=datetime(2024, 1, 15, 8, 0),  # January 15
+            validation_status=self.status,
+            comments="Breakfast on Jan 15"
+        )
+
+        self.meal2 = Meal.objects.create(
+            user=self.user,
+            meal_type=self.lunch_config,
+            meal_time=datetime(2024, 1, 20, 12, 0),  # January 20
+            validation_status=self.status,
+            comments="Lunch on Jan 20"
+        )
+
+        self.meal3 = Meal.objects.create(
+            user=self.user,
+            meal_type=self.breakfast_config,
+            meal_time=datetime(2024, 2, 5, 8, 30),  # February 5 (outside interval)
+            validation_status=self.status,
+            comments="Breakfast on Feb 5"
+        )
+
+        # Meal from other user (should not appear in results)
+        self.meal_other_user = Meal.objects.create(
+            user=self.other_user,
+            meal_type=self.breakfast_config,
+            meal_time=datetime(2024, 1, 16, 8, 0),
+            validation_status=self.status,
+            comments="Other user's meal"
+        )
+
+        self.client = APIClient()
+
+    def test_get_meals_by_user_by_interval_authenticated(self):
+        """Test getting meals by user ID within date interval as authenticated user"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-01', '2024-01-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)  # Should return meal1 and meal2
+
+        # Check meals are ordered by meal_time descending (most recent first)
+        self.assertEqual(response.data[0]['id'], self.meal2.id)  # Jan 20 (more recent)
+        self.assertEqual(response.data[1]['id'], self.meal1.id)  # Jan 15
+
+    def test_get_meals_by_user_by_interval_unauthenticated(self):
+        """Test getting meals by user ID within date interval without authentication should fail"""
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-01', '2024-01-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_meals_by_interval_excludes_outside_dates(self):
+        """Test that meals outside the date interval are excluded"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-01', '2024-01-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+        # Ensure February meal is not included
+        meal_ids = [meal['id'] for meal in response.data]
+        self.assertNotIn(self.meal3.id, meal_ids)
+
+    def test_get_meals_by_interval_different_user(self):
+        """Test getting meals for different user"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.other_user.pk, '2024-01-01', '2024-01-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)  # Should return only other_user's meal
+        self.assertEqual(response.data[0]['id'], self.meal_other_user.id)
+
+    def test_get_meals_empty_interval(self):
+        """Test getting meals for date interval with no meals"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-03-01', '2024-03-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    def test_get_meals_single_day_interval(self):
+        """Test getting meals for single day interval"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-15', '2024-01-15'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.meal1.id)
+
+    def test_get_meals_reverse_date_order(self):
+        """Test with end_date before initial_date (should return no results)"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-31', '2024-01-01'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    def test_get_meals_nonexistent_user(self):
+        """Test getting meals for non-existent user ID"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[99999, '2024-01-01', '2024-01-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    def test_get_meals_response_structure(self):
+        """Test that response has correct structure and fields"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-01', '2024-01-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        if response.data:
+            meal_data = response.data[0]
+            expected_fields = ['id', 'user', 'meal_type', 'meal_time', 'comments', 'validation_status', 'base_points', 'multiplier']
+            for field in expected_fields:
+                self.assertIn(field, meal_data, f"Field '{field}' should be in response")
+
+    def test_meals_ordered_correctly(self):
+        """Test that meals are ordered by meal_time descending"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-01', '2024-01-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        if len(response.data) > 1:
+            # Check that meals are ordered by meal_time descending
+            meal_times = [meal['meal_time'] for meal in response.data]
+            sorted_meal_times = sorted(meal_times, reverse=True)
+            self.assertEqual(meal_times, sorted_meal_times)
+
+    def test_date_format_variations(self):
+        """Test different date format variations"""
+        self.client.force_authenticate(user=self.user)
+
+        # Test with different date formats (should all work with YYYY-MM-DD format)
+        test_cases = [
+            ('2024-01-01', '2024-01-31'),
+            ('2024-1-1', '2024-1-31'),  # Single digit month/day
+        ]
+
+        for initial_date, end_date in test_cases:
+            with self.subTest(initial_date=initial_date, end_date=end_date):
+                url = reverse('meals-by-user-by-interval', args=[self.user.pk, initial_date, end_date])
+                response = self.client.get(url)
+                # Should work or at least not crash
+                self.assertIn(response.status_code, [status.HTTP_200_OK, status.HTTP_400_BAD_REQUEST])
+
+    def test_boundary_dates_inclusive(self):
+        """Test that boundary dates are inclusive"""
+        self.client.force_authenticate(user=self.user)
+
+        # Create meal exactly on boundary date
+        boundary_meal = Meal.objects.create(
+            user=self.user,
+            meal_type=self.breakfast_config,
+            meal_time=datetime(2024, 1, 31, 8, 0),  # Exactly on end date
+            validation_status=self.status,
+            comments="Boundary meal"
+        )
+
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-31', '2024-01-31'])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], boundary_meal.id)
+
+    def test_large_date_range(self):
+        """Test with large date range"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-by-user-by-interval', args=[self.user.pk, '2020-01-01', '2030-12-31'])
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Should include all user's meals
+        self.assertEqual(len(response.data), 3)
+
+    def test_concurrent_user_access(self):
+        """Test that different authenticated users can access the endpoint simultaneously"""
+        # Authenticate as first user
+        self.client.force_authenticate(user=self.user)
+        url1 = reverse('meals-by-user-by-interval', args=[self.user.pk, '2024-01-01', '2024-01-31'])
+        response1 = self.client.get(url1)
+
+        # Switch to second user
+        self.client.force_authenticate(user=self.other_user)
+        url2 = reverse('meals-by-user-by-interval', args=[self.other_user.pk, '2024-01-01', '2024-01-31'])
+        response2 = self.client.get(url2)
+
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+
+        # Results should be different
+        self.assertNotEqual(len(response1.data), len(response2.data))

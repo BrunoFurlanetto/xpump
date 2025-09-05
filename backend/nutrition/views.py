@@ -210,6 +210,32 @@ class MealsByUserAPIView(ListAPIView):
 
 
 @extend_schema(tags=['Nutrition'])
+class MealsByUserByIntervalDateAPIView(ListAPIView):
+    """
+    API view for retrieving meal check-ins for a specific user on a interval date.
+    Returns meals ordered by meal time (most recent first).
+    """
+    serializer_class = MealSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'user_id'
+
+    def get_queryset(self):
+        """
+        Filter workout check-ins by user ID and date from URL parameters.
+        Returns check-ins ordered by most recent first.
+        """
+        user_id = self.kwargs.get('user_id')
+        initial_date = self.kwargs.get('initial_date')
+        end_date = self.kwargs.get('end_date')
+
+        return Meal.objects.filter(
+            user=user_id,
+            meal_time__date__gte=initial_date,
+            meal_time__date__lte=end_date,
+        ).order_by('-meal_time')
+
+
+@extend_schema(tags=['Nutrition'])
 class NutritionPlansAPIView(ListCreateAPIView):
     """
     API view for listing all available nutrition plans.

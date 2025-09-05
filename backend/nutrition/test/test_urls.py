@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from nutrition.views import (
     MealsAPIView, MealAPIView, MealTypesAPIView, MealTypeAPIView,
     MealsByUserAPIView, NutritionPlansAPIView, NutritionPlanAPIView,
-    MealChoicesAPIView
+    MealChoicesAPIView, MealsByUserByIntervalDateAPIView
 )
 
 
@@ -97,6 +97,18 @@ class NutritionURLsTestCase(TestCase):
         self.assertEqual(resolver.view_name, 'nutrition-plan-detail')
         self.assertEqual(resolver.func.view_class, NutritionPlanAPIView)
         self.assertEqual(resolver.kwargs['pk'], 1)
+
+    def test_meals_by_user_by_interval_url_resolves(self):
+        """Test meals by user by interval date URL resolves to correct view"""
+        url = reverse('meals-by-user-by-interval', args=[1, '2024-01-01', '2024-01-31'])
+        self.assertEqual(url, '/api/v1/meals/user/1/2024-01-01/2024-01-31')
+
+        resolver = resolve('/api/v1/meals/user/1/2024-01-01/2024-01-31')
+        self.assertEqual(resolver.view_name, 'meals-by-user-by-interval')
+        self.assertEqual(resolver.func.view_class, MealsByUserByIntervalDateAPIView)
+        self.assertEqual(resolver.kwargs['user_id'], 1)
+        self.assertEqual(resolver.kwargs['initial_date'], '2024-01-01')
+        self.assertEqual(resolver.kwargs['end_date'], '2024-01-31')
 
     def test_all_urls_have_names(self):
         """Test that all URLs have proper names assigned"""
