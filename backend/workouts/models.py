@@ -55,7 +55,7 @@ class WorkoutCheckin(models.Model):
 
         # Calculate multiplier and points based on streak and duration
         self.multiplier = self.update_multiplier()
-        self.base_points = float(10 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
+        self.base_points = float(40 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
 
         super().save(*args, **kwargs)
 
@@ -114,7 +114,7 @@ class WorkoutCheckin(models.Model):
             self.multiplier = 1.50
         elif 20 <= streak < 40:
             self.multiplier = 1.75
-        elif 40 <= streak < 80:
+        elif streak >= 40:
             self.multiplier = 2.0
 
         return self.multiplier
@@ -169,6 +169,42 @@ class WorkoutStreak(models.Model):
 
     def __str__(self):
         return f"Streak of {self.user.username}: {self.current_streak} (Máx: {self.longest_streak})"
+
+    @property
+    def weekly_remaining(self):
+        """
+        Calculate the number of workouts remaining for the current week to maintain the streak.
+        """
+        if not self.last_workout_datetime:
+            return self.frequency
+
+        # Get current date and time
+        now = timezone.now()
+
+        # Calculate the start and end of the week based on the current date
+        # Assuming the week starts on Sunday
+        days_since_sunday = now.weekday() + 1
+
+        if days_since_sunday == 7:
+            days_since_sunday = 0
+
+        # Calculate the start and end of the week
+        # Adjusting to the start of the week (Sunday)
+        week_start = now - timedelta(days=days_since_sunday)
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_end = week_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+        # Count the number of check-ins in the current week
+        checkins_count = WorkoutCheckin.objects.filter(
+            user=self.user,
+            workout_date__gte=week_start,
+            workout_date__lte=week_end
+        ).count()
+
+        # Calculate remaining workouts needed to meet frequency
+        remaining = self.frequency - checkins_count
+
+        return max(remaining, 0)
 
     def update_streak(self, workout_date):
         """
@@ -259,6 +295,7 @@ class WorkoutStreak(models.Model):
     def check_and_reset_streak_if_ended(self, current_date=None):
         """
         Check if streak has ended and reset it to 0 if necessary.
+        WARNING: THIS METHOD, ONLY USE IN THE SCHEDULED TASKS
 
         Args:
             current_date: Date to check against
@@ -269,7 +306,3 @@ class WorkoutStreak(models.Model):
         if self.check_streak_ended(current_date):
             self.current_streak = 0
             self.save()
-
-            return True
-
-        return False

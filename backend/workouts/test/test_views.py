@@ -143,9 +143,14 @@ class WorkoutCheckinsAPIViewTest(APITestCase):
     def test_create_workout_checkin_success(self):
         """Testa criação bem-sucedida de check-in"""
         self.client.force_authenticate(user=self.user)
+        test_file = SimpleUploadedFile(
+            "test_image.jpg",
+            b"file_content",
+            content_type="image/jpeg"
+        )
 
         data = {
-            'location': 'Academia Central',
+            'proof_files': [test_file],
             'comments': 'Treino de peito',
             'workout_date': timezone.now() - timedelta(hours=1),
             'duration': timedelta(minutes=60)
@@ -161,7 +166,6 @@ class WorkoutCheckinsAPIViewTest(APITestCase):
     def test_create_workout_checkin_with_files(self):
         """Testa criação de check-in com arquivos"""
         self.client.force_authenticate(user=self.user)
-
         test_file = SimpleUploadedFile(
             "test_image.jpg",
             b"file_content",
@@ -507,9 +511,15 @@ class WorkoutViewsIntegrationTest(APITestCase):
         """Testa fluxo completo de workout"""
         self.client.force_authenticate(user=self.user)
 
+        test_file = SimpleUploadedFile(
+            "test_image.jpg",
+            b"file_content",
+            content_type="image/jpeg"
+        )
+
         # 1. Criar check-in
         create_data = {
-            'location': 'Academia',
+            'proof_files': [test_file],
             'comments': 'Treino completo',
             'workout_date': timezone.now() - timedelta(hours=1),
             'duration': timedelta(minutes=60)
@@ -553,11 +563,19 @@ class WorkoutViewsIntegrationTest(APITestCase):
 
         # Criar múltiplos check-ins para testar streak
         for i in range(3):
+            test_file = SimpleUploadedFile(
+                "test_image.jpg",
+                b"file_content",
+                content_type="image/jpeg"
+            )
+
             data = {
+                'proof_files': [test_file],
                 'workout_date': timezone.now() - timedelta(days=i),
                 'duration': timedelta(minutes=60)
             }
-            response = self.client.post(reverse('workout-list'), data)
+
+            response = self.client.post(reverse('workout-list'), data, format='multipart')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Verificar streak no último check-in
