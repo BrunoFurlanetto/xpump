@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+import importlib
 
 
 class TargetApp(models.TextChoices):
@@ -24,7 +25,7 @@ class Status(models.Model):
     app_name = models.CharField(max_length=120, choices=TargetApp.choices)
     action = models.CharField(max_length=120, choices=StatusAction.choices)
 
-    class meta:
+    class Meta:
         unique_together = ('app_name', 'action', 'is_active')
         ordering = ['app_name', 'action']
 
@@ -41,7 +42,7 @@ class Status(models.Model):
 
         if model_info:
             module_name, class_name = model_info
-            module = __import__(module_name, fromlist=[class_name])
+            module = importlib.import_module(module_name)
             RelatedModel = getattr(module, class_name)
             related_objs = RelatedModel.objects.filter(status=self)
 
@@ -50,7 +51,7 @@ class Status(models.Model):
                     is_active=True,
                     action=self.action,
                     app_name=self.app_name
-                )
+                ).exclude(id=self.id)
 
                 if not substitute.exists():
                     raise ValidationError(f"Cannot delete status '{self.name}' because it is in use and no substitute status is available.")
