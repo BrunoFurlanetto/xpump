@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse, resolve
 
-from status.views import StatusAPIVew, StatusDetailAPIView
+from status.views import StatusAPIView, StatusDetailAPIView
 
 
 class StatusUrlTest(TestCase):
@@ -12,7 +12,7 @@ class StatusUrlTest(TestCase):
         self.assertEqual(url, '/api/v1/status/')
 
         resolved = resolve(url)
-        self.assertEqual(resolved.func.view_class, StatusAPIVew)
+        self.assertEqual(resolved.func.view_class, StatusAPIView)
 
     def test_status_detail_url_resolves(self):
         """Testa se a URL de detalhe do status resolve corretamente"""
@@ -57,7 +57,7 @@ class StatusUrlTest(TestCase):
         """Testa padrões de correspondência das URLs"""
         # URL raiz deve corresponder à lista
         resolved = resolve('/api/v1/status/')
-        self.assertEqual(resolved.func.view_class, StatusAPIVew)
+        self.assertEqual(resolved.func.view_class, StatusAPIView)
 
         # URLs com números devem corresponder ao detalhe
         test_urls = ['/api/v1/status/1/', '/api/v1/status/123/', '/api/v1/status/9999/']
