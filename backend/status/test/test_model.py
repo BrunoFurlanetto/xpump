@@ -194,3 +194,204 @@ class StatusModelTest(TestCase):
         self.assertEqual(StatusAction.BLOCKED, 'BLOCKED')
         self.assertEqual(StatusAction.REJECTED, 'REJECTED')
         self.assertEqual(StatusAction.PENDING, 'PENDING')
+
+    @patch('importlib.import_module')
+    def test_alter_status_with_related_objects(self, mock_import):
+        """Testa a alteração de status com objetos relacionados"""
+        # Criar status atual
+        current_status = Status.objects.create(
+            name='Publicado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.PUBLISHED,
+            is_active=True
+        )
+
+        # Criar novo status
+        new_status = Status.objects.create(
+            name='Sob Revisão',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.UNDER_REVIEW,
+            is_active=True
+        )
+
+        # Mock do modelo relacionado
+        mock_related_model = MagicMock()
+        mock_related_objects = MagicMock()
+        mock_related_objects.exists.return_value = True
+        mock_related_objects.update.return_value = None
+        mock_related_model.objects.filter.return_value = mock_related_objects
+
+        # Mock do import
+        mock_module = MagicMock()
+        mock_module.WorkoutCheckin = mock_related_model
+        mock_import.return_value = mock_module
+
+        # Executar alter_status
+        Status.alter_status(TargetApp.WORKOUT, StatusAction.PUBLISHED, StatusAction.UNDER_REVIEW)
+
+        # Verificar se foi chamado filter com o status correto
+        mock_related_model.objects.filter.assert_called_once_with(status=current_status)
+        # Verificar se foi chamado update com o novo status
+        mock_related_objects.update.assert_called_once_with(status=new_status)
+
+    @patch('importlib.import_module')
+    def test_alter_status_without_related_objects(self, mock_import):
+        """Testa a alteração de status sem objetos relacionados"""
+        # Criar status atual
+        Status.objects.create(
+            name='Publicado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.PUBLISHED,
+            is_active=True
+        )
+
+        # Criar novo status
+        Status.objects.create(
+            name='Aprovado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.APPROVED,
+            is_active=True
+        )
+
+        # Mock do modelo relacionado sem objetos
+        mock_related_model = MagicMock()
+        mock_related_objects = MagicMock()
+        mock_related_objects.exists.return_value = False
+        mock_related_model.objects.filter.return_value = mock_related_objects
+
+        # Mock do import
+        mock_module = MagicMock()
+        mock_module.WorkoutCheckin = mock_related_model
+        mock_import.return_value = mock_module
+
+        # Executar alter_status - não deve levantar exceção
+        Status.alter_status(TargetApp.WORKOUT, StatusAction.PUBLISHED, StatusAction.APPROVED)
+
+        # Verificar que foi chamado mas update não foi executado
+        mock_related_model.objects.filter.assert_called_once()
+        mock_related_objects.update.assert_not_called()
+
+    def test_alter_status_app_without_related_model(self):
+        """Testa a alteração de status para app sem modelo relacionado configurado"""
+        # Criar status atual
+        Status.objects.create(
+            name='Publicado',
+            app_name=TargetApp.COMMENT,
+            action=StatusAction.PUBLISHED,
+            is_active=True
+        )
+
+        # Criar novo status
+        Status.objects.create(
+            name='Aprovado',
+            app_name=TargetApp.COMMENT,
+            action=StatusAction.APPROVED,
+            is_active=True
+        )
+
+        # Executar alter_status - deve funcionar normalmente (não há modelo relacionado)
+        Status.alter_status(TargetApp.COMMENT, StatusAction.PUBLISHED, StatusAction.APPROVED)
+
+    def test_alter_status_current_not_exists(self):
+        """Testa erro quando o status atual não existe"""
+        # Criar apenas o novo status
+        Status.objects.create(
+            name='Aprovado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.APPROVED,
+            is_active=True
+        )
+
+        # Tentar alterar de um status que não existe
+        with self.assertRaises(ValidationError) as context:
+            Status.alter_status(TargetApp.WORKOUT, StatusAction.PUBLISHED, StatusAction.APPROVED)
+
+        self.assertIn("Current or new status does not exist or is not active", str(context.exception))
+
+    def test_alter_status_new_not_exists(self):
+        """Testa erro quando o novo status não existe"""
+        # Criar apenas o status atual
+        Status.objects.create(
+            name='Publicado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.PUBLISHED,
+            is_active=True
+        )
+
+        # Tentar alterar para um status que não existe
+        with self.assertRaises(ValidationError) as context:
+            Status.alter_status(TargetApp.WORKOUT, StatusAction.PUBLISHED, StatusAction.APPROVED)
+
+        self.assertIn("Current or new status does not exist or is not active", str(context.exception))
+
+    def test_alter_status_current_inactive(self):
+        """Testa erro quando o status atual está inativo"""
+        # Criar status atual inativo
+        Status.objects.create(
+            name='Publicado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.PUBLISHED,
+            is_active=False
+        )
+
+        # Criar novo status
+        Status.objects.create(
+            name='Aprovado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.APPROVED,
+            is_active=True
+        )
+
+        # Tentar alterar - deve falhar pois status atual está inativo
+        with self.assertRaises(ValidationError) as context:
+            Status.alter_status(TargetApp.WORKOUT, StatusAction.PUBLISHED, StatusAction.APPROVED)
+
+        self.assertIn("Current or new status does not exist or is not active", str(context.exception))
+
+    def test_alter_status_new_inactive(self):
+        """Testa erro quando o novo status está inativo"""
+        # Criar status atual
+        Status.objects.create(
+            name='Publicado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.PUBLISHED,
+            is_active=True
+        )
+
+        # Criar novo status inativo
+        Status.objects.create(
+            name='Aprovado',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.APPROVED,
+            is_active=False
+        )
+
+        # Tentar alterar - deve falhar pois novo status está inativo
+        with self.assertRaises(ValidationError) as context:
+            Status.alter_status(TargetApp.WORKOUT, StatusAction.PUBLISHED, StatusAction.APPROVED)
+
+        self.assertIn("Current or new status does not exist or is not active", str(context.exception))
+
+    def test_alter_status_different_apps(self):
+        """Testa que não altera status de apps diferentes"""
+        # Criar status de WORKOUT
+        Status.objects.create(
+            name='Publicado Workout',
+            app_name=TargetApp.WORKOUT,
+            action=StatusAction.PUBLISHED,
+            is_active=True
+        )
+
+        # Criar status de NUTRITION
+        Status.objects.create(
+            name='Aprovado Nutrition',
+            app_name=TargetApp.NUTRITION,
+            action=StatusAction.APPROVED,
+            is_active=True
+        )
+
+        # Tentar alterar - deve falhar pois são apps diferentes
+        with self.assertRaises(ValidationError) as context:
+            Status.alter_status(TargetApp.WORKOUT, StatusAction.PUBLISHED, StatusAction.APPROVED)
+
+        self.assertIn("Current or new status does not exist or is not active", str(context.exception))

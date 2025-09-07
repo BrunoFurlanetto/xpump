@@ -59,3 +59,27 @@ class Status(models.Model):
                 related_objs.update(status=substitute.first())
 
         super().delete(*args, **kwargs)
+
+    @classmethod
+    def alter_status(cls, app_name, current_action, new_action):
+        try:
+            current_status = cls.objects.get(app_name=app_name, action=current_action, is_active=True)
+            new_status = cls.objects.get(app_name=app_name, action=new_action, is_active=True)
+        except cls.DoesNotExist:
+            raise ValidationError("Current or new status does not exist or is not active.")
+
+        related_models = {
+            TargetApp.WORKOUT: ('backend.workouts.models', 'WorkoutCheckin'),
+            TargetApp.NUTRITION: ('backend.nutrition.models', 'Meal'),
+            # TargetApp.COMMENT: ('backend.comments.models', 'Comment'),
+        }
+        model_info = related_models.get(app_name)
+
+        if model_info:
+            module_name, class_name = model_info
+            module = importlib.import_module(module_name)
+            RelatedModel = getattr(module, class_name)
+            related_objs = RelatedModel.objects.filter(status=current_status)
+
+            if related_objs.exists():
+                related_objs.update(status=new_status)
