@@ -74,7 +74,7 @@ export async function submitLogin(
 export const refreshToken = async (oldRefreshToken: string) => {
     try {
 
-        const response = await fetch(`${BACKEND_URL}/auth/refresh/`, {
+        const response = await fetch(`${BACKEND_URL}/auth/token/refresh/`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
