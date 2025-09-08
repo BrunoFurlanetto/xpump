@@ -357,7 +357,7 @@ class WorkoutStreakModelTest(TestCase):
         streak = WorkoutStreak.objects.create(
             user=self.user,
             frequency=3,
-            last_workout_datetime=timezone.now() - timedelta(days=2)
+            last_workout_datetime=(timezone.now() - timedelta(days=2))
         )
 
         # Criar alguns check-ins na semana atual
