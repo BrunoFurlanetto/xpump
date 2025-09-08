@@ -15,23 +15,29 @@ interface Profile {
         member_count: number,
         position: number
     }[],
-    streak: {
-        current_streak: number,
-        longest_streak: number,
-        last_workout_date: string | null,
-    }
+    workout_streak: {
+    current_streak: number,
+    longest_streak: number,
+    weekly_remaining: number,
+    weekly_expected: number,
+    last_workout_date: string | null
+  },
+  meal_streak: {
+    current_streak: number,
+    longest_streak: number,
+    weekly_remaining: number,
+    weekly_expected: number,
+    last_meal_date: string | null
+  }
 }
 
 export const getProfileById = async (profileId: string): Promise<Profile | null> => {
     try {
         const response = await authFetch(`${BACKEND_URL}/profiles/${profileId}/`);
-
         if (!response.ok) {
-            return null;
+            throw new Error("Erro ao buscar perfil");
         }
-
         const profile = await response.json();
-
         return profile;
     } catch {
         return null;

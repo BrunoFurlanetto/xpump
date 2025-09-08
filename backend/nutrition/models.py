@@ -189,7 +189,7 @@ class MealStreak(models.Model):
         ).count()
 
         # Calculate remaining workouts needed to meet frequency
-        remaining = MealConfig.all_meals_count() - checkins_count
+        remaining = (MealConfig.all_meals_count() * 7) - checkins_count
 
         return max(remaining, 0)
 
