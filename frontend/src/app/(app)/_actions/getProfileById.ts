@@ -39,7 +39,7 @@ export const getProfileById = async (profileId: string): Promise<Profile | null>
         }
         const profile = await response.json();
         return profile;
-    } catch (error) {
+    } catch {
         return null;
     }
 }
