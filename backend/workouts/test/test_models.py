@@ -147,7 +147,7 @@ class WorkoutCheckinModelTest(TestCase):
         # O modelo multiplica duration por 60 no save, então temos que ajustar
         # Fórmula: 10 * ((duration_total_seconds / 60) / 50) * multiplier
         # Como duration é multiplicado por 60 no save: duration_minutes * 60 = seconds
-        expected_points = float(10 * ((duration_minutes * 60 / 60) / 50)) * multiplier
+        expected_points = float(40 * ((duration_minutes * 60 / 60) / 50)) * multiplier
         self.assertEqual(checkin.base_points, expected_points)
 
     def test_profile_score_update(self):

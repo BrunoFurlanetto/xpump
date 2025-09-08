@@ -90,6 +90,9 @@ class WorkoutCheckinSerializer(serializers.ModelSerializer):
         files = validated_data.pop('proof_files', [])  # Extract proof files
         checkin = WorkoutCheckin.objects.create(**validated_data)  # Create check-in
 
+        if not files:
+            raise serializers.ValidationError('At least one proof file is required.')
+
         # Create proof file records
         for f in files:
             WorkoutCheckinProof.objects.create(checkin=checkin, file=f)
