@@ -93,7 +93,7 @@ class ProfilesSerialializer(serializers.ModelSerializer):
                 'longest_streak': streak_workout.longest_streak,
                 'weekly_remaining': streak_workout.weekly_remaining,
                 'weekly_expected': streak_workout.frequency,
-                'last_workout_date': streak_workout.last_workout_datetime.astimezone()  # Convert to user's timezone
+                'last_workout_date': streak_workout.last_workout_datetime.astimezone() if streak_workout.last_workout_datetime else None  # Convert to user's timezone
             }
         else:
             # Return default values if no streak record exists
@@ -116,7 +116,7 @@ class ProfilesSerialializer(serializers.ModelSerializer):
                 'longest_streak': streak_meal.longest_streak,
                 'weekly_remaining': streak_meal.weekly_remaining,
                 'weekly_expected': meals_registered * 7,
-                'last_workout_date': streak_meal.last_meal_datetime.astimezone()  # Convert to user's timezone
+                'last_meal_date': streak_meal.last_meal_datetime.astimezone() if streak_meal.last_meal_datetime else None  # Convert to user's timezone
             }
         else:
             # Return default values if no streak record exists
