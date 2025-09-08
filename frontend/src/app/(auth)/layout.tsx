@@ -13,14 +13,6 @@ export default function LayoutAuth({ children }: { children: React.ReactNode }) 
 
           <div className="w-full max-w-sm mx-auto">
             {children}
-
-            {/* Badge de Segurança Mobile */}
-            <div className="mt-3 text-center">
-              <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                Conexão segura e privada
-              </div>
-            </div>
           </div>
 
           {/* Conteúdo Mobile */}

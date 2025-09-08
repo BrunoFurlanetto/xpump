@@ -6,7 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNavigation } from "@/context/navigationContext";
-import { Home, Dumbbell, Users, Menu, User, MessageSquare } from "lucide-react";
+import { Home, Dumbbell, Users, Menu, Utensils, MoreHorizontal } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface MobileNavbarProps {
   className?: string;
@@ -25,24 +26,19 @@ const navigationItems: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Feed",
-    href: "/feed",
-    icon: MessageSquare,
-  },
-  {
     title: "Treinos",
     href: "/workouts",
     icon: Dumbbell,
   },
   {
+    title: "Refeições",
+    href: "/meals",
+    icon: Utensils,
+  },
+  {
     title: "Grupos",
     href: "/groups",
     icon: Users,
-  },
-  {
-    title: "Perfil",
-    href: "/profile",
-    icon: User,
   },
 ];
 
@@ -64,7 +60,8 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
             <Image src="/logo/simple.png" alt="XPump Logo" width={100} height={32} className="h-8" />
           </Link>
 
-          <div className="ml-auto flex items-center space-x-4">
+          <div className="ml-auto flex items-center space-x-2">
+            <NotificationBell />
             <Button variant="ghost" size="sm" onClick={toggleMobileMenu} className="h-9 w-9 p-0">
               <Menu className="h-5 w-5 text-gray-100" />
               <span className="sr-only">Abrir menu</span>
@@ -92,6 +89,15 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
               </Link>
             );
           })}
+          
+          {/* Menu button */}
+          <button
+            onClick={toggleMobileMenu}
+            className="flex flex-col items-center justify-center space-y-1 text-xs transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+            <span className="text-xs">Mais</span>
+          </button>
         </div>
       </div>
     </>

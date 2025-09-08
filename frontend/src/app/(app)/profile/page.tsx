@@ -1,7 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Target, TrendingUp, Award, Utensils, Dumbbell } from "lucide-react";
+import {
+  Trophy,
+  Target,
+  TrendingUp,
+  Award,
+  Utensils,
+  Dumbbell,
+} from "lucide-react";
 import { getCurrentUser } from "../_actions/getCurrentUser";
 import { getProfileById } from "../_actions/getProfileById";
 import GroupListCard from "./group-list-card";
@@ -196,8 +203,6 @@ export default async function ProfilePage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Grupos */}
       <GroupListCard groups={profile.groups} />
     </div>
   );

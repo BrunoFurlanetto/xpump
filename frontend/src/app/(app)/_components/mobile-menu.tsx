@@ -7,7 +7,8 @@ import { useUserAuth } from "@/context/userAuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User } from "lucide-react";
+import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User, Utensils, Bell, Trophy } from "lucide-react";
+
 import { logout } from "@/app/(auth)/login/actions";
 
 interface NavItem {
@@ -25,10 +26,28 @@ const menuItems: NavItem[] = [
     description: "Seus treinos e exercícios",
   },
   {
+    title: "Refeições",
+    href: "/meals",
+    icon: Utensils,
+    description: "Planejamento alimentar",
+  },
+  {
     title: "Grupos",
     href: "/groups",
     icon: Users,
     description: "Conecte-se com outros atletas",
+  },
+  {
+    title: "Conquistas",
+    href: "/achievements",
+    icon: Trophy,
+    description: "Suas conquistas e progresso",
+  },
+  {
+    title: "Notificações",
+    href: "/notifications",
+    icon: Bell,
+    description: "Alertas e atualizações",
   },
   {
     title: "Estatísticas",
