@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import status, permissions
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
@@ -54,6 +55,8 @@ class MealTypesAPIView(ListCreateAPIView):
     queryset = MealConfig.objects.all()
     serializer_class = MealConfigSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['meal_name']
 
     def get_permissions(self):
         if self.request.method == 'POST':
