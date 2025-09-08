@@ -163,7 +163,7 @@ class MealStreak(models.Model):
     @property
     def weekly_remaining(self):
         if not self.last_meal_datetime:
-            return MealConfig.all_meals_count() * 7
+            return MealConfig.all_meals_count() * 7  # Now is correct
 
         # Get current date and time
         now = timezone.now()
