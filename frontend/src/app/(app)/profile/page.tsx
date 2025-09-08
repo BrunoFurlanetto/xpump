@@ -1,28 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Trophy,
-  Flame,
   Target,
-  Calendar,
-  Users,
-  Medal,
   TrendingUp,
-  Settings,
-  Bell,
   Award,
   Utensils,
   Dumbbell,
-  User,
-  Crown,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { JoinGroupModal } from "@/components/groups/join-group-modal";
-import { useState } from "react";
 import { getCurrentUser } from "../_actions/getCurrentUser";
 import { getProfileById } from "../_actions/getProfileById";
 import GroupListCard from "./group-list-card";
@@ -64,21 +50,6 @@ export default async function ProfilePage() {
   if (!user) return <div className="text-center text-muted-foreground">Usuário não encontrado</div>;
   const profile = await getProfileById(user.profile_id);
   if (!profile) return <div className="text-center text-muted-foreground">Perfil não encontrado</div>;
-  const router = useRouter();
-  const [showJoinModal, setShowJoinModal] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
-
-  // Handler for joining group
-  const handleJoinGroup = async (inviteCode: string) => {
-    console.log("Joining group with code:", inviteCode);
-    setIsJoining(true);
-    try {
-      // TODO: Call your join group API here
-      // await joinGroup(inviteCode);
-    } finally {
-      setIsJoining(false);
-    }
-  };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
