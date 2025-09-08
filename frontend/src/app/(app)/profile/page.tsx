@@ -15,42 +15,23 @@ import GroupListCard from "./group-list-card";
 import ProfileCardHeader from "./profile-card-header";
 
 // Mock data - em um app real, isso viria de uma API
-const mockUserData = {
-  // name: "João Silva",
-  // email: "joao@email.com",
-  // avatar: null, // Simulando usuário sem foto - altere para "/placeholder-avatar.jpg" para testar com foto
+const mockLevels = {
   level: 12,
-  totalPoints: 2450,
-  pointsToNextLevel: 550,
-  // currentStreak: 7,
-  // bestStreak: 21,
-  // joinDate: "2024-01-15",
-  workoutCount: 45,
-  mealCount: 132,
+  pointsForNextLevel: 550,
   achievements: [
     { id: 1, name: "Primeira Semana", description: "Complete 7 dias consecutivos", icon: "🔥", earned: true },
     { id: 2, name: "Consistência", description: "30 treinos realizados", icon: "💪", earned: true },
     { id: 3, name: "Nutri Expert", description: "50 refeições registradas", icon: "🥗", earned: true },
     { id: 4, name: "Lenda", description: "100 treinos realizados", icon: "👑", earned: false },
   ],
-  weeklyStats: {
-    workouts: 5,
-    meals: 20,
-    totalWorkouts: 7,
-    totalMeals: 28,
-  },
-  // groups: [
-  //   { id: 1, name: "Galera da Academia", members: 12, rank: 3 },
-  //   { id: 2, name: "Time Nutrição", members: 8, rank: 1 },
-  // ],
-};
+}
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) return <div className="text-center text-muted-foreground">Usuário não encontrado</div>;
   const profile = await getProfileById(user.profile_id);
   if (!profile) return <div className="text-center text-muted-foreground">Perfil não encontrado</div>;
-
+console.log(profile);
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header do Perfil */}
@@ -58,10 +39,8 @@ export default async function ProfilePage() {
         avatar={user.avatar}
         email={user.email}
         name={user.name}
-
-        level={mockUserData.level}
-
-        current_streak={profile.streak.current_streak}
+        level={mockLevels.level}
+        current_streak={profile.workout_streak.current_streak}
       />
 
       {/* Estatísticas Principais */}
@@ -84,7 +63,7 @@ export default async function ProfilePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Treinos</p>
-                <p className="text-2xl font-bold text-green-400">{mockUserData.workoutCount}</p>
+                <p className="text-2xl font-bold text-green-400">{profile.workout_streak.current_streak}</p>
               </div>
               <Dumbbell className="h-8 w-8 text-green-400" />
             </div>
@@ -96,7 +75,7 @@ export default async function ProfilePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Refeições</p>
-                <p className="text-2xl font-bold text-purple-400">{mockUserData.mealCount}</p>
+                <p className="text-2xl font-bold text-purple-400">{profile.meal_streak.current_streak}</p>
               </div>
               <Utensils className="h-8 w-8 text-purple-400" />
             </div>
@@ -115,12 +94,12 @@ export default async function ProfilePage() {
         <CardContent>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Nível {mockUserData.level}</span>
-              <span>{mockUserData.pointsToNextLevel} pontos para o próximo nível</span>
+              <span>Nível {mockLevels.level}</span>
+              <span>{mockLevels.pointsForNextLevel} pontos para o próximo nível</span>
             </div>
-            <Progress value={(mockUserData.totalPoints % 1000) / 10} max={100} className="h-3" />
+            <Progress value={(profile.score % 1000) / 10} max={100} className="h-3" />
             <p className="text-xs text-muted-foreground">
-              {mockUserData.totalPoints.toLocaleString()} / {Math.ceil(mockUserData.totalPoints / 1000) * 1000} pontos
+              {profile.score.toLocaleString()} / {Math.ceil(profile.score / 1000) * 1000} pontos
             </p>
           </div>
         </CardContent>
@@ -141,11 +120,11 @@ export default async function ProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Treinos</span>
                 <span className="text-sm text-muted-foreground">
-                  {mockUserData.weeklyStats.workouts}/{mockUserData.weeklyStats.totalWorkouts}
+                  {profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining}/{profile.workout_streak.weekly_expected}
                 </span>
               </div>
               <Progress
-                value={(mockUserData.weeklyStats.workouts / mockUserData.weeklyStats.totalWorkouts) * 100}
+                value={((profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining) / profile.workout_streak.weekly_expected) * 100}
                 className="h-2"
               />
             </div>
@@ -154,11 +133,11 @@ export default async function ProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Refeições</span>
                 <span className="text-sm text-muted-foreground">
-                  {mockUserData.weeklyStats.meals}/{mockUserData.weeklyStats.totalMeals}
+                  {profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining}/{profile.meal_streak.weekly_expected}
                 </span>
               </div>
               <Progress
-                value={(mockUserData.weeklyStats.meals / mockUserData.weeklyStats.totalMeals) * 100}
+                value={((profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining) / profile.meal_streak.weekly_expected) * 100}
                 className="h-2"
               />
             </div>
@@ -177,7 +156,7 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {mockUserData.achievements.map((achievement) => (
+            {mockLevels.achievements.map((achievement) => (
               <div
                 key={achievement.id}
                 className={`p-4 rounded-lg border ${
