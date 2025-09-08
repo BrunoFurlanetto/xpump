@@ -62,6 +62,11 @@ const navigationItems: NavItem[] = [
     icon: BarChart3,
   },
   {
+    title: "Configurações",
+    href: "/settings",
+    icon: Settings,
+  },
+  {
     title: "Atividades",
     href: "/activities",
     icon: Activity,
