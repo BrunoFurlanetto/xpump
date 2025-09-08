@@ -25,7 +25,6 @@ import {
 import { 
   MapPin, 
   MessageSquare, 
-  Clock, 
   Trophy, 
   MoreVertical,
   Edit3,
@@ -61,7 +60,7 @@ export function WorkoutCard({
       setIsUpdating(true);
       await onUpdateComments(workout.id, editedComments);
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       setEditedComments(workout.comments); // Revert on error
     } finally {
       setIsUpdating(false);

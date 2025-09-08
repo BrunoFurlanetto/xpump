@@ -19,7 +19,6 @@ import {
   Activity,
   Dumbbell,
   Utensils,
-  Users
 } from "lucide-react";
 
 interface StatCard {
@@ -226,7 +225,7 @@ export default function StatsPage() {
               </div>
               
               <div className="grid grid-cols-6 gap-2 h-48">
-                {monthlyData.map((data, index) => {
+                {monthlyData.map((data) => {
                   const maxWorkouts = Math.max(...monthlyData.map(d => d.workouts));
                   const maxMeals = Math.max(...monthlyData.map(d => d.meals));
                   const maxPoints = Math.max(...monthlyData.map(d => d.points));

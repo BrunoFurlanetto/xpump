@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -75,7 +74,7 @@ export function GroupDetails({ group, onBack }: GroupDetailsProps) {
     try {
       await navigator.clipboard.writeText(group.invite_code);
       toast.success('Código de convite copiado!');
-    } catch (error) {
+    } catch  {
       toast.error('Erro ao copiar código');
     }
   };
@@ -90,7 +89,7 @@ export function GroupDetails({ group, onBack }: GroupDetailsProps) {
           text: shareText,
           url: window.location.origin,
         });
-      } catch (error) {
+      } catch  {
         // Fallback para clipboard se share não funcionar
         await navigator.clipboard.writeText(shareText);
         toast.success('Link de convite copiado!');

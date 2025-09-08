@@ -64,6 +64,7 @@ export default function ProfilePage() {
 
   // Handler for joining group
   const handleJoinGroup = async (inviteCode: string) => {
+    console.log("Joining group with code:", inviteCode);
     setIsJoining(true);
     try {
       // TODO: Call your join group API here

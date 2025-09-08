@@ -7,9 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { 
-  Settings,
   Bell,
   Dumbbell,
   Utensils,
@@ -24,12 +22,6 @@ import {
   Moon,
   Sun,
   Globe,
-  Volume2,
-  VolumeX,
-  Zap,
-  Droplets,
-  User,
-  Users
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -226,7 +218,7 @@ export default function SettingsPage() {
                   value={settings.workout.preferredTime}
                   onChange={(e) =>
                     updateSettings({ 
-                      workout: { ...settings.workout, preferredTime: e.target.value as any }
+                      workout: { ...settings.workout, preferredTime: e.target.value as 'morning' | 'afternoon' | 'evening' | 'any' }
                     })
                   }
                   className="w-full p-2 border rounded-md bg-background"
@@ -244,7 +236,7 @@ export default function SettingsPage() {
                   value={settings.workout.intensityLevel}
                   onChange={(e) =>
                     updateSettings({ 
-                      workout: { ...settings.workout, intensityLevel: e.target.value as any }
+                      workout: { ...settings.workout, intensityLevel: e.target.value as 'beginner' | 'intermediate' | 'advanced' }
                     })
                   }
                   className="w-full p-2 border rounded-md bg-background"
@@ -312,7 +304,7 @@ export default function SettingsPage() {
                   value={settings.interface.theme}
                   onChange={(e) =>
                     updateSettings({ 
-                      interface: { ...settings.interface, theme: e.target.value as any }
+                      interface: { ...settings.interface, theme: e.target.value as 'dark' | 'light' | 'system' }
                     })
                   }
                   className="w-full p-2 border rounded-md bg-background"
@@ -332,7 +324,7 @@ export default function SettingsPage() {
                   value={settings.interface.language}
                   onChange={(e) =>
                     updateSettings({ 
-                      interface: { ...settings.interface, language: e.target.value as any }
+                      interface: { ...settings.interface, language: e.target.value as 'pt' | 'en' | 'es' }
                     })
                   }
                   className="w-full p-2 border rounded-md bg-background"

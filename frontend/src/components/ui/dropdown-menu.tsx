@@ -41,7 +41,7 @@ export function DropdownMenuTrigger({ asChild, children }: DropdownMenuTriggerPr
   };
 
   if (asChild) {
-    return React.cloneElement(children as React.ReactElement<any>, {
+    return React.cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, {
       onClick: (e: React.MouseEvent) => {
         handleClick();
         // Preservar o onClick original se existir

@@ -8,14 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Dumbbell, 
   Plus, 
-  Trophy, 
-  Flame, 
   Calendar,
-  Clock,
   Target,
-  TrendingUp,
-  MapPin,
-  MessageSquare
 } from 'lucide-react';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { WorkoutCheckinModal } from '@/components/workouts/workout-checkin-modal';

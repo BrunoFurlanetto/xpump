@@ -22,7 +22,6 @@ import {
   ChevronRight,
   Star,
   Award,
-  Clock
 } from "lucide-react";
 import Link from "next/link";
 
@@ -295,7 +294,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {weeklyActivity.map((day, index) => (
+              {weeklyActivity.map((day) => (
                 <div key={day.day} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                   <div className="flex items-center gap-3">
                     <div className="w-8 text-center">

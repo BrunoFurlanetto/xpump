@@ -39,7 +39,6 @@ interface MealCardProps {
   mealType: MealType;
   onUpdateComments: (id: number, comments: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
-  formatDate: (date: string) => string;
 }
 
 export function MealCard({ 
@@ -47,7 +46,6 @@ export function MealCard({
   mealType,
   onUpdateComments, 
   onDelete, 
-  formatDate 
 }: MealCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedComments, setEditedComments] = useState(meal.comments);
@@ -60,7 +58,7 @@ export function MealCard({
       setIsUpdating(true);
       await onUpdateComments(meal.id, editedComments);
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       setEditedComments(meal.comments); // Revert on error
     } finally {
       setIsUpdating(false);

@@ -5,19 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Trophy, 
   Utensils, 
-  Calendar,
   TrendingUp,
   Flame,
   Target
 } from 'lucide-react';
-import { MealStats as MealStatsType, MealType } from '@/hooks/useMeals';
+import { MealStats as MealStatsType } from '@/hooks/useMeals';
 
 interface MealStatsProps {
   stats: MealStatsType;
-  mealTypes: MealType[];
 }
 
-export function MealStats({ stats, mealTypes }: MealStatsProps) {
+export function MealStats({ stats }: MealStatsProps) {
   const getCompletionColor = (rate: number) => {
     if (rate >= 80) return 'text-green-400';
     if (rate >= 60) return 'text-yellow-400';
@@ -32,10 +30,10 @@ export function MealStats({ stats, mealTypes }: MealStatsProps) {
     return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
 
-  const getFavoriteMealType = () => {
-    const favoriteType = mealTypes.find(type => type.id === stats.favorite_meal_type);
-    return favoriteType ? `${favoriteType.icon} ${favoriteType.name}` : 'N/A';
-  };
+  // const getFavoriteMealType = () => {
+  //   const favoriteType = mealTypes.find(type => type.id === stats.favorite_meal_type);
+  //   return favoriteType ? `${favoriteType.icon} ${favoriteType.name}` : 'N/A';
+  // };
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

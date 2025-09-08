@@ -1,14 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Trophy, 
   Flame, 
-  Calendar,
   Clock,
-  Target,
-  TrendingUp,
   Dumbbell
 } from 'lucide-react';
 import { WorkoutStats as WorkoutStatsType, WorkoutStreak } from '@/hooks/useWorkouts';
@@ -18,7 +15,7 @@ interface WorkoutStatsProps {
   streak: WorkoutStreak | null;
 }
 
-export function WorkoutStats({ stats, streak }: WorkoutStatsProps) {
+export function WorkoutStats({ stats }: WorkoutStatsProps) {
   const getStreakBadgeColor = (currentStreak: number) => {
     if (currentStreak >= 10) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
     if (currentStreak >= 5) return 'bg-orange-500/20 text-orange-400 border-orange-500/30';

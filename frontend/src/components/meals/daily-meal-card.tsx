@@ -1,18 +1,11 @@
 "use client";
 
-import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
   Plus, 
-  Clock, 
-  MessageSquare,
-  MoreVertical,
-  Edit3,
-  Trash2
 } from 'lucide-react';
-import { DailyMeals, MealType, MealLog } from '@/hooks/useMeals';
+import { DailyMeals, MealType } from '@/hooks/useMeals';
 import { MealCard } from './meal-card';
 
 interface DailyMealCardProps {
@@ -21,7 +14,6 @@ interface DailyMealCardProps {
   onAddMeal: () => void;
   onUpdateMeal: (id: number, comments: string) => Promise<void>;
   onDeleteMeal: (id: number) => Promise<void>;
-  formatDate: (date: string) => string;
 }
 
 export function DailyMealCard({ 
@@ -29,8 +21,7 @@ export function DailyMealCard({
   mealTypes, 
   onAddMeal, 
   onUpdateMeal, 
-  onDeleteMeal, 
-  formatDate 
+  onDeleteMeal
 }: DailyMealCardProps) {
   
   const getMealTypeInfo = (mealTypeId: string) => {
@@ -51,7 +42,6 @@ export function DailyMealCard({
           mealType={mealTypeInfo}
           onUpdateComments={onUpdateMeal}
           onDelete={onDeleteMeal}
-          formatDate={formatDate}
         />
       );
     }

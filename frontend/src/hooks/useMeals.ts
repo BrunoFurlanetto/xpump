@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 export interface MealType {
@@ -104,7 +104,7 @@ export function useMeals(): UseMealsReturn {
 
   const mealTypes = DEFAULT_MEAL_TYPES;
 
-  const fetchMeals = async () => {
+  const fetchMeals = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -175,7 +175,7 @@ export function useMeals(): UseMealsReturn {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const groupMealsByDay = (mealsList: MealLog[]): DailyMeals[] => {
     const grouped: { [key: string]: DailyMeals } = {};
@@ -298,7 +298,7 @@ export function useMeals(): UseMealsReturn {
 
   useEffect(() => {
     fetchMeals();
-  }, []);
+  }, [fetchMeals]);
 
   return {
     meals,

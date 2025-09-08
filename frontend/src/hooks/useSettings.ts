@@ -152,7 +152,7 @@ export const useSettings = () => {
           updated[key as keyof UserSettings] = {
             ...prev[key as keyof UserSettings],
             ...newSettings[key as keyof UserSettings]
-          } as any;
+          } as never;
         }
       });
 
@@ -204,7 +204,7 @@ export const useSettings = () => {
           setSettings({ ...defaultSettings, ...imported });
           setHasChanges(true);
           resolve(true);
-        } catch (error) {
+        } catch {
           reject(new Error('Arquivo de configurações inválido'));
         }
       };

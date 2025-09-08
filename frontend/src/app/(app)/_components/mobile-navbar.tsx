@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNavigation } from "@/context/navigationContext";
-import { Home, Dumbbell, Users, Menu, User, MessageSquare, Utensils, MoreHorizontal } from "lucide-react";
+import { Home, Dumbbell, Users, Menu, Utensils, MoreHorizontal } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface MobileNavbarProps {

@@ -62,7 +62,7 @@ export function GroupCard({
     try {
       await navigator.clipboard.writeText(group.invite_code);
       toast.success('Código de convite copiado!');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao copiar código');
     }
   };
@@ -74,7 +74,7 @@ export function GroupCard({
     try {
       await onLeaveGroup(group.id);
       toast.success('Você saiu do grupo');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao sair do grupo');
     } finally {
       setIsLeaving(false);

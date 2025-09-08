@@ -37,7 +37,7 @@ export default function NotificationsPage() {
     return date.toLocaleDateString('pt-BR');
   };
 
-  const getNotificationIcon = (type: string, icon: string) => {
+  const getNotificationIcon = (type: string) => {
     const iconMap = {
       achievement: Trophy,
       streak: Flame,
@@ -221,7 +221,7 @@ export default function NotificationsPage() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {notifications.map((notification, index) => (
+              {notifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-muted/50 transition-colors ${
@@ -231,7 +231,7 @@ export default function NotificationsPage() {
                   <div className="flex items-start gap-3">
                     {/* Icon */}
                     <div className={`p-2 rounded-full ${getPriorityColor(notification.priority)}`}>
-                      {getNotificationIcon(notification.type, notification.icon)}
+                      {getNotificationIcon(notification.type)}
                     </div>
 
                     {/* Content */}

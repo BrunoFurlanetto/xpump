@@ -12,19 +12,14 @@ import {
   Trophy, 
   Calendar,
   Target,
-  TrendingUp,
-  Clock,
-  Flame
 } from 'lucide-react';
 import { useMeals } from '@/hooks/useMeals';
 import { MealLogModal } from '@/components/meals/meal-log-modal';
 import { MealStats } from '@/components/meals/meal-stats';
 import { DailyMealCard } from '@/components/meals/daily-meal-card';
-import { MealCard } from '@/components/meals/meal-card';
 
 export default function MealsPage() {
   const { 
-    meals, 
     dailyMeals,
     stats, 
     mealTypes,
@@ -36,16 +31,6 @@ export default function MealsPage() {
   } = useMeals();
   
   const [showLogModal, setShowLogModal] = useState(false);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   const formatDateTitle = (dateString: string) => {
     const date = new Date(dateString);
@@ -119,7 +104,7 @@ export default function MealsPage() {
       </div>
 
       {/* Estatísticas */}
-      {stats && <MealStats stats={stats} mealTypes={mealTypes} />}
+      {stats && <MealStats stats={stats} />}
 
       {/* Progresso Diário */}
       {stats && (
@@ -214,7 +199,6 @@ export default function MealsPage() {
                     onAddMeal={() => setShowLogModal(true)}
                     onUpdateMeal={updateMeal}
                     onDeleteMeal={deleteMeal}
-                    formatDate={formatDate}
                   />
                 </div>
               ))}

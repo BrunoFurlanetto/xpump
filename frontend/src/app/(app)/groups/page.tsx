@@ -8,7 +8,6 @@ import {
   Users, 
   Plus, 
   UserPlus, 
-  Search, 
   Crown,
   Trophy,
   Target,

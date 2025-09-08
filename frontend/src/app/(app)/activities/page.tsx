@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useActivityTimeline } from '@/hooks/useActivityTimeline';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -32,7 +32,6 @@ export default function ActivitiesPage() {
     stats,
     getRelativeTime,
     getActivityIcon,
-    getActivityColor,
     deleteActivity,
     clearOldActivities
   } = useActivityTimeline();
@@ -156,7 +155,7 @@ export default function ActivitiesPage() {
                     key={option.value}
                     variant={filter === option.value ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setFilter(option.value as any)}
+                    onClick={() => setFilter(option.value as 'all' | 'workout' | 'meal' | 'achievement' | 'group' | 'social')}
                     className="gap-2"
                   >
                     <IconComponent className="h-4 w-4" />
