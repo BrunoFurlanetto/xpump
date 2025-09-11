@@ -115,6 +115,7 @@
 
 body {
   letter-spacing: var(--tracking-normal);
+  background-color: var(--color-background);
 }
 
 /* Corrige o fundo branco do autocompletar */

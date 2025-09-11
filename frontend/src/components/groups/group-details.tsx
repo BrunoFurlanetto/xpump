@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Trophy, 
   Medal, 
@@ -17,9 +18,11 @@ import {
   Target,
   ArrowLeft,
   Copy,
-  Share2
+  Share2,
+  UserCog
 } from 'lucide-react';
 import { Group } from '@/hooks/useGroups';
+import { GroupMembersManager } from './group-members-manager';
 import { toast } from 'sonner';
 
 interface GroupDetailsProps {
@@ -68,6 +71,15 @@ const mockRankingData = [
 ];
 
 export function GroupDetails({ group, onBack }: GroupDetailsProps) {
+  const [activeTab, setActiveTab] = useState('ranking');
+  
+  // Simular usuário atual (em um app real, viria do contexto de auth)
+  const currentUserId = 1;
+  const currentUserMember = group.members.find(m => m.id === currentUserId);
+  const currentUserRole = group.owner === currentUserId ? 'owner' : 
+                         currentUserMember?.is_admin ? 'admin' : 'member';
+
+  const canManageMembers = currentUserRole === 'owner' || currentUserRole === 'admin';
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'all'>('week');
 
   const handleCopyInviteCode = async () => {
@@ -213,30 +225,46 @@ export function GroupDetails({ group, onBack }: GroupDetailsProps) {
         </Card>
       </div>
 
-      {/* Controles de Período */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-primary" />
-              <CardTitle className="text-foreground">Ranking do Grupo</CardTitle>
-            </div>
-            
-            <div className="flex gap-1 flex-wrap">
-              {(Object.keys(periodLabels) as Array<keyof typeof periodLabels>).map((period) => (
-                <Button
-                  key={period}
-                  onClick={() => setSelectedPeriod(period)}
-                  variant={selectedPeriod === period ? "default" : "outline"}
-                  size="sm"
-                  className={selectedPeriod === period ? 'bg-primary text-primary-foreground' : 'border-border text-foreground hover:bg-muted'}
-                >
-                  {periodLabels[period]}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardHeader>
+      {/* Conteúdo Principal com Abas */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="ranking" className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" />
+            Ranking
+          </TabsTrigger>
+          {canManageMembers && (
+            <TabsTrigger value="members" className="flex items-center gap-2">
+              <UserCog className="h-4 w-4" />
+              Gerenciar Membros
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="ranking" className="space-y-4">
+          {/* Controles de Período */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-foreground">Ranking do Grupo</CardTitle>
+                </div>
+                
+                <div className="flex gap-1 flex-wrap">
+                  {(Object.keys(periodLabels) as Array<keyof typeof periodLabels>).map((period) => (
+                    <Button
+                      key={period}
+                      onClick={() => setSelectedPeriod(period)}
+                      variant={selectedPeriod === period ? "default" : "outline"}
+                      size="sm"
+                      className={selectedPeriod === period ? 'bg-primary text-primary-foreground' : 'border-border text-foreground hover:bg-muted'}
+                    >
+                      {periodLabels[period]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </CardHeader>
       </Card>
 
       {/* Ranking */}
@@ -403,6 +431,24 @@ export function GroupDetails({ group, onBack }: GroupDetailsProps) {
           </Card>
         </div>
       </div>
+      </TabsContent>
+
+      {/* Aba de Gerenciamento de Membros */}
+      {canManageMembers && (
+        <TabsContent value="members">
+          <GroupMembersManager
+            groupId={group.id}
+            members={group.members}
+            currentUserId={currentUserId}
+            currentUserRole={currentUserRole}
+            onMemberUpdate={() => {
+              // Em uma aplicação real, isso faria refresh dos dados
+              console.log('Member updated, refreshing data...');
+            }}
+          />
+        </TabsContent>
+      )}
+      </Tabs>
     </div>
   );
 }
