@@ -134,7 +134,7 @@ export default function NotificationsPage() {
             asChild
             className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
           >
-            <Link href="/settings/notifications">
+            <Link href="/settings">
               <Settings className="h-4 w-4 mr-2" />
               Configurações
             </Link>
