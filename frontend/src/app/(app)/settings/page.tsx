@@ -12,7 +12,6 @@ import {
   Dumbbell,
   Utensils,
   Palette,
-  Shield,
   Target,
   Save,
   RotateCcw,
@@ -24,6 +23,7 @@ import {
   Globe,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { 
@@ -83,8 +83,6 @@ export default function SettingsPage() {
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'workout', label: 'Treinos', icon: Dumbbell },
     { id: 'nutrition', label: 'Nutrição', icon: Utensils },
-    { id: 'interface', label: 'Interface', icon: Palette },
-    { id: 'privacy', label: 'Privacidade', icon: Shield },
     { id: 'goals', label: 'Metas', icon: Target },
   ];
 
@@ -133,7 +131,9 @@ export default function SettingsPage() {
               variant={activeSection === section.id ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveSection(section.id)}
-              className="gap-2"
+              className={cn("gap-2", 
+                activeSection !== section.id && "text-muted-foreground"
+              )}
             >
               <IconComponent className="h-4 w-4" />
               {section.label}
@@ -284,92 +284,6 @@ export default function SettingsPage() {
         </Card>
       )}
 
-      {/* Interface */}
-      {activeSection === 'interface' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-primary" />
-              Configurações de Interface
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  {settings.interface.theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                  Tema
-                </Label>
-                <select
-                  value={settings.interface.theme}
-                  onChange={(e) =>
-                    updateSettings({ 
-                      interface: { ...settings.interface, theme: e.target.value as 'dark' | 'light' | 'system' }
-                    })
-                  }
-                  className="w-full p-2 border rounded-md bg-background"
-                >
-                  <option value="dark">Escuro</option>
-                  <option value="light">Claro</option>
-                  <option value="system">Sistema</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
-                  Idioma
-                </Label>
-                <select
-                  value={settings.interface.language}
-                  onChange={(e) =>
-                    updateSettings({ 
-                      interface: { ...settings.interface, language: e.target.value as 'pt' | 'en' | 'es' }
-                    })
-                  }
-                  className="w-full p-2 border rounded-md bg-background"
-                >
-                  <option value="pt">Português</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                </select>
-              </div>
-
-              {Object.entries({
-                compactMode: 'Modo Compacto',
-                animations: 'Animações',
-                sounds: 'Sons'
-              }).map(([key, label]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium">{label}</Label>
-                    <p className="text-xs text-muted-foreground">
-                      {key === 'compactMode' && 'Interface mais densa com menos espaçamentos'}
-                      {key === 'animations' && 'Animações e transições visuais'}
-                      {key === 'sounds' && 'Sons de notificação e feedback'}
-                    </p>
-                  </div>
-                  <Button
-                    variant={settings.interface[key as keyof typeof settings.interface] ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => 
-                      updateSettings({ 
-                        interface: { 
-                          ...settings.interface, 
-                          [key]: !settings.interface[key as keyof typeof settings.interface] 
-                        }
-                      })
-                    }
-                  >
-                    {settings.interface[key as keyof typeof settings.interface] ? 'Ativado' : 'Desativado'}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Metas */}
       {activeSection === 'goals' && (
         <Card>
@@ -473,61 +387,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Ações de configuração */}
-      <Card className="bg-muted/50">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-medium text-foreground">Gerenciar Configurações</h3>
-              <p className="text-sm text-muted-foreground">
-                Exporte, importe ou redefina suas configurações
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportSettings}
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Exportar
-              </Button>
-              
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => document.getElementById('import-settings')?.click()}
-                >
-                  <Upload className="h-4 w-4" />
-                  Importar
-                </Button>
-                <input
-                  id="import-settings"
-                  type="file"
-                  accept=".json"
-                  onChange={handleImport}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                />
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleReset}
-                className="gap-2 text-destructive hover:text-destructive"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Resetar
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
