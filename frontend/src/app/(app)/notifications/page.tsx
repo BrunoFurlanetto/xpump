@@ -110,6 +110,7 @@ export default function NotificationsPage() {
             Acompanhe suas conquistas, lembretes e atualizações
           </p>
         </div>
+      </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           {unreadCount > 0 && (
@@ -140,7 +141,6 @@ export default function NotificationsPage() {
             </Link>
           </Button>
         </div>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

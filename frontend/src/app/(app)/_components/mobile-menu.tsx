@@ -7,7 +7,7 @@ import { useUserAuth } from "@/context/userAuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User, Utensils, Bell, Trophy, MessageSquare } from "lucide-react";
+import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User, Utensils,  Trophy, MessageSquare } from "lucide-react";
 
 import { logout } from "@/app/(auth)/login/actions";
 

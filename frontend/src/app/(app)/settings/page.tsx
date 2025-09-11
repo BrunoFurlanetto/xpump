@@ -11,16 +11,9 @@ import {
   Bell,
   Dumbbell,
   Utensils,
-  Palette,
   Target,
   Save,
-  RotateCcw,
-  Download,
-  Upload,
   AlertTriangle,
-  Moon,
-  Sun,
-  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from '@/lib/utils';
@@ -32,9 +25,6 @@ export default function SettingsPage() {
     hasChanges, 
     updateSettings, 
     saveSettings, 
-    resetSettings,
-    exportSettings,
-    importSettings 
   } = useSettings();
   
   const [isSaving, setIsSaving] = useState(false);
@@ -53,23 +43,6 @@ export default function SettingsPage() {
     setIsSaving(false);
   };
 
-  const handleReset = () => {
-    resetSettings();
-    toast.info("Configurações resetadas para o padrão");
-  };
-
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    importSettings(file)
-      .then(() => {
-        toast.success("Configurações importadas com sucesso!");
-      })
-      .catch((error) => {
-        toast.error(error.message);
-      });
-  };
 
   if (isLoading) {
     return (
