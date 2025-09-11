@@ -7,7 +7,7 @@ import { useUserAuth } from "@/context/userAuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User, Utensils, Bell, Trophy } from "lucide-react";
+import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User, Utensils, Bell, Trophy, MessageSquare } from "lucide-react";
 
 import { logout } from "@/app/(auth)/login/actions";
 
@@ -32,6 +32,12 @@ const menuItems: NavItem[] = [
     description: "Planejamento alimentar",
   },
   {
+    title: "Feed",
+    href: "/feed",
+    icon: MessageSquare,
+    description: "Atualizações e novidades",
+  },
+  {
     title: "Grupos",
     href: "/groups",
     icon: Users,
@@ -43,12 +49,7 @@ const menuItems: NavItem[] = [
     icon: Trophy,
     description: "Suas conquistas e progresso",
   },
-  {
-    title: "Notificações",
-    href: "/notifications",
-    icon: Bell,
-    description: "Alertas e atualizações",
-  },
+  
   {
     title: "Estatísticas",
     href: "/stats",

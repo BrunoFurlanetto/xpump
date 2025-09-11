@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNavigation } from "@/context/navigationContext";
-import { Home, Dumbbell, Users, Menu, Utensils, MoreHorizontal } from "lucide-react";
+import { Home, Dumbbell, Menu, Utensils, MoreHorizontal, MessageSquare } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface MobileNavbarProps {
@@ -36,9 +36,9 @@ const navigationItems: NavItem[] = [
     icon: Utensils,
   },
   {
-    title: "Grupos",
-    href: "/groups",
-    icon: Users,
+    title: "Feed",
+    href: "/feed",
+    icon: MessageSquare,
   },
 ];
 

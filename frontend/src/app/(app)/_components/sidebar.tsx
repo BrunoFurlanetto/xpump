@@ -52,11 +52,6 @@ const navigationItems: NavItem[] = [
     icon: Trophy,
   },
   {
-    title: "Notificações",
-    href: "/notifications",
-    icon: Bell,
-  },
-  {
     title: "Estatísticas",
     href: "/stats",
     icon: BarChart3,
