@@ -18,8 +18,6 @@ class IsMember(BasePermission):
         if not Group.objects.filter(pk=group_id).exists():
             raise NotFound("Group does not exist.")
 
-        if not group_id:
-            return False
         try:
             membership = GroupMembers.objects.get(group_id=group_id, member_id=request.user.id)
         except GroupMembers.DoesNotExist:

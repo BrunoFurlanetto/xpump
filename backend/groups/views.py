@@ -147,7 +147,7 @@ class InviteGroupAPIView(APIView):
         if member_exists.exists() and member_exists.first().pending:
             return Response({"detail": "User already invited to this group"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if member_exists:
+        if member_exists.exists():
             return Response({"detail": "User already a member of this group"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
