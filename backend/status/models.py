@@ -6,7 +6,7 @@ import importlib
 class TargetApp(models.TextChoices):
     WORKOUT = 'WORKOUT', 'Check-ins de treino'
     NUTRITION = 'NUTRITION', 'Posts de refeições'
-    # COMMENT = 'COMMENT', 'Comentários'
+    COMMENT = 'COMMENT', 'Comentários'
 
 
 class StatusAction(models.TextChoices):
