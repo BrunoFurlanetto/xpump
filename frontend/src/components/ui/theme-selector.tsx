@@ -34,7 +34,7 @@ export function ThemeSelector() {
       <label className="text-sm font-medium text-foreground">
         Tema da Interface
       </label>
-      <Select value={theme} onValueChange={(value) => setTheme(value as any)}>
+      <Select value={theme} onValueChange={(value) => setTheme(value as "system" | "light" | "dark")}>
         <SelectTrigger className="w-full">
           <SelectValue>
             <div className="flex items-center gap-2">

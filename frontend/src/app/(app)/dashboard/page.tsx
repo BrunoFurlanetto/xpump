@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useWorkouts } from '@/hooks/useWorkouts';
-import { useMeals } from '@/hooks/useMeals';
+import { CreateWorkoutData, useWorkouts } from '@/hooks/useWorkouts';
+import { CreateMealData, useMeals } from '@/hooks/useMeals';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -160,7 +160,7 @@ export default function DashboardPage() {
   const recentAchievements = unlockedAchievements.slice(0, 3);
 
   // Funções para lidar com os modais
-  const handleWorkoutSubmit = async (data: any) => {
+  const handleWorkoutSubmit = async (data: CreateWorkoutData) => {
     try {
       await createWorkout(data);
       setIsWorkoutModalOpen(false);
@@ -169,7 +169,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleMealSubmit = async (data: any) => {
+  const handleMealSubmit = async (data: CreateMealData) => {
     try {
       await createMeal(data);
       setIsMealModalOpen(false);

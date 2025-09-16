@@ -9,9 +9,6 @@ import {
   Plus, 
   UserPlus, 
   Crown,
-  Trophy,
-  Target,
-  Star,
   TrendingUp,
   Loader2
 } from 'lucide-react';
