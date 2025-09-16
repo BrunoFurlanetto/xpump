@@ -25,6 +25,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
+import { WorkoutCheckinModal } from "@/components/workouts/workout-checkin-modal";
+import { MealLogModal } from "@/components/meals/meal-log-modal";
 
 interface DashboardStats {
   totalPoints: number;
@@ -46,6 +48,15 @@ interface WeeklyActivity {
 interface QuickAction {
   title: string;
   description: string;
+  action: () => void;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+}
+
+interface NavigationAction {
+  title: string;
+  description: string;
   href: string;
   icon: React.ElementType;
   color: string;
@@ -53,9 +64,13 @@ interface QuickAction {
 }
 
 export default function DashboardPage() {
-  const { stats: workoutStats, streak: workoutStreak } = useWorkouts();
-  const { stats: mealStats } = useMeals();
+  const { stats: workoutStats, streak: workoutStreak, createWorkout } = useWorkouts();
+  const { stats: mealStats, createMeal, mealTypes } = useMeals();
   const { unreadCount, achievements } = useNotifications();
+  
+  // Estados para controlar os modais
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [isMealModalOpen, setIsMealModalOpen] = useState(false);
   
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalPoints: 0,
@@ -74,7 +89,7 @@ export default function DashboardPage() {
     {
       title: "Registrar Treino",
       description: "Faça check-in do seu treino",
-      href: "/workouts",
+      action: () => setIsWorkoutModalOpen(true),
       icon: Dumbbell,
       color: "text-blue-400",
       bgColor: "bg-blue-500/10 border-blue-500/20"
@@ -82,14 +97,14 @@ export default function DashboardPage() {
     {
       title: "Adicionar Refeição", 
       description: "Registre sua alimentação",
-      href: "/meals",
+      action: () => setIsMealModalOpen(true),
       icon: Utensils,
       color: "text-green-400",
       bgColor: "bg-green-500/10 border-green-500/20"
     },
   ];
 
-  const smallQuickActions: QuickAction[] = [
+  const smallQuickActions: NavigationAction[] = [
     {
       title: "Ver Grupos",
       description: "Conecte-se com amigos",
@@ -144,6 +159,25 @@ export default function DashboardPage() {
   const unlockedAchievements = achievements.filter(a => a.isUnlocked);
   const recentAchievements = unlockedAchievements.slice(0, 3);
 
+  // Funções para lidar com os modais
+  const handleWorkoutSubmit = async (data: any) => {
+    try {
+      await createWorkout(data);
+      setIsWorkoutModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao criar treino:', error);
+    }
+  };
+
+  const handleMealSubmit = async (data: any) => {
+    try {
+      await createMeal(data);
+      setIsMealModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao criar refeição:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header com boas-vindas */}
@@ -181,18 +215,20 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1  gap-3">
-            {quickActions.map((action) => {
+            {quickActions.map((action, index) => {
               const IconComponent = action.icon;
               return (
-                <Link key={action.href} href={action.href}>
-                  <Card className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}>
-                    <CardContent className="p-4 text-center">
-                      <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
-                      <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
-                      <p className="text-xs text-muted-foreground">{action.description}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <Card 
+                  key={index}
+                  className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}
+                  onClick={action.action}
+                >
+                  <CardContent className="p-4 text-center">
+                    <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
+                    <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
+                    <p className="text-xs text-muted-foreground">{action.description}</p>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
@@ -393,6 +429,19 @@ export default function DashboardPage() {
       </div>
      </details>
 
+      {/* Modais */}
+      <WorkoutCheckinModal
+        isOpen={isWorkoutModalOpen}
+        onClose={() => setIsWorkoutModalOpen(false)}
+        onSubmit={handleWorkoutSubmit}
+      />
+      
+      <MealLogModal
+        isOpen={isMealModalOpen}
+        onClose={() => setIsMealModalOpen(false)}
+        onSubmit={handleMealSubmit}
+        mealTypes={mealTypes}
+      />
     
     </div>
   );
