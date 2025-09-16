@@ -10,6 +10,6 @@ export default async function Home() {
     redirect("/login");
   }
 
-  // Se tem sessão válida, redirecionar para profile
-  redirect("/profile");
+  // Se tem sessão válida, redirecionar para dashboard
+  redirect("/dashboard");
 }
