@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Star,
   Award,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -86,6 +87,9 @@ export default function DashboardPage() {
       color: "text-green-400",
       bgColor: "bg-green-500/10 border-green-500/20"
     },
+  ];
+
+  const smallQuickActions: QuickAction[] = [
     {
       title: "Ver Grupos",
       description: "Conecte-se com amigos",
@@ -166,6 +170,50 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+       {/* Ações rápidas */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            Ações Rápidas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1  gap-3">
+            {quickActions.map((action) => {
+              const IconComponent = action.icon;
+              return (
+                <Link key={action.href} href={action.href}>
+                  <Card className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}>
+                    <CardContent className="p-4 text-center">
+                      <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
+                      <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
+                      <p className="text-xs text-muted-foreground">{action.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-2  gap-3 pt-3">
+            {smallQuickActions.map((action) => {
+              const IconComponent = action.icon;
+              return (
+                <Link key={action.href} href={action.href}>
+                  <Card className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}>
+                    <CardContent className="p-4 text-center">
+                      <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
+                      <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
+                      <p className="text-xs text-muted-foreground">{action.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Cards principais de estatísticas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -255,35 +303,15 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Ações rápidas */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Ações Rápidas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {quickActions.map((action) => {
-              const IconComponent = action.icon;
-              return (
-                <Link key={action.href} href={action.href}>
-                  <Card className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}>
-                    <CardContent className="p-4 text-center">
-                      <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
-                      <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
-                      <p className="text-xs text-muted-foreground">{action.description}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+     
 
-      <div className="grid gap-6 lg:grid-cols-2">
+     <details>
+     <Button variant="ghost" size="sm" asChild> 
+           <summary className="text-white mx-2 my-4"> 
+                Ver mais <ChevronDown className="h-4 w-4 ml-1" />
+            </summary>
+            </Button>
+       <div className="grid gap-6 lg:grid-cols-2">
         {/* Atividade semanal */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -325,7 +353,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Conquistas recentes */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border mb-5">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-foreground flex items-center gap-2">
               <Award className="h-5 w-5 text-primary" />
@@ -363,31 +391,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+     </details>
 
-      {/* Call to action motivacional */}
-      <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
-        <CardContent className="p-6 text-center">
-          <Flame className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-foreground mb-2">Continue Assim! 🔥</h3>
-          <p className="text-muted-foreground mb-4">
-            Você está com {dashboardStats.currentStreak} dias consecutivos! Que tal registrar um treino hoje?
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Link href="/workouts">
-                <Dumbbell className="h-4 w-4 mr-2" />
-                Registrar Treino
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="border-primary/20 text-primary hover:bg-primary/10">
-              <Link href="/meals">
-                <Utensils className="h-4 w-4 mr-2" />
-                Adicionar Refeição
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    
     </div>
   );
 }
