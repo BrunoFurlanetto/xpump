@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Loader2, 
   Dumbbell, 
@@ -13,7 +14,8 @@ import {
   MessageSquare,
   Camera,
   Upload,
-  X
+  X,
+  Share2
 } from 'lucide-react';
 import { CreateWorkoutData } from '@/hooks/useWorkouts';
 
@@ -40,6 +42,7 @@ export function WorkoutCheckinModal({
   });
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [shareToFeed, setShareToFeed] = useState(true); // Padrão: compartilhar
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +85,8 @@ export function WorkoutCheckinModal({
         comments: formData.comments,
         workout_date: formData.workout_date,
         duration,
-        proof_image: proofImage || undefined
+        proof_image: proofImage || undefined,
+        share_to_feed: shareToFeed
       };
 
       await onSubmit(submitData);
@@ -103,6 +107,7 @@ export function WorkoutCheckinModal({
     });
     setProofImage(null);
     setImagePreview(null);
+    setShareToFeed(true); // Reset para padrão
     setErrors({});
     onClose();
   };
@@ -303,6 +308,24 @@ export function WorkoutCheckinModal({
                 className="pl-10 min-h-[80px] bg-background border-border text-foreground placeholder:text-muted-foreground"
                 disabled={isLoading}
               />
+            </div>
+          </div>
+
+          {/* Compartilhar no feed */}
+          <div className="flex items-center space-x-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <Checkbox
+              id="shareToFeed"
+              checked={shareToFeed}
+              onCheckedChange={(checked) => setShareToFeed(checked === true)}
+            />
+            <div className="flex-1">
+              <label htmlFor="shareToFeed" className="text-sm font-medium text-foreground cursor-pointer flex items-center gap-2">
+                <Share2 className="h-4 w-4 text-primary" />
+                Compartilhar no feed
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Mostre seu treino, motive outros membros!
+              </p>
             </div>
           </div>
 

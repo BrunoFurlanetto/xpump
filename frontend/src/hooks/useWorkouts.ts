@@ -54,6 +54,7 @@ export interface CreateWorkoutData {
   workout_date: string;
   duration: string; // formato HH:MM:SS
   proof_image?: File;
+  share_to_feed?: boolean;
 }
 
 export function useWorkouts(): UseWorkoutsReturn {
@@ -133,10 +134,19 @@ export function useWorkouts(): UseWorkoutsReturn {
       // TODO: Implementar upload de imagem e chamada para API
       console.log('Criando workout:', data);
       
+      if (data.share_to_feed) {
+        console.log('Compartilhando treino no feed...');
+        // TODO: Implementar compartilhamento no feed
+      }
+      
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      toast.success('Treino registrado com sucesso! 🎉');
+      const message = data.share_to_feed 
+        ? 'Treino registrado e compartilhado no feed! 🎉📢' 
+        : 'Treino registrado com sucesso! 🎉';
+      
+      toast.success(message);
       await fetchWorkouts(); // Recarregar dados
     } catch (error) {
       console.error('Erro ao criar workout:', error);

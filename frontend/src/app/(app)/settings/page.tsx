@@ -14,9 +14,11 @@ import {
   Target,
   Save,
   AlertTriangle,
+  Palette,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from '@/lib/utils';
+import { ThemeSelector } from '@/components/ui/theme-selector';
 
 export default function SettingsPage() {
   const { 
@@ -28,7 +30,7 @@ export default function SettingsPage() {
   } = useSettings();
   
   const [isSaving, setIsSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState("notifications");
+  const [activeSection, setActiveSection] = useState("interface");
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -53,6 +55,7 @@ export default function SettingsPage() {
   }
 
   const sections = [
+    { id: 'interface', label: 'Interface', icon: Palette },
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'workout', label: 'Treinos', icon: Dumbbell },
     { id: 'nutrition', label: 'Nutrição', icon: Utensils },
@@ -114,6 +117,23 @@ export default function SettingsPage() {
           );
         })}
       </div>
+
+      {/* Interface */}
+      {activeSection === 'interface' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5 text-primary" />
+              Configurações de Interface
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <ThemeSelector />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Notificações */}
       {activeSection === 'notifications' && (

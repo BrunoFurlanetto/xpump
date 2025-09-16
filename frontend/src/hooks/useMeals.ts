@@ -61,6 +61,7 @@ export interface CreateMealData {
   meal_date: string;
   comments: string;
   photo?: File;
+  share_to_feed?: boolean;
 }
 
 // Tipos de refeição padrão do sistema
@@ -218,6 +219,11 @@ export function useMeals(): UseMealsReturn {
       // TODO: Implementar upload de imagem e chamada para API
       console.log('Criando refeição:', data);
       
+      if (data.share_to_feed) {
+        console.log('Compartilhando refeição no feed...');
+        // TODO: Implementar compartilhamento no feed
+      }
+      
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -242,7 +248,11 @@ export function useMeals(): UseMealsReturn {
 
       setMeals(prev => [newMeal, ...prev]);
       
-      toast.success('Refeição registrada com sucesso! 🍽️');
+      const message = data.share_to_feed 
+        ? 'Refeição registrada e compartilhada no feed! 🍽️📢' 
+        : 'Refeição registrada com sucesso! 🍽️';
+      
+      toast.success(message);
       await fetchMeals(); // Recarregar para recalcular dados
     } catch (error) {
       console.error('Erro ao criar refeição:', error);
