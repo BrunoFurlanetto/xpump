@@ -1,13 +1,15 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from groups.models import Group, GroupMembers
+from groups.permissions import IsMember, IsAdminMember
 from groups.serializer import GroupSerializer, GroupMemberSerializer
 
 
@@ -61,7 +63,7 @@ class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
     Handles member admin status updates and member removal with proper permissions.
     """
     serializer_class = GroupMemberSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsMember]
     lookup_field = 'member_id'
 
     def get_queryset(self):
@@ -85,7 +87,7 @@ class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
                 {"error": "Only is_admin field can be updated from group owner"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Check if current user is the group owner
         if group.owner != request.user:
             raise PermissionDenied("Only the group owner can update admin members")
@@ -126,35 +128,121 @@ class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
 
 
 @extend_schema(tags=['Groups'])
-class JoinGroupAPIView(APIView):
+class InviteGroupAPIView(APIView):
     """
     API view for joining groups using invite codes.
     Allows users to join groups by providing the group's unique invite code.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminMember]
 
     def post(self, request, *args, **kwargs):
-        """
-        Join a group using an invite code.
-        Creates membership record and adds group to user's profile.
-        """
         try:
-            # Find group by invite code
-            group = Group.objects.get(invite_code=kwargs['invite_code'])
-        except Group.DoesNotExist:
-            return Response({"detail": "Group does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            invited_user = User.objects.get(username=self.kwargs['user'])
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if user is already a member
-        if GroupMembers.objects.filter(group_id=group.id, member_id=request.user.id).exists():
-            return Response({"detail": "User already joined this group"}, status=status.HTTP_400_BAD_REQUEST)
+        group = Group.objects.get(id=self.kwargs['group_id'])
+        member_exists = GroupMembers.objects.filter(member=invited_user, group=group)
+
+        if member_exists.exists() and member_exists.first().pending:
+            return Response({"detail": "User already invited to this group"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if member_exists.exists():
+            return Response({"detail": "User already a member of this group"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Create membership record
-            GroupMembers.objects.create(group_id=group.id, member_id=request.user.id)
+            GroupMembers.objects.create(member=invited_user, group=group)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Add group to user's profile
-        request.user.profile.groups.add(group)
+        return Response({"detail": f"User {invited_user.username} invited to group {group.name}."},
+                        status=status.HTTP_201_CREATED)
 
-        return Response({"detail": "User joined this group"}, status=status.HTTP_200_OK)
+
+@extend_schema(
+    tags=['Groups'],
+    request={
+        'application/json': {
+            'type': 'object', 'properties': {
+                'action': {
+                    'type': 'string', 'enum': ['accept', 'reject']}
+            },
+            'required': ['action']
+        }
+    }
+)
+class InviteGroupAccept(APIView):
+    """
+    API view for accepting or rejecting group invitations.
+    Allows invited users to respond to group membership invitations.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        action = request.data.get('action')
+
+        if action not in ['accept', 'reject']:
+            return Response({"detail": "Invalid action. Use 'accept' or 'reject'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            group_member = GroupMembers.objects.get(member=request.user, group_id=self.kwargs['group_id'], pending=True)
+        except GroupMembers.DoesNotExist:
+            return Response({"detail": "No pending invitation found for this group."}, status=status.HTTP_404_NOT_FOUND)
+
+        if action == 'accept':
+            group_member.pending = False
+            group_member.save()
+            # Add group to user's profile groups
+            try:
+                request.user.profile.groups.add(group_member.group)
+            except ObjectDoesNotExist:
+                pass
+
+            return Response({"detail": "You have successfully joined the group."}, status=status.HTTP_200_OK)
+        else:
+            group_member.delete()
+
+            return Response({"detail": "You have rejected the group invitation."}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Groups'])
+class QuitingGroupAPIView(APIView):
+    """
+    API view for quitting a group.
+    Allows members to leave a group they are part of.
+    """
+    permission_classes = [IsAuthenticated, IsMember]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            group = Group.objects.get(id=self.kwargs['group_id'])
+        except Group.DoesNotExist:
+            return Response({"detail": "Group not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if group.main:
+            return Response({
+                "detail": "Cannot quit for this group. This is the enterprise group. Only manager can remove you."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            group_member = GroupMembers.objects.get(
+                member=request.user,
+                group_id=group.id,
+                pending=False
+            )
+        except GroupMembers.DoesNotExist:
+            return Response({"detail": "You are not a member of this group."}, status=status.HTTP_404_NOT_FOUND)
+
+        if group_member.group.owner == request.user:
+            return Response({"detail": "Group owner cannot quit the group. Transfer ownership or delete the group."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Remove group from user's profile groups
+            request.user.profile.groups.remove(group_member.group)
+        except ObjectDoesNotExist:
+            pass
+
+        group_member.delete()
+
+        return Response({"detail": "You have successfully quit the group."}, status=status.HTTP_200_OK)

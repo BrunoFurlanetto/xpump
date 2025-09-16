@@ -18,6 +18,7 @@ class ProfilesSerialializer(serializers.ModelSerializer):
     workout_streak = serializers.SerializerMethodField()  # Read-only field for workout streak information
     meal_streak = serializers.SerializerMethodField()  # Read-only for meal streak information
     groups = serializers.SerializerMethodField()  # Override groups field to return detailed information
+    pending_groups = serializers.SerializerMethodField()  # New field for pending groups
 
     class Meta:
         model = Profile
@@ -30,6 +31,7 @@ class ProfilesSerialializer(serializers.ModelSerializer):
             'notification_preferences',
             'score',
             'groups',
+            'pending_groups',
             'workout_streak',  # Computed field with workout streak data
             'meal_streak',  # Computed field with meal streak data
         )
@@ -45,7 +47,7 @@ class ProfilesSerialializer(serializers.ModelSerializer):
 
         members_qs = (
             GroupMembers.objects
-            .filter(group_id__in=group_ids)
+            .filter(group_id__in=group_ids, pending=False)
             .select_related('group', 'member__profile')
             .annotate(
                 rank=Window(
@@ -77,6 +79,31 @@ class ProfilesSerialializer(serializers.ModelSerializer):
             })
 
         return groups_data
+
+    def get_pending_groups(self, obj):
+        """
+        Get detailed information about groups the user has pending invitations to.
+        Returns list with id, name, owner name and description.
+        """
+        pending_memberships = (
+            GroupMembers.objects
+            .filter(member=obj.user, pending=True)
+            .select_related('group', 'group__owner')
+        )
+        pending_groups_data = []
+
+        for membership in pending_memberships:
+            group = membership.group
+            owner_name = group.owner.get_full_name() if getattr(group, 'owner', None) else None
+
+            pending_groups_data.append({
+                'id': group.id,
+                'name': group.name,
+                'owner': owner_name,
+                'description': group.description,
+            })
+
+        return pending_groups_data
 
     def get_workout_streak(self, obj):
         """

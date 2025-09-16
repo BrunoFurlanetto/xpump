@@ -1,6 +1,5 @@
 from django.test import TestCase
 from django.urls import reverse, resolve
-from groups import views
 
 
 class TestUrls(TestCase):
@@ -16,6 +15,3 @@ class TestUrls(TestCase):
         url = reverse('group-members-detail', kwargs={'group_id': 1, 'member_id': 1})
         self.assertEqual(resolve(url).view_name, 'group-members-detail')
 
-    def test_join_group_url(self):
-        url = reverse('join-group', kwargs={'invite_code': 'testcode'})
-        self.assertEqual(resolve(url).view_name, 'join-group')

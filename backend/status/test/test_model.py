@@ -81,6 +81,8 @@ class StatusModelTest(TestCase):
         """Testa a exclusão de status com objetos relacionados e substituto disponível"""
         # Criar status original
         original_status = Status.objects.create(**self.status_data)
+        original_status.is_active = False
+        original_status.save()
 
         # Criar status substituto
         substitute_data = self.status_data.copy()

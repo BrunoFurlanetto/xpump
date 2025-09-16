@@ -19,10 +19,11 @@ class Group(models.Model):
     """
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    invite_code = models.CharField(max_length=8, unique=True, editable=False, default=invate_code_generator)
+    # invite_code = models.CharField(max_length=8, unique=True, editable=False, default=invate_code_generator)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     created_by = models.ForeignKey(User, editable=False, on_delete=models.PROTECT, related_name='group_created_by')
     owner = models.ForeignKey(User, on_delete=models.PROTECT, related_name='group_owner', blank=True)
+    main = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -49,6 +50,7 @@ class GroupMembers(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE, editable=False)
     joined_at = models.DateTimeField(auto_now_add=True, editable=False)
     is_admin = models.BooleanField(default=False)
+    pending = models.BooleanField(default=True)
 
     class Meta:
         unique_together = (('member', 'group'),)  # Ensure one membership per user per group
