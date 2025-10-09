@@ -16,7 +16,6 @@ import { useGroups, Group } from '@/hooks/useGroups';
 import { useAuth } from '@/hooks/useAuth';
 import { GroupCard } from '@/components/groups/group-card';
 import { CreateGroupModal } from '@/components/groups/create-group-modal';
-import { JoinGroupModal } from '@/components/groups/join-group-modal';
 import { GroupDetails } from '@/components/groups/group-details';
 import { InviteUserModal } from '@/components/groups/invite-user-modal';
 import { PendingInvites } from '@/components/groups/pending-invites';
@@ -40,14 +39,12 @@ const companyGroup: Group = {
 
 export default function GroupsPage() {
   const { user } = useAuth();
-  const { groups, loading, error, createGroup, joinGroup, leaveGroup } = useGroups();
+  const { groups, loading, error, createGroup, leaveGroup } = useGroups();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showJoinModal, setShowJoinModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [selectedGroupForInvite, setSelectedGroupForInvite] = useState<Group | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
 
   const handleInviteUsers = (group: Group) => {
     setSelectedGroupForInvite(group);
@@ -75,19 +72,6 @@ export default function GroupsPage() {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar grupo');
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  const handleJoinGroup = async (inviteCode: string) => {
-    setIsJoining(true);
-    try {
-      await joinGroup(inviteCode);
-      toast.success('Você entrou no grupo!');
-      setShowJoinModal(false);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao entrar no grupo');
-    } finally {
-      setIsJoining(false);
     }
   };
 
@@ -137,23 +121,13 @@ export default function GroupsPage() {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button 
-              onClick={() => setShowJoinModal(true)} 
-              variant="outline"
-              className="w-full sm:w-auto border-muted-foreground/20 hover:border-muted-foreground/40 text-foreground"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Entrar em Grupo
-            </Button>
-            <Button 
-              onClick={() => setShowCreateModal(true)}
-              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Grupo
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setShowCreateModal(true)}
+            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Criar Grupo
+          </Button>
         </div>
 
         {/* Convites Pendentes */}
@@ -277,25 +251,15 @@ export default function GroupsPage() {
                 <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2 text-foreground">Nenhum grupo adicional</h3>
                 <p className="text-muted-foreground mb-4 text-sm sm:text-base">
-                  Você ainda não participa de grupos adicionais. Crie um novo grupo ou peça um convite para amigos!
+                  Você ainda não participa de grupos adicionais. Crie um novo grupo ou aguarde um convite!
                 </p>
-                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <Button 
-                    onClick={() => setShowJoinModal(true)} 
-                    variant="outline"
-                    className="w-full sm:w-auto border-muted-foreground/20 hover:border-muted-foreground/40 text-foreground"
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Entrar em Grupo
-                  </Button>
-                  <Button 
-                    onClick={() => setShowCreateModal(true)}
-                    className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar Grupo
-                  </Button>
-                </div>
+                <Button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Grupo
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -340,13 +304,6 @@ export default function GroupsPage() {
         onClose={() => setShowCreateModal(false)}
         onCreateGroup={handleCreateGroup}
         isLoading={isCreating}
-      />
-
-      <JoinGroupModal
-        isOpen={showJoinModal}
-        onClose={() => setShowJoinModal(false)}
-        onJoinGroup={handleJoinGroup}
-        isLoading={isJoining}
       />
 
       {/* Modal de convite de usuários */}

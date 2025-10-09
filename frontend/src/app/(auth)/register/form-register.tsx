@@ -23,7 +23,7 @@ export default function RegisterForm() {
     last_name: "",
     username: "",
     email: "",
-    company_code: "",
+    // company_code: "",
     password: "",
     password2: "",
   });
@@ -52,7 +52,7 @@ export default function RegisterForm() {
         last_name: "",
         username: "",
         email: "",
-        company_code: "",
+        // company_code: "",
         password: "",
         password2: "",
       });
@@ -181,7 +181,7 @@ export default function RegisterForm() {
         {state?.errors?.email && <p className="text-red-400 text-xs flex items-center gap-1">{state.errors.email}</p>}
       </motion.div>
 
-      {/* Campo de Código da Empresa */}
+      {/* Campo de Código da Empresa 
       <motion.div
         className="space-y-2"
         initial={{ opacity: 0, x: -20 }}
@@ -207,7 +207,7 @@ export default function RegisterForm() {
         {state?.errors?.company_code && (
           <p className="text-red-400 text-xs flex items-center gap-1">{state.errors.company_code}</p>
         )}
-      </motion.div>
+      </motion.div>*/}
 
       {/* Senhas */}
       <div className="grid grid-cols-1 gap-3">
