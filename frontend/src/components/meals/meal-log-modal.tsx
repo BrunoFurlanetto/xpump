@@ -5,13 +5,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Loader2, 
   Utensils, 
   Camera,
   Upload,
   X,
-  Clock
+  Clock,
+  Share2
 } from 'lucide-react';
 import { CreateMealData, MealType } from '@/hooks/useMeals';
 
@@ -37,6 +39,7 @@ export function MealLogModal({
   });
   const [mealPhoto, setMealPhoto] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [shareToFeed, setShareToFeed] = useState(true); // Padrão: compartilhar
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,7 +72,8 @@ export function MealLogModal({
         meal_type: formData.meal_type,
         meal_date: formData.meal_date,
         comments: formData.comments,
-        photo: mealPhoto || undefined
+        photo: mealPhoto || undefined,
+        share_to_feed: shareToFeed
       };
 
       await onSubmit(submitData);
@@ -87,6 +91,7 @@ export function MealLogModal({
     });
     setMealPhoto(null);
     setImagePreview(null);
+    setShareToFeed(true); // Reset para padrão
     setErrors({});
     onClose();
   };
@@ -295,6 +300,24 @@ export function MealLogModal({
             <p className="text-xs text-muted-foreground">
               Seja específico para ajudar a comunidade e acompanhar sua evolução nutricional
             </p>
+          </div>
+
+          {/* Compartilhar no feed */}
+          <div className="flex items-center space-x-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <Checkbox
+              id="shareToFeedMeal"
+              checked={shareToFeed}
+              onCheckedChange={(checked) => setShareToFeed(checked === true)}
+            />
+            <div className="flex-1">
+              <label htmlFor="shareToFeedMeal" className="text-sm font-medium text-foreground cursor-pointer flex items-center gap-2">
+                <Share2 className="h-4 w-4 text-primary" />
+                Compartilhar no feed
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Inspire outros com suas escolhas saudáveis!
+              </p>
+            </div>
           </div>
 
           {/* Info sobre pontos */}

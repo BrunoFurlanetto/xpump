@@ -26,7 +26,7 @@ import {
   Users, 
   Crown, 
   MoreVertical, 
-  Copy, 
+  UserPlus, 
   Settings, 
   LogOut, 
   Calendar,
@@ -42,13 +42,15 @@ interface GroupCardProps {
   onLeaveGroup?: (groupId: number) => Promise<void>;
   onEditGroup?: (group: Group) => void;
   onViewDetails?: (group: Group) => void;
+  onInviteUsers?: (group: Group) => void;
 }
 
 export function GroupCard({ 
   group, 
   onLeaveGroup, 
   onEditGroup, 
-  onViewDetails 
+  onViewDetails,
+  onInviteUsers
 }: GroupCardProps) {
   const { user } = useAuth();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
@@ -56,14 +58,12 @@ export function GroupCard({
 
   const isOwner = Number(user?.id) === group.owner;
   const isAdmin = group.members.find(member => member.id === Number(user?.id))?.is_admin;
+  const canInvite = isOwner || isAdmin;
   const memberCount = group.members.length;
 
-  const handleCopyInviteCode = async () => {
-    try {
-      await navigator.clipboard.writeText(group.invite_code);
-      toast.success('Código de convite copiado!');
-    } catch {
-      toast.error('Erro ao copiar código');
+  const handleInviteUsers = () => {
+    if (onInviteUsers) {
+      onInviteUsers(group);
     }
   };
 
@@ -145,10 +145,12 @@ export function GroupCard({
                   <Trophy className="mr-2 h-4 w-4" />
                   Ver Ranking
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopyInviteCode} className="text-popover-foreground">
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copiar Convite
-                </DropdownMenuItem>
+                {canInvite && (
+                  <DropdownMenuItem onClick={handleInviteUsers} className="text-popover-foreground">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Convidar Usuários
+                  </DropdownMenuItem>
+                )}
                 {(isOwner || isAdmin) && (
                   <>
                     <DropdownMenuSeparator />

@@ -6,7 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
-import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare, Utensils, Bell, Trophy } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
+import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare, Utensils, Trophy } from "lucide-react";
 import { logout } from "@/app/(auth)/login/actions";
 
 interface SidebarProps {
@@ -52,19 +53,9 @@ const navigationItems: NavItem[] = [
     icon: Trophy,
   },
   {
-    title: "Notificações",
-    href: "/notifications",
-    icon: Bell,
-  },
-  {
     title: "Estatísticas",
     href: "/stats",
     icon: BarChart3,
-  },
-  {
-    title: "Configurações",
-    href: "/settings",
-    icon: Settings,
   },
   {
     title: "Atividades",
@@ -88,6 +79,7 @@ const bottomItems: NavItem[] = [
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+  const { actualTheme } = useTheme();
 
   const { user } = useUserAuth();
   async function handleLogout() {
@@ -100,7 +92,13 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Logo */}
         <div className="px-3 py-2">
           <Link href="/" className="flex items-center pl-3 mb-2">
-            <Image src="/logo/simple.png" alt="XPump Logo" width={120} height={40} className="h-8" />
+            <Image 
+              src={actualTheme === 'light' ? "/logo/dark_simple.png" : "/logo/simple.png"} 
+              alt="XPump Logo" 
+              width={120} 
+              height={40} 
+              className="h-8" 
+            />
           </Link>
         </div>
 
@@ -115,7 +113,7 @@ export function Sidebar({ className }: SidebarProps) {
                     key={item.href}
                     variant={isActive ? "secondary" : "ghost"}
                     className={cn(
-                      "w-full justify-start text-gray-200 h-10",
+                      "w-full justify-start text-sidebarlink h-10",
                       isActive && "bg-muted font-medium text-foreground"
                     )}
                     asChild
@@ -148,7 +146,7 @@ export function Sidebar({ className }: SidebarProps) {
                     key={item.href}
                     variant={isActive ? "secondary" : "ghost"}
                     className={cn(
-                      "w-full justify-start text-gray-200 h-10",
+                      "w-full justify-start text-sidebarlink h-10",
                       isActive && "bg-muted font-medium text-foreground"
                     )}
                     asChild

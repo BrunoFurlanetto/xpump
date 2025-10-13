@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useWorkouts } from '@/hooks/useWorkouts';
-import { useMeals } from '@/hooks/useMeals';
+import { CreateWorkoutData, useWorkouts } from '@/hooks/useWorkouts';
+import { CreateMealData, useMeals } from '@/hooks/useMeals';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,11 @@ import {
   ChevronRight,
   Star,
   Award,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
+import { WorkoutCheckinModal } from "@/components/workouts/workout-checkin-modal";
+import { MealLogModal } from "@/components/meals/meal-log-modal";
 
 interface DashboardStats {
   totalPoints: number;
@@ -45,6 +48,15 @@ interface WeeklyActivity {
 interface QuickAction {
   title: string;
   description: string;
+  action: () => void;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+}
+
+interface NavigationAction {
+  title: string;
+  description: string;
   href: string;
   icon: React.ElementType;
   color: string;
@@ -52,9 +64,13 @@ interface QuickAction {
 }
 
 export default function DashboardPage() {
-  const { stats: workoutStats, streak: workoutStreak } = useWorkouts();
-  const { stats: mealStats } = useMeals();
+  const { stats: workoutStats, streak: workoutStreak, createWorkout } = useWorkouts();
+  const { stats: mealStats, createMeal, mealTypes } = useMeals();
   const { unreadCount, achievements } = useNotifications();
+  
+  // Estados para controlar os modais
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [isMealModalOpen, setIsMealModalOpen] = useState(false);
   
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalPoints: 0,
@@ -73,7 +89,7 @@ export default function DashboardPage() {
     {
       title: "Registrar Treino",
       description: "Faça check-in do seu treino",
-      href: "/workouts",
+      action: () => setIsWorkoutModalOpen(true),
       icon: Dumbbell,
       color: "text-blue-400",
       bgColor: "bg-blue-500/10 border-blue-500/20"
@@ -81,11 +97,14 @@ export default function DashboardPage() {
     {
       title: "Adicionar Refeição", 
       description: "Registre sua alimentação",
-      href: "/meals",
+      action: () => setIsMealModalOpen(true),
       icon: Utensils,
       color: "text-green-400",
       bgColor: "bg-green-500/10 border-green-500/20"
     },
+  ];
+
+  const smallQuickActions: NavigationAction[] = [
     {
       title: "Ver Grupos",
       description: "Conecte-se com amigos",
@@ -140,6 +159,25 @@ export default function DashboardPage() {
   const unlockedAchievements = achievements.filter(a => a.isUnlocked);
   const recentAchievements = unlockedAchievements.slice(0, 3);
 
+  // Funções para lidar com os modais
+  const handleWorkoutSubmit = async (data: CreateWorkoutData) => {
+    try {
+      await createWorkout(data);
+      setIsWorkoutModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao criar treino:', error);
+    }
+  };
+
+  const handleMealSubmit = async (data: CreateMealData) => {
+    try {
+      await createMeal(data);
+      setIsMealModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao criar refeição:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header com boas-vindas */}
@@ -166,6 +204,52 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+       {/* Ações rápidas */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            Ações Rápidas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1  gap-3">
+            {quickActions.map((action, index) => {
+              const IconComponent = action.icon;
+              return (
+                <Card 
+                  key={index}
+                  className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}
+                  onClick={action.action}
+                >
+                  <CardContent className="p-4 text-center">
+                    <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
+                    <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
+                    <p className="text-xs text-muted-foreground">{action.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-2  gap-3 pt-3">
+            {smallQuickActions.map((action) => {
+              const IconComponent = action.icon;
+              return (
+                <Link key={action.href} href={action.href}>
+                  <Card className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}>
+                    <CardContent className="p-4 text-center">
+                      <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
+                      <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
+                      <p className="text-xs text-muted-foreground">{action.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Cards principais de estatísticas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -255,35 +339,15 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Ações rápidas */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Ações Rápidas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {quickActions.map((action) => {
-              const IconComponent = action.icon;
-              return (
-                <Link key={action.href} href={action.href}>
-                  <Card className={`${action.bgColor} border hover:border-primary/40 transition-colors cursor-pointer`}>
-                    <CardContent className="p-4 text-center">
-                      <IconComponent className={`h-8 w-8 mx-auto mb-2 ${action.color}`} />
-                      <h3 className="font-medium text-foreground text-sm mb-1">{action.title}</h3>
-                      <p className="text-xs text-muted-foreground">{action.description}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+     
 
-      <div className="grid gap-6 lg:grid-cols-2">
+     <details>
+     <Button variant="ghost" size="sm" asChild> 
+           <summary className="text-white mx-2 my-4"> 
+                Ver mais <ChevronDown className="h-4 w-4 ml-1" />
+            </summary>
+            </Button>
+       <div className="grid gap-6 lg:grid-cols-2">
         {/* Atividade semanal */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -325,7 +389,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Conquistas recentes */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border mb-5">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-foreground flex items-center gap-2">
               <Award className="h-5 w-5 text-primary" />
@@ -363,31 +427,22 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+     </details>
 
-      {/* Call to action motivacional */}
-      <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
-        <CardContent className="p-6 text-center">
-          <Flame className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-foreground mb-2">Continue Assim! 🔥</h3>
-          <p className="text-muted-foreground mb-4">
-            Você está com {dashboardStats.currentStreak} dias consecutivos! Que tal registrar um treino hoje?
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Link href="/workouts">
-                <Dumbbell className="h-4 w-4 mr-2" />
-                Registrar Treino
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="border-primary/20 text-primary hover:bg-primary/10">
-              <Link href="/meals">
-                <Utensils className="h-4 w-4 mr-2" />
-                Adicionar Refeição
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modais */}
+      <WorkoutCheckinModal
+        isOpen={isWorkoutModalOpen}
+        onClose={() => setIsWorkoutModalOpen(false)}
+        onSubmit={handleWorkoutSubmit}
+      />
+      
+      <MealLogModal
+        isOpen={isMealModalOpen}
+        onClose={() => setIsMealModalOpen(false)}
+        onSubmit={handleMealSubmit}
+        mealTypes={mealTypes}
+      />
+    
     </div>
   );
 }

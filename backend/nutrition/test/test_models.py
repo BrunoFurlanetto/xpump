@@ -981,7 +981,7 @@ class MealStreakModelTests(TestCase):
         self.meal_streak.save()
 
         remaining = self.meal_streak.weekly_remaining
-        expected = MealConfig.objects.count()  # 3 tipos de refeição criados
+        expected = MealConfig.objects.count() * 7  # 3 tipos de refeição criados
         self.assertEqual(remaining, expected)
 
     @patch('django.utils.timezone.now')
@@ -1007,9 +1007,9 @@ class MealStreakModelTests(TestCase):
                 meal_time=meal_time,
                 comments='Test meal'
             )
-
+        print(MealConfig.objects.count())
         remaining = self.meal_streak.weekly_remaining
-        self.assertEqual(remaining, 1)  # 3 - 2 = 1
+        self.assertEqual(remaining, 19)  # 21 - 2 = 19 (3 tipos * 7 dias - 2 refeições)
 
     @patch('django.utils.timezone.now')
     def test_weekly_remaining_goal_exceeded(self, mock_now):
@@ -1046,7 +1046,7 @@ class MealStreakModelTests(TestCase):
             )
 
         remaining = self.meal_streak.weekly_remaining
-        self.assertEqual(remaining, 0)  # max(3-5, 0) = 0
+        self.assertEqual(remaining, 16)  # 21 - 5 = 16 (3 tipos * 7 dias - 5 refeições)
 
     @patch('django.utils.timezone.now')
     def test_weekly_remaining_sunday_calculation(self, mock_now):

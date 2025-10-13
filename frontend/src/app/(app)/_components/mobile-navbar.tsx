@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNavigation } from "@/context/navigationContext";
-import { Home, Dumbbell, Users, Menu, Utensils, MoreHorizontal } from "lucide-react";
+import { Home, Dumbbell, Menu, Utensils, MoreHorizontal, MessageSquare } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface MobileNavbarProps {
@@ -36,9 +36,9 @@ const navigationItems: NavItem[] = [
     icon: Utensils,
   },
   {
-    title: "Grupos",
-    href: "/groups",
-    icon: Users,
+    title: "Feed",
+    href: "/feed",
+    icon: MessageSquare,
   },
 ];
 
@@ -71,7 +71,7 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-muted bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="fixed bottom-0 pb-3 left-0 right-0 z-50 border-t border-muted bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="grid grid-cols-5 h-16">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;

@@ -27,10 +27,45 @@ class GroupModelTest(TestCase):
         member, created = GroupMembers.objects.get_or_create(group=group, member=self.user)
         self.assertFalse(created)  # This should be False on the second attempt (no duplicates allowed)
 
-    def test_unique_invite_code(self):
-        # Create a group and check if the invite code is unique
+    def test_group_member_pending_status(self):
+        """Test that group members can have pending status for invitations"""
         group = Group.objects.create(name="Test Group", created_by=self.user, owner=self.user)
-        self.assertIsNotNone(group.invite_code)  # Ensure invite code is not None
-        another_group = Group.objects.create(name="Another Group", created_by=self.user, owner=self.user)
-        self.assertIsNotNone(another_group.invite_code)  # Ensure invite code is not None for another group
-        self.assertNotEqual(group.invite_code, another_group.invite_code)  # Check that invite codes are different
+        user2 = User.objects.create_user(username='user2', password='password')
+
+        # Create a pending member invitation
+        member = GroupMembers.objects.create(group=group, member=user2, pending=True)
+        self.assertTrue(member.pending)
+        self.assertFalse(member.is_admin)
+
+        # Accept invitation
+        member.pending = False
+        member.save()
+        self.assertFalse(member.pending)
+
+    def test_group_member_admin_status(self):
+        """Test group member admin functionality"""
+        group = Group.objects.create(name="Test Group", created_by=self.user, owner=self.user)
+        user2 = User.objects.create_user(username='user2', password='password')
+
+        # Create admin member
+        admin_member = GroupMembers.objects.create(group=group, member=user2, is_admin=True)
+        admin_member.pending = False
+        admin_member.save()
+
+        self.assertTrue(admin_member.is_admin)
+        self.assertFalse(admin_member.pending)
+
+    def test_group_main_status(self):
+        """Test group main field for enterprise groups"""
+        # Regular group
+        regular_group = Group.objects.create(name="Regular Group", created_by=self.user, owner=self.user)
+        self.assertFalse(regular_group.main)
+
+        # Main enterprise group
+        main_group = Group.objects.create(
+            name="Main Group",
+            created_by=self.user,
+            owner=self.user,
+            main=True
+        )
+        self.assertTrue(main_group.main)

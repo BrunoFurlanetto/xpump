@@ -19,11 +19,11 @@ class GroupSerializer(serializers.ModelSerializer):
             'description',
             'created_by',
             'owner',
-            'invite_code',
             'created_at',
-            'members'
+            'members',
+            'main',
         ]  # Include all model fields in serialization
-        read_only_fields = ['created_by', 'invite_code', 'created_at', 'members']  # Prevent modification of read-only fields
+        read_only_fields = ['created_by', 'created_at', 'members', 'main']  # Prevent modification of read-only fields
 
     def get_members(self, obj):
         """
@@ -51,8 +51,8 @@ class GroupMemberSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = GroupMembers
-        fields = ['member', 'joined_at', 'is_admin']
-        read_only_fields = ['member', 'joined_at']  # Prevent modification of member and join date
+        fields = ['member', 'joined_at', 'is_admin', 'pending']
+        read_only_fields = ['member', 'joined_at', 'pending']  # Prevent modification of member and join date
 
     def validate(self, attrs):
         """
@@ -62,6 +62,11 @@ class GroupMemberSerializer(serializers.ModelSerializer):
         if 'joined_at' in self.initial_data:
             raise serializers.ValidationError({
                 "joined_at": "This field is read-only and cannot be modified."
+            })
+
+        if 'pending' in self.initial_data:
+            raise serializers.ValidationError({
+                "pending": "This field is read-only and cannot be modified."
             })
 
         return attrs

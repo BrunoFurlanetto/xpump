@@ -110,6 +110,7 @@ export default function NotificationsPage() {
             Acompanhe suas conquistas, lembretes e atualizações
           </p>
         </div>
+      </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           {unreadCount > 0 && (
@@ -134,13 +135,12 @@ export default function NotificationsPage() {
             asChild
             className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
           >
-            <Link href="/settings/notifications">
+            <Link href="/settings">
               <Settings className="h-4 w-4 mr-2" />
               Configurações
             </Link>
           </Button>
         </div>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

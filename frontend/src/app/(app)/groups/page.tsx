@@ -9,9 +9,6 @@ import {
   Plus, 
   UserPlus, 
   Crown,
-  Trophy,
-  Target,
-  Star,
   TrendingUp,
   Loader2
 } from 'lucide-react';
@@ -21,6 +18,8 @@ import { GroupCard } from '@/components/groups/group-card';
 import { CreateGroupModal } from '@/components/groups/create-group-modal';
 import { JoinGroupModal } from '@/components/groups/join-group-modal';
 import { GroupDetails } from '@/components/groups/group-details';
+import { InviteUserModal } from '@/components/groups/invite-user-modal';
+import { PendingInvites } from '@/components/groups/pending-invites';
 import { toast } from 'sonner';
 
 // Dados mock para grupos da empresa (fixo)
@@ -44,9 +43,21 @@ export default function GroupsPage() {
   const { groups, loading, error, createGroup, joinGroup, leaveGroup } = useGroups();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [selectedGroupForInvite, setSelectedGroupForInvite] = useState<Group | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+
+  const handleInviteUsers = (group: Group) => {
+    setSelectedGroupForInvite(group);
+    setShowInviteModal(true);
+  };
+
+  const handleInviteSent = () => {
+    // Refresh data when invite is sent
+    // In a real app, this would trigger a refresh of pending invites
+  };
 
   // Combinar grupo da empresa com grupos do usuário
   const allGroups = [companyGroup, ...groups];
@@ -145,8 +156,11 @@ export default function GroupsPage() {
           </div>
         </div>
 
+        {/* Convites Pendentes */}
+        <PendingInvites onInviteResponse={handleInviteSent} />
+
         {/* Estatísticas rápidas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="bg-card border-border">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
@@ -196,7 +210,7 @@ export default function GroupsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Erro */}
         {error && (
@@ -249,6 +263,7 @@ export default function GroupsPage() {
                       onLeaveGroup={handleLeaveGroup}
                       onEditGroup={(group) => console.log('Editar:', group)}
                       onViewDetails={(group) => setSelectedGroup(group)}
+                      onInviteUsers={handleInviteUsers}
                     />
                   ))}
               </div>
@@ -333,6 +348,20 @@ export default function GroupsPage() {
         onJoinGroup={handleJoinGroup}
         isLoading={isJoining}
       />
+
+      {/* Modal de convite de usuários */}
+      {selectedGroupForInvite && (
+        <InviteUserModal
+          isOpen={showInviteModal}
+          onClose={() => {
+            setShowInviteModal(false);
+            setSelectedGroupForInvite(null);
+          }}
+          groupId={selectedGroupForInvite.id}
+          groupName={selectedGroupForInvite.name}
+          onInviteSent={handleInviteSent}
+        />
+      )}
     </>
   );
 }
