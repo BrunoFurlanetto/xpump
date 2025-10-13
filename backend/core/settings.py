@@ -43,7 +43,7 @@ if 'SECRET_KEY' in os.environ:
 DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'xpump.up.railway.app', 'xpump.onrender.com']
-CORS_ALLOWED_ORIGINS = ['localhost:3000', '127.0.0.1', 'xpump.up.railway.app', 'xpump.onrender.com']
+CORS_ORIGIN_ALLOW_ALL = True  # TODO: Change to False in production
 
 # Application definition
 INSTALLED_APPS = [
