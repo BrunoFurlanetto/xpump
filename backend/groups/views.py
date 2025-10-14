@@ -65,7 +65,8 @@ class GroupMeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        groups = request.user.profile.groups.all()
+        members = GroupMembers.objects.filter(member=self.request.user)
+        groups = Group.objects.filter(groupmembers__in=members).distinct()
         serializer = GroupSerializer(groups, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
