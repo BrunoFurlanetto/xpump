@@ -36,7 +36,13 @@ class Group(models.Model):
         if not self.pk:  # New group creation
             super().save(*args, **kwargs)
             # Automatically add creator as admin member
-            GroupMembers.objects.create(member=self.created_by, joined_at=self.created_at, is_admin=True, group=self)
+            GroupMembers.objects.create(
+                member=self.created_by,
+                joined_at=self.created_at,
+                is_admin=True,
+                group=self,
+                pending=False
+            )
         else:
             super().save(*args, **kwargs)
 

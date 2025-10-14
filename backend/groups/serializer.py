@@ -37,7 +37,8 @@ class GroupSerializer(serializers.ModelSerializer):
                 "username": member.member.username,
                 "email": member.member.email,
                 "is_admin": member.is_admin,
-                "joined_at": member.joined_at
+                "joined_at": member.joined_at,
+                "pending": member.pending
             }
             for member in members
         ]

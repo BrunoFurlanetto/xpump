@@ -57,6 +57,22 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
 
 
 @extend_schema(tags=['Groups'])
+class GroupMeAPIView(APIView):
+    """
+    API view for retrieving groups the authenticated user is a member of.
+    Returns groups associated with the user's profile.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        members = GroupMembers.objects.filter(member=self.request.user)
+        groups = Group.objects.filter(groupmembers__in=members).distinct()
+        serializer = GroupSerializer(groups, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Groups'])
 class GroupMemberAPIView(RetrieveUpdateDestroyAPIView):
     """
     API view for individual group member operations.
