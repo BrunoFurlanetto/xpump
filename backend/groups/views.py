@@ -69,6 +69,13 @@ class GroupMeAPIView(APIView):
         groups = Group.objects.filter(groupmembers__in=members).distinct()
         serializer = GroupSerializer(groups, many=True)
 
+        data = serializer.data
+        pending_map = {gm.group_id: gm.pending for gm in members}
+
+        for item in data:
+            gid = item.get('id') or item.get('pk')
+            item['pending'] = pending_map.get(gid, False)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
