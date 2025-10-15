@@ -22,7 +22,13 @@ class GroupsAPIView(ListCreateAPIView):
     """
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAdminUser()]
+
+        return [IsAuthenticated()]
 
     def perform_create(self, serializer):
         """

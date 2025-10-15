@@ -65,7 +65,7 @@ class Meal(models.Model):
 
         # Calculate multiplier and points based on streak
         self.multiplier = self.update_multiplier()
-        self.base_points = float(10 * self.multiplier)
+        self.base_points = float(1 * self.multiplier)
 
         super().save(*args, **kwargs)
 

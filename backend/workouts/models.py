@@ -55,7 +55,7 @@ class WorkoutCheckin(models.Model):
 
         # Calculate multiplier and points based on streak and duration
         self.multiplier = self.update_multiplier()
-        self.base_points = float(40 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
+        self.base_points = float(2 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
 
         super().save(*args, **kwargs)
 
