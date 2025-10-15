@@ -1,4 +1,3 @@
-
 "use server";
 import "server-only";
 import { JWTPayload, SignJWT, decodeJwt, jwtVerify } from "jose";
@@ -9,7 +8,7 @@ export type Session = {
   user_id: string;
   access: string;
   refresh: string;
-}
+};
 const key = new TextEncoder().encode(process.env.JWT_SECRET);
 
 const cookie = {
@@ -24,11 +23,7 @@ const cookie = {
 };
 
 export async function encrypt(payload: JWTPayload) {
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("1day")
-    .sign(key);
+  return new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("1day").sign(key);
 }
 
 export async function decrypt(session: string) {
@@ -49,7 +44,7 @@ export async function createSession(payload: Session) {
   const session = await encrypt({
     ...payload,
     user_id,
-    expires
+    expires,
   });
   (await cookies()).set(cookie.name, session, { ...cookie.options, expires });
   redirect("/", RedirectType.push);
@@ -60,6 +55,7 @@ export async function verifySession(redirectToLogin = true) {
     const ck = (await cookies()).get(cookie.name)?.value || "";
 
     if (!ck) {
+      console.log("⚠️ Nenhum cookie de sessão encontrado");
       if (redirectToLogin) redirect("/login");
       return null;
     }
@@ -68,6 +64,7 @@ export async function verifySession(redirectToLogin = true) {
 
     // Verificar se a sessão é válida e não expirou
     if (!session?.user_id || !session?.expires) {
+      console.log("⚠️ Sessão inválida - faltando user_id ou expires");
       if (redirectToLogin) {
         redirect("/login");
       }
@@ -79,14 +76,17 @@ export async function verifySession(redirectToLogin = true) {
     const expiresAt = new Date(session.expires as string).getTime();
 
     if (now > expiresAt) {
+      console.log("⚠️ Sessão expirada");
       if (redirectToLogin) {
         redirect("/login");
       }
       return null;
     }
 
+    console.log("✅ Sessão válida encontrada");
     return session as Session;
-  } catch {
+  } catch (error) {
+    console.error("❌ Erro ao verificar sessão:", error);
     if (redirectToLogin) {
       redirect("/login");
     }
@@ -99,25 +99,20 @@ export async function deleteSession() {
   redirect("/login");
 }
 
-export async function updateToken({ accessToken, refreshToken }: {
-  accessToken: string;
-  refreshToken: string;
-}) {
+export async function updateToken({ accessToken, refreshToken }: { accessToken: string; refreshToken: string }) {
   const ck = (await cookies()).get(cookie.name)?.value;
   if (!ck) {
     return null;
   }
   const session = await decrypt(ck);
-  if (!session?.user_id)
-    throw new Error("Sessão invalida ou expirada");
-
+  if (!session?.user_id) throw new Error("Sessão invalida ou expirada");
 
   const expires = new Date(Date.now() + cookie.duration);
   const newSession = await encrypt({
     ...session,
     access: accessToken,
     refresh: refreshToken,
-    expires
+    expires,
   });
   (await cookies()).set(cookie.name, newSession, { ...cookie.options, expires });
 }

@@ -1,61 +1,45 @@
 import { RequestInit } from "next/dist/server/web/spec-extension/request";
 import { verifySession } from "./session";
-import { refreshToken } from "@/app/(auth)/login/actions";
 
 export type VerifySessionType = Awaited<ReturnType<typeof verifySession>>;
 export interface FetchOptions extends RequestInit {
-    headers?: Record<string, string>;
-    skipRefresh?: boolean; // Para evitar loops infinitos
+  headers?: Record<string, string>;
+  skipRefresh?: boolean; // Para evitar loops infinitos
 }
 
 export class AuthError extends Error {
-    constructor(message: string, public shouldLogout = false) {
-        super(message);
-        this.name = 'AuthError';
-    }
+  constructor(message: string, public shouldLogout = false) {
+    super(message);
+    this.name = "AuthError";
+  }
 }
 
 export const authFetch = async (url: string | URL, options: FetchOptions = {}) => {
-    const session = await verifySession(false);
+  const session = await verifySession(false);
 
-    if (!session?.access) {
-        throw new AuthError("Sessão não encontrada", true);
-    }
+  if (!session?.access) {
+    throw new AuthError("Sessão não encontrada", true);
+  }
 
-    options.headers = {
-        ...options.headers,
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access}`,
-    }
+  options.headers = {
+    ...options.headers,
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session.access}`,
+  };
 
-    let response = await fetch(url, options);
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (error) {
+    console.error("Erro na requisição fetch:", error, url, options);
+    throw new AuthError("Erro ao fazer requisição", true);
+  }
 
-    // Se receber 401 e não for uma tentativa de refresh, tentar renovar o token
-    if (response.status === 401 && !options.skipRefresh) {
+  // If we get a 401, just throw an error instead of trying to refresh
+  // Token refresh should happen in Server Actions, not during rendering
+  if (response.status === 401) {
+    throw new AuthError("Token expirado ou inválido", true);
+  }
 
-
-        if (!session.refresh) {
-            throw new AuthError("Sessão expirada", true);
-        }
-
-        try {
-            const newAccessToken = await refreshToken(session.refresh);
-            if (newAccessToken) {
-
-                options.headers.Authorization = `Bearer ${newAccessToken}`;
-                response = await fetch(url, options);
-
-                // Verificar se ainda está retornando 401 após renovação
-                if (response.status === 401) {
-                    throw new AuthError("Token renovado é inválido", true);
-                }
-            } else {
-                throw new AuthError("Falha ao renovar sessão", true);
-            }
-        } catch {
-            throw new AuthError("Erro de autenticação", true);
-        }
-    }
-
-    return response;
+  return response;
 };

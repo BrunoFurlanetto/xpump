@@ -1,5 +1,6 @@
 import { authFetch } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
+import { getCurrentUser } from "./getCurrentUser";
 
 interface Profile {
     id: number,
@@ -10,6 +11,12 @@ interface Profile {
     notification_preferences: undefined,
     score: number,
     groups: {
+        id: number,
+        name: string,
+        member_count: number,
+        position: number
+    }[],
+    pending_groups: {
         id: number,
         name: string,
         member_count: number,
@@ -38,6 +45,20 @@ export const getProfileById = async (profileId: string): Promise<Profile | null>
             throw new Error("Erro ao buscar perfil");
         }
         const profile = await response.json();
+        return profile;
+    } catch {
+        return null;
+    }
+}
+
+
+export const getCurrentProfile = async (): Promise<Profile | null> => {
+    try {
+        const user = await getCurrentUser();
+        if (!user?.profile_id) {
+            return null;
+        }
+        const profile = await getProfileById(user.profile_id);
         return profile;
     } catch {
         return null;

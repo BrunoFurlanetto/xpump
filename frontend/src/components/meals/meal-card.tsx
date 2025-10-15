@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,25 +14,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { 
-  MessageSquare, 
-  Clock, 
-  Trophy, 
-  MoreVertical,
-  Edit3,
-  Trash2,
-  Save,
-  X
-} from 'lucide-react';
-import { MealLog, MealType } from '@/hooks/useMeals';
+} from "@/components/ui/dropdown-menu";
+import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
+import { MealLog, MealType } from "@/hooks/useMeals";
 
 interface MealCardProps {
   meal: MealLog;
@@ -41,12 +32,7 @@ interface MealCardProps {
   onDelete: (id: number) => Promise<void>;
 }
 
-export function MealCard({ 
-  meal, 
-  mealType,
-  onUpdateComments, 
-  onDelete, 
-}: MealCardProps) {
+export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedComments, setEditedComments] = useState(meal.comments);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -81,9 +67,9 @@ export function MealCard({
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -118,25 +104,19 @@ export function MealCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover border-border">
-                <DropdownMenuItem 
-                  onClick={() => setIsEditing(true)}
-                  className="text-popover-foreground"
-                >
+                <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-popover-foreground">
                   <Edit3 className="mr-2 h-4 w-4" />
                   Editar Descrição
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="text-red-400 focus:text-red-400"
-                >
+                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-400 focus:text-red-400">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Excluir Refeição
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          
+
           {isEditing ? (
             <div className="space-y-3">
               <Textarea
@@ -154,7 +134,7 @@ export function MealCard({
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Save className="h-3 w-3 mr-1" />
-                  {isUpdating ? 'Salvando...' : 'Salvar'}
+                  {isUpdating ? "Salvando..." : "Salvar"}
                 </Button>
                 <Button
                   size="sm"
@@ -192,20 +172,14 @@ export function MealCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir refeição?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A refeição será removida permanentemente 
-              e os pontos associados serão subtraídos do seu total.
+              Esta ação não pode ser desfeita. A refeição será removida permanentemente e os pontos associados serão
+              subtraídos do seu total.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

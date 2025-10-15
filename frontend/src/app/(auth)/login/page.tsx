@@ -2,10 +2,12 @@ import React from "react";
 import Link from "next/link";
 import LoginForm from "./form-login";
 import { RegistrationSuccess } from "./registration-success";
+import { SessionCleaner } from "./session-cleaner";
 
 const Page = () => {
   return (
     <div className="w-full max-w-md">
+      <SessionCleaner />
       <RegistrationSuccess />
 
       {/* Card do Formulário */}
