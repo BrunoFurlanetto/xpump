@@ -12,6 +12,7 @@ interface UserAuthContext {
     last_name: string;
     name: string;
     avatar: string | null;
+    profile_id: string;
   };
   isFetching: boolean;
 }
