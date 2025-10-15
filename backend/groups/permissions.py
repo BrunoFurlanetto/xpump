@@ -3,6 +3,33 @@ from rest_framework.permissions import BasePermission
 from groups.models import GroupMembers, Group
 
 
+class IsGroupMember(BasePermission):
+    message = 'User not a member of the group.'
+
+    def _get_group_id(self, request, view):
+
+        return view.kwargs.get('pk')
+
+    def has_permission(self, request, view):
+        group_id = self._get_group_id(request, view)
+
+        if not group_id:
+            return False
+
+        if not Group.objects.filter(pk=group_id).exists():
+            raise NotFound("Group does not exist.")
+
+        return GroupMembers.objects.filter(group_id=group_id, member_id=request.user.id, pending=False).exists()
+
+    def has_object_permission(self, request, view, obj):
+        group_id = self._get_group_id(request, view)
+
+        if not group_id:
+            return False
+
+        return GroupMembers.objects.filter(group_id=group_id, member_id=request.user.id, pending=False).exists()
+
+
 class IsMember(BasePermission):
     message = 'User not a member of the group or membership is pending.'
 

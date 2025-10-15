@@ -4,12 +4,12 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from groups.models import Group, GroupMembers
-from groups.permissions import IsMember, IsAdminMember
+from groups.permissions import IsMember, IsAdminMember, IsGroupMember
 from groups.serializer import GroupSerializer, GroupMemberSerializer
 
 
@@ -22,7 +22,7 @@ class GroupsAPIView(ListCreateAPIView):
     """
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         """
@@ -40,7 +40,7 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
     """
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsGroupMember]
 
     def destroy(self, request, *args, **kwargs):
         """
