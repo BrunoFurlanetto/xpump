@@ -32,7 +32,7 @@ class MealConfig(models.Model):
 
 
 class Meal(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meals')
     meal_type = models.ForeignKey(MealConfig, on_delete=models.PROTECT)
     meal_time = models.DateTimeField()
     comments = models.TextField(blank=True, null=True)

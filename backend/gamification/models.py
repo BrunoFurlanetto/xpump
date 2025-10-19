@@ -4,28 +4,28 @@ from django.db import models
 
 DEFAULT_MULTIPLIER_WORKOUT_STREAK = {
     "first_streak_day": {
-        "min_days": 1,
-        "max_days": 4,
+        "min_workouts": 1,
+        "max_workouts": 4,
         "multiplier": 1.0
     },
     "second_streak_day": {
-        "min_days": 5,
-        "max_days": 19,
+        "min_workouts": 5,
+        "max_workouts": 19,
         "multiplier": 1.25
     },
     "third_streak_day": {
-        "min_days": 10,
-        "max_days": 19,
+        "min_workouts": 10,
+        "max_workouts": 19,
         "multiplier": 1.5
     },
     "fourth_streak_day": {
-        "min_days": 20,
-        "max_days": 39,
+        "min_workouts": 20,
+        "max_workouts": 39,
         "multiplier": 1.75
     },
     "last_streak_day": {
-        "min_days": 40,
-        "max_days": None,
+        "min_workouts": 40,
+        "max_workouts": None,
         "multiplier": 2.0
     }
 }
@@ -75,7 +75,7 @@ class GamificationSettings(models.Model):
     workout_xp = models.IntegerField(default=2, help_text="XP concedido por completar os minutos de treino treino")
     multiplier_workout_streak = models.JSONField(
         default=default_multiplier_workout_streak,
-        help_text="Multiplicador de XP baseado na sequência de dias de atividade"
+        help_text="Multiplicador de XP baseado na sequência de treinos"
     )
     meal_xp = models.IntegerField(default=1, help_text="XP concedido por registrar uma refeição")
     multiplier_meal_streak = models.JSONField(
@@ -94,6 +94,7 @@ class GamificationSettings(models.Model):
         default=60.0,
         help_text="Porcentagem de pontos do primeiro colocado que deverão receber boônus de XP no final da temporada"
     )
+    singleton_id = models.PositiveSmallIntegerField(default=1, unique=True, editable=False)
 
     def __str__(self):
         return "Gamification Settings"
@@ -101,3 +102,23 @@ class GamificationSettings(models.Model):
     class Meta:
         verbose_name = "Gamification Setting"
         verbose_name_plural = "Gamification Settings"
+
+    def save(self, *args, **kwargs):
+        self.singleton_id = 1
+        self.full_clean(exclude=['singleton_id'])
+        super().save(*args, **kwargs)
+
+
+class Season(models.Model):
+    name = models.CharField(max_length=100, help_text="Nome")
+    start_date = models.DateField(help_text="Data de início da temporada")
+    end_date = models.DateField(help_text="Data de término da temporada")
+    description = models.TextField(blank=True, help_text="Descrição da temporada")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Season"
+        verbose_name_plural = "Seasons"
+        unique_together = ("start_date", "end_date")
