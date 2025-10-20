@@ -61,8 +61,7 @@ class WorkoutCheckin(models.Model):
         super().save(*args, **kwargs)
 
         # Update the user's profile with the new points
-        self.user.profile.score += self.base_points
-        self.user.profile.save()
+        Gamification().add_xp(self.user, self.base_points)
 
     def clean(self):
         """
