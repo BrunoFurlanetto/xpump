@@ -2,6 +2,8 @@ import copy
 
 from django.db import models
 
+from clients.models import Client
+
 DEFAULT_MULTIPLIER_WORKOUT_STREAK = {
     "first_streak_day": {
         "min_workouts": 1,
@@ -110,10 +112,11 @@ class GamificationSettings(models.Model):
 
 
 class Season(models.Model):
-    name = models.CharField(max_length=100, help_text="Nome")
-    start_date = models.DateField(help_text="Data de início da temporada")
-    end_date = models.DateField(help_text="Data de término da temporada")
-    description = models.TextField(blank=True, help_text="Descrição da temporada")
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, related_name="seasons", verbose_name="Cliente")
+    name = models.CharField(max_length=100, help_text="Nome", verbose_name="Nome")
+    start_date = models.DateField(help_text="Data de início da temporada", verbose_name="Data de Início")
+    end_date = models.DateField(help_text="Data de término da temporada", verbose_name="Data de Término")
+    description = models.TextField(blank=True, help_text="Descrição da temporada", verbose_name="Descrição")
 
     def __str__(self):
         return self.name

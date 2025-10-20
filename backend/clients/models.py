@@ -1,3 +1,28 @@
+# clients/models.py
+from django.contrib.auth.models import User
+from django.core.validators import EmailValidator
 from django.db import models
+from django.conf import settings
+from django.utils import timezone
 
-# Create your models here.
+from groups.models import Group
+
+
+class Client(models.Model):
+    name = models.CharField(max_length=255, verbose_name='Nome fantasia')
+    cnpj = models.CharField(max_length=20, unique=True, verbose_name="CNPJ")
+    contact_email = models.EmailField(validators=[EmailValidator()], verbose_name='E-mail')
+    phone = models.CharField(max_length=9, verbose_name="Telefone")
+    address = models.TextField(verbose_name='Endereço')
+    is_active = models.BooleanField(default=True, verbose_name='Ativo')
+    created_at = models.DateTimeField(editable=False, default=timezone.now, verbose_name='Criado em')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
+    owners = models.ForeignKey(User, on_delete=models.PROTECT, related_name='clients', verbose_name='Proprietário')
+    groups = models.ManyToManyField(Group, blank=True, related_name='clients', verbose_name='Grupos')
+
+    class Meta:
+        verbose_name = "Cliente"
+        verbose_name_plural = "Clientes"
+
+    def __str__(self):
+        return self.name
