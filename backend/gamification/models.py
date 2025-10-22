@@ -124,4 +124,4 @@ class Season(models.Model):
     class Meta:
         verbose_name = "Season"
         verbose_name_plural = "Seasons"
-        unique_together = ("start_date", "end_date")
+        unique_together = ("client", "start_date", "end_date")
