@@ -127,9 +127,10 @@ class Gamification:
         user.profile.save()
 
     def add_xp(self, user, xp):
+        print(user, xp)
         user.profile.score += xp
 
-        if user.profile.score >= self.points_to_next_level(user.profile.score):
+        if user.profile.score >= self.points_to_next_level(user):
             user.profile.level += 1
 
         user.profile.save()
@@ -166,5 +167,5 @@ class Gamification:
         base_xp = self.settings.xp_base
         exponential_factor = self.settings.exponential_factor
         next_level_xp = base_xp * (user_level + 1) ** exponential_factor
-
-        return next_level_xp - user_xp
+        print(exponential_factor, user_xp, user_level, base_xp, next_level_xp)
+        return int(next_level_xp - user_xp)

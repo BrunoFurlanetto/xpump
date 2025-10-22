@@ -4,6 +4,7 @@ from django.db.models import Window, F
 from django.db.models.functions.window import Rank
 from rest_framework import serializers
 
+from gamification.services import Gamification
 from groups.models import GroupMembers
 from nutrition.models import MealStreak, MealConfig
 from workouts.models import WorkoutStreak
@@ -19,6 +20,7 @@ class ProfilesSerialializer(serializers.ModelSerializer):
     meal_streak = serializers.SerializerMethodField()  # Read-only for meal streak information
     groups = serializers.SerializerMethodField()  # Override groups field to return detailed information
     pending_groups = serializers.SerializerMethodField()  # New field for pending groups
+    points_to_next_level = serializers.SerializerMethodField()  # New field for points to next level
 
     class Meta:
         model = Profile
@@ -31,10 +33,15 @@ class ProfilesSerialializer(serializers.ModelSerializer):
             'notification_preferences',
             'score',
             'groups',
+            'level',
             'pending_groups',
+            'points_to_next_level',
             'workout_streak',  # Computed field with workout streak data
             'meal_streak',  # Computed field with meal streak data
         )
+
+    def get_points_to_next_level(self, obj):
+        return Gamification().points_to_next_level(obj.user)
 
     def get_groups(self, obj):
         """

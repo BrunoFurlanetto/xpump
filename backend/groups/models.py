@@ -46,6 +46,12 @@ class Group(models.Model):
         else:
             super().save(*args, **kwargs)
 
+    def member_count(self):
+        """
+        Return the count of active (non-pending) members in the group.
+        """
+        return GroupMembers.objects.filter(group=self, pending=False).count()
+
     def rank(self):
         """
         Calculate and return the ranking of group members based on their profile scores.
