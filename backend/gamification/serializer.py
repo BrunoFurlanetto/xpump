@@ -6,7 +6,7 @@ from gamification.models import GamificationSettings, Season
 class GamificationSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = GamificationSettings
-        exclude = 'singleton_id'
+        exclude = ['singleton_id']
 
 
 class SeasonSerializer(serializers.ModelSerializer):

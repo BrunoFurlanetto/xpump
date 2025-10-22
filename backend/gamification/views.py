@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from drf_spectacular.utils import extend_schema
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
@@ -7,6 +8,7 @@ from gamification.models import GamificationSettings, Season
 from gamification.serializer import GamificationSettingsSerializer, SeasonSerializer
 
 
+@extend_schema(tags=['Gamification settings'])
 class ListGamificationSettingsAPIView(ListCreateAPIView):
     """
     API view to create and list gamification settings.
@@ -24,6 +26,7 @@ class ListGamificationSettingsAPIView(ListCreateAPIView):
         return super().post(request, *args, **kwargs)
 
 
+@extend_schema(tags=['Gamification settings'])
 class DetailGamificationSettingsAPIView(RetrieveUpdateAPIView):
     """
     API view to retrieve and update gamification settings.
@@ -33,18 +36,21 @@ class DetailGamificationSettingsAPIView(RetrieveUpdateAPIView):
     permission_classes = [IsAdminUser]
 
 
+@extend_schema(tags=['Season'])
 class SeasonList(ListCreateAPIView):
     queryset = Season.objects.all()
     serializer_class = SeasonSerializer
     permission_classes = [IsAdminUser]
 
 
+@extend_schema(tags=['Season'])
 class SeasonDetail(RetrieveUpdateDestroyAPIView):
     queryset = Season.objects.all()
     serializer_class = SeasonSerializer
     permission_classes = [IsAdminUser]
 
 
+@extend_schema(tags=['Season'])
 class SeasonByClient(ListAPIView):
     """
     API view to list seasons by client ID.
