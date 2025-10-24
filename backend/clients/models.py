@@ -1,4 +1,6 @@
 # clients/models.py
+import uuid
+
 from django.contrib.auth.models import User
 from django.core.validators import EmailValidator
 from django.db import models
@@ -19,6 +21,7 @@ class Client(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
     owners = models.ForeignKey(User, on_delete=models.PROTECT, related_name='clients', verbose_name='Proprietário')
     groups = models.ManyToManyField(Group, blank=True, related_name='clients', verbose_name='Grupos')
+    client_code = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name='Código do Cliente')
 
     class Meta:
         verbose_name = "Cliente"

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from clients.models import Client
 from groups.models import Group
 
 
@@ -17,6 +18,7 @@ class Profile(models.Model):
     score = models.FloatField(default=0.0)
     level = models.PositiveIntegerField(default=0)
     groups = models.ManyToManyField(Group, blank=True)
+    employer = models.ForeignKey(Client, on_delete=models.PROTECT, related_name='employees')
 
     def __str__(self):
         return f'Profile of {self.user.get_full_name()}'
