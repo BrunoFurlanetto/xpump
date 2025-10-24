@@ -23,7 +23,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--username', '-u', type=str, help='Username')
         parser.add_argument('--user-id', '-i', type=int, help='ID for user')
-        parser.add_argument('--amount', '-a', type=int, help='Amount of XP to add')
+        parser.add_argument('--amount', '-a', type=float, help='Amount of XP to add')
 
     def handle(self, *args, **options):
         username = options.get('username')
@@ -43,7 +43,7 @@ class Command(BaseCommand):
 
         if Gamification is None:
             raise CommandError('Could not import Gamification. Adjust the import command.')
-        print(user)
+
         Gamification().add_xp(user, amount)
 
         self.stdout.write(self.style.SUCCESS(f'XP added for {user.username}.'))

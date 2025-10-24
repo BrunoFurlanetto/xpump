@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 from django.db import models
 
@@ -125,3 +126,11 @@ class Season(models.Model):
         verbose_name = "Season"
         verbose_name_plural = "Seasons"
         unique_together = ("client", "start_date", "end_date")
+
+    @classmethod
+    def get_user_active_season(cls, user):
+        user_main_group = user.profile.groups.filter(main=True).first()
+        client = Client.objects.filter(groups=user_main_group)
+        season = cls.objects.filter(client=client[0], start_date__lte=datetime.today(), end_date__gte=datetime.today())
+
+        return season

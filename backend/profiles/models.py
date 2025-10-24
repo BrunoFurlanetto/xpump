@@ -14,7 +14,7 @@ class Profile(models.Model):
     weight = models.PositiveSmallIntegerField(null=True, blank=True)
     photo = models.ImageField(upload_to='profile_photos', null=True, blank=True)
     notification_preferences = models.JSONField(default=dict, null=True, blank=True)
-    score = models.PositiveBigIntegerField(default=0)
+    score = models.FloatField(default=0.0)
     level = models.PositiveIntegerField(default=0)
     groups = models.ManyToManyField(Group, blank=True)
 

@@ -12,7 +12,7 @@ class Client(models.Model):
     name = models.CharField(max_length=255, verbose_name='Nome fantasia')
     cnpj = models.CharField(max_length=20, unique=True, verbose_name="CNPJ")
     contact_email = models.EmailField(validators=[EmailValidator()], verbose_name='E-mail')
-    phone = models.CharField(max_length=9, verbose_name="Telefone")
+    phone = models.CharField(max_length=14, verbose_name="Telefone")
     address = models.TextField(verbose_name='Endereço')
     is_active = models.BooleanField(default=True, verbose_name='Ativo')
     created_at = models.DateTimeField(editable=False, default=timezone.now, verbose_name='Criado em')

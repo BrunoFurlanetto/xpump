@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from math import floor
+
+from django.contrib.auth.models import User
 
 from gamification.models import GamificationSettings, Season
-from groups.exceptions import MultipleGroupMembersError
+from groups.exceptions import MultipleGroupMembersError, NothingMainGroupError
 from groups.models import Group
 
 
@@ -50,7 +53,11 @@ class GamificationService(ABC):
         return max(candidates, key=lambda t: t[0])[1]
 
     def base_xp(self, user):
-        actual_season = Season.objects.get(start_date__lt=datetime.today(), end_date__gt=datetime.today())
+        actual_season = Season.get_user_active_season(user)
+        print(actual_season, actual_season.name, actual_season.client)
+        if not actual_season:
+            raise NothingMainGroupError('User has no main group. Talk to an administrator.')
+
         months_to_end_season = (actual_season.end_date - datetime.today().date()).days / 30
         xp = self.get_xp_settings()
 
@@ -127,17 +134,20 @@ class Gamification:
         user.profile.save()
 
     def add_xp(self, user, xp):
-        print(user, xp)
         user.profile.score += xp
-
-        if user.profile.score >= self.points_to_next_level(user):
+        # self.Workout.base_xp(user)
+        print(self.points_to_next_level(user))
+        if user.profile.level < self.convert_to_level(user.profile.score):
             user.profile.level += 1
 
         user.profile.save()
 
-    @staticmethod
-    def remove_xp(user, xp):
+    def remove_xp(self, user, xp):
         user.profile.score -= xp
+
+        if user.profile.level > self.convert_to_level(user.profile.score):
+            user.profile.level -= 1
+
         user.profile.save()
 
     @staticmethod
@@ -161,11 +171,22 @@ class Gamification:
             "total_xp": total_workout_xp + total_meal_xp
         }
 
-    def points_to_next_level(self, user):
-        user_xp = self.get_xp(user)
-        user_level = self.get_level(user)
+    def convert_to_level(self, xp):
         base_xp = self.settings.xp_base
         exponential_factor = self.settings.exponential_factor
-        next_level_xp = base_xp * (user_level + 1) ** exponential_factor
-        print(exponential_factor, user_xp, user_level, base_xp, next_level_xp)
-        return int(next_level_xp - user_xp)
+        level = (xp / base_xp) ** (1 / exponential_factor)
+
+        return floor(level)
+
+    def convert_to_xp(self, level):
+        base_xp = self.settings.xp_base
+        exponential_factor = self.settings.exponential_factor
+        xp = base_xp * (level ** exponential_factor)
+
+        return xp
+
+    def points_to_next_level(self, user):
+        user_xp = self.get_xp(user)
+        next_level = self.get_level(user) + 1
+
+        return max(int(self.convert_to_xp(next_level) - user_xp), 0)
