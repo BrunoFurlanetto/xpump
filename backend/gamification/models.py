@@ -109,8 +109,13 @@ class GamificationSettings(models.Model):
 
     def save(self, *args, **kwargs):
         self.singleton_id = 1
-        self.full_clean(exclude=['singleton_id'])
         super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(singleton_id=1)
+
+        return obj
 
 
 class Season(models.Model):

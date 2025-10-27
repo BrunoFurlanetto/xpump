@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-nutritionbackend</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="xpump-dev-gamification@localhost" uuid="162e607a-8d9e-43bc-9559-29e3a86676c9">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-gamification</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

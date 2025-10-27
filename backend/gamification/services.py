@@ -3,6 +3,7 @@ from datetime import datetime
 from math import floor
 
 from django.contrib.auth.models import User
+from django.utils.functional import cached_property
 
 from gamification.exceptions import NoSeasonFoundError
 from gamification.models import GamificationSettings, Season
@@ -12,16 +13,12 @@ from groups.models import Group
 
 class GamificationService(ABC):
     def __init__(self):
-        self._settings = None
-        self.__key_min_multiplier = None
-        self.__key_max_multiplier = None
+        self._key_min_multiplier = None
+        self._key_max_multiplier = None
 
-    @property
+    @cached_property
     def settings(self):
-        if self._settings is None:
-            self._settings, _ = GamificationSettings.objects.get_or_create(pk=1)
-
-        return self._settings
+        return GamificationSettings.load()
 
     @abstractmethod
     def get_xp_settings(self):
@@ -29,6 +26,11 @@ class GamificationService(ABC):
 
     @abstractmethod
     def get_streak(self, user):
+        ...
+
+    @property
+    @abstractmethod
+    def multiplier_streak_attr(self):
         ...
 
     def calculate(self, user, *args, **kwargs):
@@ -40,10 +42,11 @@ class GamificationService(ABC):
     def get_multiplier(self, user):
         streak = self.get_streak(user)
         candidates = []
+        cfg_collection = getattr(self.settings, self.multiplier_streak_attr)
 
-        for cfg in self.settings.multiplier_workout_streak.values():
-            min_k = cfg.get(self.__key_min_multiplier, 0) or 0
-            max_k = cfg.get(self.__key_max_multiplier)
+        for cfg in cfg_collection.values():
+            min_k = cfg.get(self._key_min_multiplier, 0) or 0
+            max_k = cfg.get(self._key_max_multiplier)
 
             if streak >= min_k and (max_k is None or streak <= max_k):
                 candidates.append((min_k, float(cfg.get("multiplier", 1.0))))
@@ -68,7 +71,8 @@ class GamificationService(ABC):
             except Group.MultipleObjectsReturned:
                 raise MultipleGroupMembersError("User is member of multiple main groups.")
 
-            if user.profile.score < main_user_group.points_first_place() * self.settings.percentage_from_first_position:
+            bonus_percentage = self.settings.season_bonus_percentage / 100
+            if user.profile.score < main_user_group.points_first_place() * bonus_percentage:
                 xp += xp * (self.settings.season_bonus_percentage / 100)
 
         return xp
@@ -77,14 +81,18 @@ class GamificationService(ABC):
 class WorkoutGamification(GamificationService):
     def __init__(self):
         super().__init__()
-        self.__key_min_multiplier = "min_workouts"
-        self.__key_max_multiplier = "max_workouts"
+        self._key_min_multiplier = "min_workouts"
+        self._key_max_multiplier = "max_workouts"
 
     def get_xp_settings(self):
         return self.settings.workout_xp
 
     def get_streak(self, user):
         return user.workout_streak.current_streak
+
+    @property
+    def multiplier_streak_attr(self):
+        return "multiplier_workout_streak"
 
     def calculate(self, user, *args):
         if len(args) != 1:
@@ -101,14 +109,18 @@ class WorkoutGamification(GamificationService):
 class MealGamification(GamificationService):
     def __init__(self):
         super().__init__()
-        self.__key_min_multiplier = "min_days"
-        self.__key_max_multiplier = "max_days"
+        self._key_min_multiplier = "min_days"
+        self._key_max_multiplier = "max_days"
 
     def get_xp_settings(self):
         return self.settings.meal_xp
 
     def get_streak(self, user):
         return user.meal_streak.current_streak
+
+    @property
+    def multiplier_streak_attr(self):
+        return "multiplier_meal_streak"
 
 
 class Gamification:
@@ -118,12 +130,9 @@ class Gamification:
     Workout = WorkoutGamification()
     Meal = MealGamification()
 
-    @property
+    @cached_property
     def settings(self):
-        if self._settings is None:
-            self._settings, _ = GamificationSettings.objects.get_or_create(pk=1)
-
-        return self._settings
+        return GamificationSettings.load()
 
     @staticmethod
     def get_xp(user):
