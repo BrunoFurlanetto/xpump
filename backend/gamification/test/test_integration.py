@@ -86,7 +86,7 @@ class WorkoutGamificationIntegrationTest(TestCase):
         initial_score = self.profile.score
         # Simulate workout completion with gamification
         duration = timedelta(minutes=60)
-        print(GamificationSettings.objects.all())
+
         with patch('gamification.services.Season.objects.get') as mock_season:
             mock_season.return_value = MagicMock()
             mock_season.return_value.end_date = date.today() + timedelta(days=90)

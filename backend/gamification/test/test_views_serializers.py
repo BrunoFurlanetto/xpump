@@ -120,14 +120,14 @@ class GamificationSettingsAPITest(APITestCase):
     def test_list_gamification_settings_admin(self):
         """Test listing gamification settings as admin"""
         self.client.force_authenticate(user=self.admin_user)
-        url = reverse('list_gamification_settings')
+        url = reverse('list-gamification-settings')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_list_gamification_settings_regular_user(self):
         """Test listing gamification settings as regular user (should be forbidden)"""
         self.client.force_authenticate(user=self.regular_user)
-        url = reverse('list_gamification_settings')
+        url = reverse('list-gamification-settings')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -142,7 +142,7 @@ class GamificationSettingsAPITest(APITestCase):
             'workout_xp': 5,
             'meal_xp': 3
         }
-        url = reverse('list_gamification_settings')
+        url = reverse('list-gamification-settings')
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -152,7 +152,7 @@ class GamificationSettingsAPITest(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
 
         data = {'xp_base': 10}
-        url = reverse('list_gamification_settings')
+        url = reverse('list-gamification-settings')
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Only one GamificationSettings instance is allowed', response.data['detail'])
@@ -163,7 +163,7 @@ class GamificationSettingsAPITest(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
 
         data = {'xp_base': 15, 'workout_xp': 8}
-        url = reverse('detail_gamification_settings', args=[settings.id])
+        url = reverse('detail-gamification-settings', args=[settings.id])
         response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -176,7 +176,7 @@ class GamificationSettingsAPITest(APITestCase):
         settings = GamificationSettings.objects.create(xp_base=12)
         self.client.force_authenticate(user=self.admin_user)
 
-        url = reverse('detail_gamification_settings', args=[settings.id])
+        url = reverse('detail-gamification-settings', args=[settings.id])
         response = self.client.get(url)
         self.assertEqual(response.data['xp_base'], 12)
 

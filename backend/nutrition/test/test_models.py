@@ -1000,7 +1000,7 @@ class MealStreakModelTests(TestCase):
                 meal_time=meal_time,
                 comments='Test meal'
             )
-        print(MealConfig.objects.count())
+
         remaining = self.meal_streak.weekly_remaining
         self.assertEqual(remaining, 19)  # 21 - 2 = 19 (3 tipos * 7 dias - 2 refeições)
 

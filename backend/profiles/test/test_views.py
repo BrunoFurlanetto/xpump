@@ -1,7 +1,10 @@
 # profiles/tests.py
+import base64
+import io
 import os
 import tempfile
 
+from PIL import Image
 from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -10,6 +13,7 @@ from rest_framework import status
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
+from clients.models import Client
 from core import settings
 from profiles.models import Profile
 
@@ -35,6 +39,16 @@ class ProfilesAPIViewTestCase(APITestCase):
             "is_superuser": True,
         }
         self.user = User.objects.create_user(**self.user_data)
+
+        self.client_obj = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
         self.url = reverse('profiles-list')  # URL for the user list endpoint
         self.detail_url = reverse('profile-detail', args=[self.user.id])  # URL for the user detail endpoint
         self.client.login(username=self.user_data['username'], password=self.user_data['password'])
@@ -51,7 +65,8 @@ class ProfilesAPIViewTestCase(APITestCase):
                 "password2": "password1",
                 "first_name": "Test",
                 "last_name": "User1",
-                "email": "testuser1@example.com"
+                "email": "testuser1@example.com",
+                "client_code": self.client_obj.client_code
             },
             {
                 "username": "testuser2",
@@ -59,7 +74,8 @@ class ProfilesAPIViewTestCase(APITestCase):
                 "password2": "password2",
                 "first_name": "Test",
                 "last_name": "User2",
-                "email": "testuser2@example.com"
+                "email": "testuser2@example.com",
+                "client_code": self.client_obj.client_code
             },
             {
                 "username": "testuser3",
@@ -67,7 +83,8 @@ class ProfilesAPIViewTestCase(APITestCase):
                 "password2": "password3",
                 "first_name": "Test",
                 "last_name": "User3",
-                "email": "testuser3@example.com"
+                "email": "testuser3@example.com",
+                "client_code": self.client_obj.client_code
             }
         ]
 
@@ -126,6 +143,15 @@ class ProfileAPIViewTestCase(APITestCase):
         self.url = reverse('profiles-list')  # URL for the user list endpoint
         self.client.login(username=self.user_data['username'], password=self.user_data['password'])
 
+        self.client_obj = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
         # Creation profiles from users-list endpoint
         self.users = []
         self.profiles = []
@@ -138,7 +164,8 @@ class ProfileAPIViewTestCase(APITestCase):
                 "password2": "password1",
                 "first_name": "Test",
                 "last_name": "User1",
-                "email": "testuser1@example.com"
+                "email": "testuser1@example.com",
+                "client_code": self.client_obj.client_code
             },
             {
                 "username": "testuser2",
@@ -146,7 +173,8 @@ class ProfileAPIViewTestCase(APITestCase):
                 "password2": "password2",
                 "first_name": "Test",
                 "last_name": "User2",
-                "email": "testuser2@example.com"
+                "email": "testuser2@example.com",
+                "client_code": self.client_obj.client_code
             },
             {
                 "username": "testuser3",
@@ -154,7 +182,8 @@ class ProfileAPIViewTestCase(APITestCase):
                 "password2": "password3",
                 "first_name": "Test",
                 "last_name": "User3",
-                "email": "testuser3@example.com"
+                "email": "testuser3@example.com",
+                "client_code": self.client_obj.client_code
             }
         ]
 
@@ -184,13 +213,18 @@ class ProfileAPIViewTestCase(APITestCase):
         The test ensures that authenticated users can update their profile data,
         including updating the photo.
         """
-        # Prepare image for upload
-        with open('img_tests/perfils.jpg', 'rb') as image_file:
-            image = SimpleUploadedFile(
-                name='testphoto.jpg',
-                content=image_file.read(),
-                content_type='image/jpeg'
-            )
+        # Gera uma imagem PNG 1x1 válida em memória
+        image_io = io.BytesIO()
+        img = Image.new("RGBA", (1, 1), (255, 0, 0, 0))
+        img.save(image_io, format="PNG")
+        image_io.seek(0)
+        image_content = image_io.read()
+
+        image = SimpleUploadedFile(
+            name='testphoto.png',
+            content=image_content,
+            content_type='image/png'
+        )
 
         # Prepare data to update profile
         data = {
@@ -202,6 +236,7 @@ class ProfileAPIViewTestCase(APITestCase):
 
         # Send PUT request with the image and other data
         response = self.client.put(self.detail_url, data, format='multipart')
+
         # Ensure the response is OK (200)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -261,6 +296,15 @@ class ProfileUnauthorizedAccessTestCase(APITestCase):
         self.url = reverse('profiles-list')  # URL for the user list endpoint
         self.client.login(username=self.user_data['username'], password=self.user_data['password'])
 
+        self.client_obj = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
         # Creation profiles from users-list endpoint
         self.users = []
         self.profiles = []
@@ -273,7 +317,8 @@ class ProfileUnauthorizedAccessTestCase(APITestCase):
                 "password2": "password1",
                 "first_name": "Test",
                 "last_name": "User1",
-                "email": "testuser1@example.com"
+                "email": "testuser1@example.com",
+                "client_code": self.client_obj.client_code
             },
             {
                 "username": "testuser2",
@@ -281,7 +326,8 @@ class ProfileUnauthorizedAccessTestCase(APITestCase):
                 "password2": "password2",
                 "first_name": "Test",
                 "last_name": "User2",
-                "email": "testuser2@example.com"
+                "email": "testuser2@example.com",
+                "client_code": self.client_obj.client_code
             },
             {
                 "username": "testuser3",
@@ -289,7 +335,8 @@ class ProfileUnauthorizedAccessTestCase(APITestCase):
                 "password2": "password3",
                 "first_name": "Test",
                 "last_name": "User3",
-                "email": "testuser3@example.com"
+                "email": "testuser3@example.com",
+                "client_code": self.client_obj.client_code
             }
         ]
 

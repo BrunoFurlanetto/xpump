@@ -138,14 +138,22 @@ class GamificationIntegrationWithGroupsTest(TestCase):
     """Integration tests between gamification and groups functionality"""
 
     def setUp(self):
-        self.client_obj = Client.objects.create(name="Test Client")
         self.settings = GamificationSettings.objects.create()
 
         self.user1 = User.objects.create_user(username='user1', password='pass')
         self.user2 = User.objects.create_user(username='user2', password='pass')
 
-        self.profile1 = Profile.objects.create(user=self.user1, score=100, level=1)
-        self.profile2 = Profile.objects.create(user=self.user2, score=300, level=2)
+        self.client_obj = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.profile1 = Profile.objects.create(user=self.user1, score=100, level=1, employer=self.client_obj)
+        self.profile2 = Profile.objects.create(user=self.user2, score=300, level=2, employer=self.client_obj)
 
         self.group = Group.objects.create(
             name="Test Group",
