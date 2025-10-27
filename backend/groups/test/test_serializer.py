@@ -1,6 +1,12 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from django.test import TestCase
+
+from clients.models import Client
+from gamification.models import Season
 from groups.models import Group, GroupMembers
 from groups.serializer import GroupSerializer, GroupMemberSerializer
 from profiles.models import Profile
@@ -9,7 +15,24 @@ from profiles.models import Profile
 class GroupSerializerTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='password')
-        Profile.objects.create(user=self.user)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, employer=self.employer)
         self.group = Group.objects.create(
             name="Test Group",
             description="Test Description",
@@ -94,8 +117,25 @@ class GroupMembersSerializerTest(TestCase):
     def setUp(self):
         self.user1 = User.objects.create_user(username='user1', password='password')
         self.user2 = User.objects.create_user(username='user2', password='password')
-        Profile.objects.create(user=self.user1)
-        Profile.objects.create(user=self.user2)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user1, employer=self.employer)
+        Profile.objects.create(user=self.user2, employer=self.employer)
 
         self.group = Group.objects.create(
             name="Test Group",
