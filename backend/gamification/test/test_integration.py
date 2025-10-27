@@ -408,4 +408,4 @@ class GamificationReportsIntegrationTest(TestCase):
 
         # Verify that the gamification services were called correctly
         mock_workout_calc.assert_called_once_with(self.user, mock_workout.duration)
-        mock_meal_calc.assert_called_once_with(self.user, mock_meal.duration)
+        mock_meal_calc.assert_called_once_with(self.user)

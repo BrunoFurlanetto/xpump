@@ -36,13 +36,6 @@ class UserAuthenticationTests(APITestCase):
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
 
-        # self.season = Season.objects.create(
-        #     name='Season 1',
-        #     start_date=timezone.now() - timedelta(days=180),
-        #     end_date=timezone.now() + timedelta(days=180),
-        #     client=self.employer
-        # )
-
     def test_user_creation(self):
         """
         Tests the creation of a new user and the automatic creation of their profile.

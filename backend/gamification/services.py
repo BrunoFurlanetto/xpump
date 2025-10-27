@@ -145,7 +145,6 @@ class Gamification:
 
     def add_xp(self, user, xp):
         user.profile.score += xp
-        # self.Workout.base_xp(user)
 
         if user.profile.level < self.convert_to_level(user.profile.score):
             user.profile.level += 1
@@ -173,7 +172,7 @@ class Gamification:
             total_workout_xp += self.Workout.calculate(user, workout.duration)
 
         for meal in meals:
-            total_meal_xp += self.Meal.calculate(user, meal.duration)
+            total_meal_xp += self.Meal.calculate(user)
 
         return {
             "workout_xp": total_workout_xp,

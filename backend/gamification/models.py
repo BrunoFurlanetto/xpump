@@ -96,7 +96,7 @@ class GamificationSettings(models.Model):
     )
     percentage_from_first_position = models.FloatField(
         default=60.0,
-        help_text="Porcentagem de pontos do primeiro colocado que deverão receber boônus de XP no final da temporada"
+        help_text="Porcentagem de pontos do primeiro colocado que deverão receber bônus de XP no final da temporada"
     )
     singleton_id = models.PositiveSmallIntegerField(default=1, unique=True, editable=False)
 

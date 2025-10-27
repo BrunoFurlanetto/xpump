@@ -7,13 +7,13 @@ User = get_user_model()
 
 try:
     from gamification.services import Gamification
-except Exception:
+except ImportError:
     try:
         from gamification import Gamification
-    except Exception:
+    except ImportError:
         try:
             from backend.gamification.services import Gamification
-        except Exception:
+        except ImportError:
             Gamification = None
 
 
