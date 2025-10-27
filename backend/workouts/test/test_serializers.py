@@ -5,6 +5,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
+from clients.models import Client
+from gamification.models import Season
 from workouts.models import WorkoutCheckin, WorkoutCheckinProof, WorkoutPlan, WorkoutStreak
 from workouts.serializer import WorkoutCheckinSerializer, WorkoutCheckinProofSerializer, WorkoutPlanSerializer
 from status.models import Status
@@ -19,7 +21,23 @@ class WorkoutCheckinProofSerializerTest(TestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
         WorkoutStreak.objects.create(user=self.user)
 
         self.status = Status.objects.create(
@@ -82,7 +100,23 @@ class WorkoutCheckinSerializerTest(TestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
         self.workout_streak = WorkoutStreak.objects.create(
             user=self.user,
             current_streak=5,
@@ -224,7 +258,7 @@ class WorkoutCheckinSerializerTest(TestCase):
             email='nostreak@example.com',
             password='testpass123'
         )
-        Profile.objects.create(user=user_no_streak, score=0)
+        Profile.objects.create(user=user_no_streak, score=0, employer=self.employer)
 
         # Não criar WorkoutStreak para este usuário
         checkin = WorkoutCheckin.objects.create(

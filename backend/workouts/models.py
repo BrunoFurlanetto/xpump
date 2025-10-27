@@ -38,7 +38,7 @@ class WorkoutCheckin(models.Model):
         Automatically sets validation status and updates user's score.
         """
         self.clean()
-        self.duration = self.duration
+        # self.duration = self.duration
         # Set validation status to published for workouts
         self.validation_status = Status.objects.filter(app_name='WORKOUT', action='PUBLISHED', is_active=True).first()
 

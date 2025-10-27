@@ -4,6 +4,7 @@ from datetime import datetime
 from django.db import models
 
 from clients.models import Client
+from gamification.exceptions import MultipleSeasonsFoundError
 
 DEFAULT_MULTIPLIER_WORKOUT_STREAK = {
     "first_streak_day": {
@@ -129,8 +130,11 @@ class Season(models.Model):
 
     @classmethod
     def get_user_active_season(cls, user):
-        user_main_group = user.profile.groups.filter(main=True).first()
-        client = Client.objects.filter(groups=user_main_group)
-        season = cls.objects.filter(client=client[0], start_date__lte=datetime.today(), end_date__gte=datetime.today())
+        client = user.profile.employer
+
+        try:
+            season = cls.objects.get(client=client, start_date__lte=datetime.today(), end_date__gte=datetime.today())
+        except cls.MultipleObjectsReturned:
+            raise MultipleSeasonsFoundError(f'Multiple active seasons found for client {client.name}.')
 
         return season

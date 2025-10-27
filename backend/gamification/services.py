@@ -4,6 +4,7 @@ from math import floor
 
 from django.contrib.auth.models import User
 
+from gamification.exceptions import NoSeasonFoundError
 from gamification.models import GamificationSettings, Season
 from groups.exceptions import MultipleGroupMembersError, NothingMainGroupError
 from groups.models import Group
@@ -54,9 +55,9 @@ class GamificationService(ABC):
 
     def base_xp(self, user):
         actual_season = Season.get_user_active_season(user)
-        print(actual_season, actual_season.name, actual_season.client)
+
         if not actual_season:
-            raise NothingMainGroupError('User has no main group. Talk to an administrator.')
+            raise NoSeasonFoundError(f'No active season found for {user.profile.employer.name}.')
 
         months_to_end_season = (actual_season.end_date - datetime.today().date()).days / 30
         xp = self.get_xp_settings()
@@ -136,7 +137,7 @@ class Gamification:
     def add_xp(self, user, xp):
         user.profile.score += xp
         # self.Workout.base_xp(user)
-        print(self.points_to_next_level(user))
+
         if user.profile.level < self.convert_to_level(user.profile.score):
             user.profile.level += 1
 

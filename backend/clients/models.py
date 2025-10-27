@@ -19,6 +19,15 @@ class Client(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='Ativo')
     created_at = models.DateTimeField(editable=False, default=timezone.now, verbose_name='Criado em')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
+    updated_by = models.ForeignKey(
+        User,
+        limit_choices_to={'is_staff': True},
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_clients',
+        verbose_name='Atualizado por'
+    )
     owners = models.ForeignKey(User, on_delete=models.PROTECT, related_name='clients', verbose_name='Proprietário')
     groups = models.ManyToManyField(Group, blank=True, related_name='clients', verbose_name='Grupos')
     client_code = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name='Código do Cliente')

@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 
+from clients.models import Client
+from gamification.models import Season
 from workouts.views import (
     WorkoutCheckinsAPIView,
     WorkoutCheckinAPIView,
@@ -25,7 +27,23 @@ class WorkoutURLsTest(TestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
         WorkoutStreak.objects.create(user=self.user)
 
         self.status = Status.objects.create(
@@ -207,7 +225,8 @@ class WorkoutURLsTest(TestCase):
             email='user2@example.com',
             password='pass123'
         )
-        Profile.objects.create(user=user2, score=0)
+
+        Profile.objects.create(user=user2, score=0, employer=self.employer)
         WorkoutStreak.objects.create(user=user2)
 
         checkin2 = WorkoutCheckin.objects.create(
