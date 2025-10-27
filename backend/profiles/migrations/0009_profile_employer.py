@@ -4,6 +4,23 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def create_client(apps, schema_editor):
+    Client = apps.get_model('clients', 'Client')
+    User = apps.get_model('auth', 'User')
+
+    Client.objects.get_or_create(
+        id=1,
+        defaults={
+            'name': 'Test Client',
+            'cnpj': '12.345.678/0001-90',
+            'owners': User.objects.get(id=1),
+            'contact_email': 'contato@cliente.test',
+            'phone': '(11)99999-9999',
+            'address': 'Rua Exemplo, 123, Bairro, Cidade - SP',
+        }
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,6 +29,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(create_client),
         migrations.AddField(
             model_name='profile',
             name='employer',
