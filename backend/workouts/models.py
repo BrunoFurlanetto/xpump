@@ -42,17 +42,17 @@ class WorkoutCheckin(models.Model):
         # Set validation status to published for workouts
         self.validation_status = Status.objects.filter(app_name='WORKOUT', action='PUBLISHED', is_active=True).first()
 
-        try:
-            # Update user's workout streak
-            self.user.workout_streak.update_streak(self.workout_date)
-        except RelatedObjectDoesNotExist:
-            # Create workout streak if it doesn't exist
-            WorkoutStreak.objects.create(
-                user=self.user,
-                current_streak=1,
-                longest_streak=1,
-                last_workout_datetime=self.workout_date,
-            )
+        streak, created = WorkoutStreak.objects.get_or_create(
+            user=self.user,
+            defaults={
+                'current_streak': 1,
+                'longest_streak': 1,
+                'last_workout_datetime': self.workout_date.astimezone(),
+            }
+        )
+
+        if not created:
+            streak.update_streak(self.workout_date.astimezone())
 
         # Calculate multiplier and points based on streak and duration
         self.multiplier = Gamification.Workout.get_multiplier(self.user)

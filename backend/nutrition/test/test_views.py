@@ -1,5 +1,10 @@
 import json
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
+
+from django.utils import timezone
+
+from clients.models import Client
+from gamification.models import Season
 from profiles.models import Profile
 
 from django.urls import reverse
@@ -42,10 +47,26 @@ class NutritionViewsTestCase(APITestCase):
             password='otherpass123'
         )
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Create mock profile for users (assuming profile exists)
         for user in [self.user, self.superuser, self.other_user]:
             if not hasattr(user, 'profile'):
-                profile = Profile.objects.create(user=user)
+                profile = Profile.objects.create(user=user, employer=self.employer)
 
         # Create meal configurations
         self.breakfast_config = MealConfig.objects.create(
@@ -201,9 +222,25 @@ class MealsAPIViewTestCase(APITestCase):
         self.user = User.objects.create_user('user', 'user@test.com', 'pass')
         self.other_user = User.objects.create_user('other', 'other@test.com', 'pass')
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Mock profile for users
         for user in [self.user, self.other_user]:
-            Profile.objects.create(user=user)
+            Profile.objects.create(user=user, employer=self.employer)
 
         self.meal_config = MealConfig.objects.create(
             meal_name='breakfast',
@@ -236,7 +273,6 @@ class MealsAPIViewTestCase(APITestCase):
             'meal_time': meal_time.isoformat(),
             'comments': 'Test meal'
         }
-
         response = self.client.post(url, data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -306,9 +342,25 @@ class MealDetailAPIViewTestCase(APITestCase):
         self.user = User.objects.create_user('user', 'user@test.com', 'pass')
         self.other_user = User.objects.create_user('other', 'other@test.com', 'pass')
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Mock profile
         for user in [self.user, self.other_user]:
-            Profile.objects.create(user=user)
+            Profile.objects.create(user=user, employer=self.employer)
 
         self.meal_config = MealConfig.objects.create(
             meal_name='breakfast',
@@ -403,9 +455,25 @@ class MealsByUserAPIViewTestCase(APITestCase):
         self.user = User.objects.create_user('user', 'user@test.com', 'pass')
         self.other_user = User.objects.create_user('other', 'other@test.com', 'pass')
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Mock profiles
         for user in [self.user, self.other_user]:
-            Profile.objects.create(user=user)
+            Profile.objects.create(user=user, employer=self.employer)
 
         self.meal_config = MealConfig.objects.create(
             meal_name='breakfast',
@@ -553,7 +621,24 @@ class ValidationTestCase(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user('user', 'user@test.com', 'pass')
-        Profile.objects.create(user=self.user)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, employer=self.employer)
 
         self.meal_config = MealConfig.objects.create(
             meal_name='breakfast',
@@ -624,9 +709,25 @@ class MealsByUserByIntervalDateAPIViewTestCase(APITestCase):
         self.user = User.objects.create_user('testuser', 'test@example.com', 'testpass')
         self.other_user = User.objects.create_user('otheruser', 'other@example.com', 'otherpass')
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Create profiles
         for user in [self.user, self.other_user]:
-            Profile.objects.create(user=user)
+            Profile.objects.create(user=user, employer=self.employer)
 
         # Create meal configurations
         self.breakfast_config = MealConfig.objects.create(

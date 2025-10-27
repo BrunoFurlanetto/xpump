@@ -133,6 +133,7 @@ class MealsAPIView(ListCreateAPIView):
         Manages validation errors and provides detailed error responses.
         """
         serializer = self.get_serializer(data=request.data)
+
         if serializer.is_valid():
             try:
                 self.perform_create(serializer)

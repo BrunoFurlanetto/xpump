@@ -9,6 +9,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.utils import timezone
 
+from clients.models import Client
+from gamification.models import Season
 from nutrition.models import Meal, MealConfig, MealStreak, MealProof, NutritionPlan
 from status.models import Status
 from profiles.models import Profile
@@ -131,12 +133,29 @@ class MealModelTest(TestCase):
             password='testpass123'
         )
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Create profile for the user (needed for score calculation)
         self.profile = Profile.objects.create(
             user=self.user,
             score=0,
             height=175,
-            weight=70
+            weight=70,
+            employer=self.employer
         )
 
         # Create MealConfig
@@ -206,21 +225,6 @@ class MealModelTest(TestCase):
         self.assertEqual(self.user.meal_streak.current_streak, 3)
         self.assertEqual(self.user.meal_streak.longest_streak, 3)
 
-    def test_meal_calculates_base_points(self):
-        """Test that meal calculates base_points correctly"""
-        meal = Meal.objects.create(**self.meal_data)
-
-        expected_points = 10 * meal.multiplier
-        self.assertEqual(meal.base_points, expected_points)
-
-    def test_meal_updates_user_profile_score(self):
-        """Test that meal updates user's profile score"""
-        initial_score = self.profile.score
-        meal = Meal.objects.create(**self.meal_data)
-
-        self.profile.refresh_from_db()
-        self.assertEqual(self.profile.score, initial_score + meal.base_points)
-
     def test_meal_time_validation_within_interval(self):
         """Test that meal_time must be within the configured interval"""
         # Valid time within interval (7:00 - 10:00)
@@ -268,53 +272,8 @@ class MealModelTest(TestCase):
         meal = Meal.objects.create(**different_day_meal_data)
         self.assertIsNotNone(meal.id)
 
-    def test_multiplier_calculation_based_on_streak(self):
-        """Test multiplier calculation based on streak length"""
-        # Create meal configs to test multiplier calculation
-        MealConfig.objects.create(
-            meal_name='lunch',
-            interval_start=time(12, 0),
-            interval_end=time(14, 0)
-        )
-        MealConfig.objects.create(
-            meal_name='dinner',
-            interval_start=time(19, 0),
-            interval_end=time(21, 0)
-        )
-
-        meal_configs_count = MealConfig.objects.count()  # Should be 3 now
-
-        # Test different streak levels
-        test_cases = [
-            (1, 1.0),  # streak < meal_records * 2
-            (meal_configs_count * 2, 1.25),  # meal_records * 2 <= streak < meal_records * 8
-            (meal_configs_count * 8, 1.50),  # meal_records * 8 <= streak < meal_records * 16
-            (meal_configs_count * 16, 1.75),  # meal_records * 16 <= streak < meal_records * 32
-            (meal_configs_count * 32, 2.0),  # streak >= meal_records * 32
-        ]
-
-        for streak, expected_multiplier in test_cases:
-
-            with self.subTest(streak=streak, expected_multiplier=expected_multiplier):
-                # Create user with specific streak
-                user = User.objects.create_user(
-                    username=f'testuser_{streak}',
-                    email=f'test_{streak}@example.com',
-                    password='testpass123'
-                )
-                Profile.objects.create(user=user, score=0, height=175, weight=70)
-                MealStreak.objects.create(
-                    user=user,
-                    current_streak=streak,
-                    longest_streak=streak,
-                    last_meal_datetime=datetime(2025, 8, 26, 20, 30)
-                )
-
-                meal_data = self.meal_data.copy()
-                meal_data['user'] = user
-                meal = Meal.objects.create(**meal_data)
-
-                self.assertEqual(meal.multiplier, expected_multiplier)
+    # Gamification-related tests moved to gamification app
+    # def test_multiplier_calculation_based_on_streak - moved to gamification.tests
 
     def test_meal_optional_comments(self):
         """Test that comments field is optional"""
@@ -347,12 +306,29 @@ class MealProofModelTest(TestCase):
             password='testpass123'
         )
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Create profile for the user
         self.profile = Profile.objects.create(
             user=self.user,
             score=0,
             height=175,
-            weight=70
+            weight=70,
+            employer=self.employer
         )
 
         # Create MealConfig
@@ -952,7 +928,24 @@ class MealStreakModelTests(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='testpass')
-        Profile.objects.create(user=self.user)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, employer=self.employer)
         self.meal_streak = MealStreak.objects.create(
             user=self.user,
             last_meal_datetime=(timezone.now() - timedelta(days=7)).replace(hour=20)

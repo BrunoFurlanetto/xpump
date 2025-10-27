@@ -52,17 +52,17 @@ class Meal(models.Model):
             'action': 'PUBLISHED',
         })
 
-        try:
-            # Update user's workout streak
-            self.user.meal_streak.update_streak(self.meal_time.astimezone())
-        except RelatedObjectDoesNotExist:
-            # Create workout streak if it doesn't exist
-            MealStreak.objects.create(
-                user=self.user,
-                current_streak=1,
-                longest_streak=1,
-                last_meal_datetime=self.meal_time.astimezone(),
-            )
+        streak, created = MealStreak.objects.get_or_create(
+            user=self.user,
+            defaults={
+                'current_streak': 1,
+                'longest_streak': 1,
+                'last_meal_datetime': self.meal_time.astimezone(),
+            }
+        )
+
+        if not created:
+            streak.update_streak(self.meal_time.astimezone())
 
         # Calculate multiplier and points based on streak
         self.multiplier = Gamification.Meal.get_multiplier(self.user)
@@ -182,6 +182,7 @@ class MealStreak(models.Model):
         self.last_meal_datetime = meal_datetime
 
         self.save()
+
         return self.current_streak
 
     def check_streak_ended(self, meal_datetime):

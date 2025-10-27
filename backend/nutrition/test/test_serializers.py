@@ -1,9 +1,13 @@
-from datetime import datetime, time, date
+from datetime import datetime, time, date, timedelta
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.test import APITestCase
+
+from clients.models import Client
+from gamification.models import Season
 from nutrition.models import Meal, MealConfig, MealStreak, MealProof, NutritionPlan
 from nutrition.serializer import MealConfigSerializer, MealProofSerializer, MealSerializer, NutritionPlanSerializer
 from status.models import Status
@@ -107,12 +111,29 @@ class MealProofSerializerTest(TestCase):
             password='testpass123'
         )
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Create profile
         self.profile = Profile.objects.create(
             user=self.user,
             score=0,
             height=175,
-            weight=70
+            weight=70,
+            employer=self.employer
         )
 
         # Create MealConfig
@@ -183,12 +204,29 @@ class MealSerializerTest(TestCase):
             password='testpass123'
         )
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Create profile
         self.profile = Profile.objects.create(
             user=self.user,
             score=0,
             height=175,
-            weight=70
+            weight=70,
+            employer=self.employer
         )
 
         # Create MealConfig
