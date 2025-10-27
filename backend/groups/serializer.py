@@ -1,3 +1,5 @@
+from django.db.models import Window, F
+from django.db.models.functions import Rank
 from rest_framework import serializers
 
 from groups.models import Group, GroupMembers
@@ -30,7 +32,13 @@ class GroupSerializer(serializers.ModelSerializer):
         Retrieve and serialize the members of the group.
         Uses GroupMemberSerializer to represent each member.
         """
-        members = obj.groupmembers_set.all().select_related('member')
+        members = obj.groupmembers_set.select_related('member', 'member__profile').annotate(
+            score=F('member__profile__score'),
+            position=Window(
+                expression=Rank(),
+                order_by=F('member__profile__score').desc(),
+            )
+        ).order_by('position')
 
         return [{
                 "id": member.member.id,
@@ -38,7 +46,9 @@ class GroupSerializer(serializers.ModelSerializer):
                 "email": member.member.email,
                 "is_admin": member.is_admin,
                 "joined_at": member.joined_at,
-                "pending": member.pending
+                "pending": member.pending,
+                "position": int(member.position) if not member.pending else None,
+                "score": member.score if not member.pending else None,
             }
             for member in members
         ]

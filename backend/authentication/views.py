@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import (
 )
 
 from authentication.serializer import UserSerializer
+from clients.models import Client
 from profiles.models import Profile
 
 
@@ -37,7 +38,6 @@ class UsersListAPIView(generics.ListCreateAPIView):
             # Create user instance
             user = serializer.save()
             # Automatically create associated profile for the new user
-            Profile.objects.create(user=user)
 
             # Return user data with profile information
             return Response({

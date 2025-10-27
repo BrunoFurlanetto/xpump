@@ -1,8 +1,13 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework.test import APIRequestFactory, force_authenticate
 from rest_framework import status
 
+from clients.models import Client
+from gamification.models import Season
 from groups.models import Group, GroupMembers
 from groups.views import (
     GroupsAPIView,
@@ -21,7 +26,24 @@ class GroupViewsTest(TestCase):
         # Users of test
         self.user1 = User.objects.create_user(username='user1', password='password')
         self.user2 = User.objects.create_user(username='user2', password='password')
-        self.profile_user_2 = Profile.objects.create(user=self.user2)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        self.profile_user_2 = Profile.objects.create(user=self.user2, employer=self.employer)
         self.user3 = User.objects.create_user(username='user3', password='password')
         # Created group by user1 (automatically GroupMember created for user1 with admin)
         self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)
@@ -205,9 +227,26 @@ class InviteGroupViewTest(TestCase):
         self.user1 = User.objects.create_user(username='user1', password='password')
         self.user2 = User.objects.create_user(username='user2', password='password')
         self.user3 = User.objects.create_user(username='user3', password='password')
-        Profile.objects.create(user=self.user1)
-        Profile.objects.create(user=self.user2)
-        Profile.objects.create(user=self.user3)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user1, employer=self.employer)
+        Profile.objects.create(user=self.user2, employer=self.employer)
+        Profile.objects.create(user=self.user3, employer=self.employer)
 
         # Group created by user1 (owner and admin)
         self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)
@@ -290,8 +329,25 @@ class InviteAcceptViewTest(TestCase):
         self.factory = APIRequestFactory()
         self.user1 = User.objects.create_user(username='user1', password='password')
         self.user2 = User.objects.create_user(username='user2', password='password')
-        Profile.objects.create(user=self.user1)
-        Profile.objects.create(user=self.user2)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user1, employer=self.employer)
+        Profile.objects.create(user=self.user2, employer=self.employer)
 
         # Group created by user1
         self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)
@@ -360,8 +416,25 @@ class QuitGroupViewTest(TestCase):
         self.factory = APIRequestFactory()
         self.user1 = User.objects.create_user(username='user1', password='password')
         self.user2 = User.objects.create_user(username='user2', password='password')
-        Profile.objects.create(user=self.user1)
-        Profile.objects.create(user=self.user2)
+
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user1, employer=self.employer)
+        Profile.objects.create(user=self.user2, employer=self.employer)
 
         # Group created by user1 (owner)
         self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)

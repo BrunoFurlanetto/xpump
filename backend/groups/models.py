@@ -46,6 +46,51 @@ class Group(models.Model):
         else:
             super().save(*args, **kwargs)
 
+    def member_count(self):
+        """
+        Return the count of active (non-pending) members in the group.
+        """
+        return GroupMembers.objects.filter(group=self, pending=False).count()
+
+    def rank(self):
+        """
+        Calculate and return the ranking of group members based on their profile scores.
+        Returns a list of tuples containing user and their score, sorted in descending order.
+        """
+        members = GroupMembers.objects.filter(group=self, pending=False).select_related('member__profile')
+        ranking = sorted(
+            [(member.member, member.member.profile.score) for member in members],
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        return ranking
+
+    def user_position(self, user):
+        """
+        Get the rank of a specific user within the group.
+        Returns the rank position (1-based index) or None if the user is not a member.
+        """
+        ranking = self.rank()
+
+        for index, (member, _) in enumerate(ranking, start=1):
+            if member == user:
+                return index
+
+        return None
+
+    def points_first_place(self):
+        """
+        Get the score of the top-ranked member in the group.
+        Returns the score or 0 if there are no members.
+        """
+        ranking = self.rank()
+
+        if ranking:
+            return ranking[0][1]
+
+        return 0
+
 
 class GroupMembers(models.Model):
     """

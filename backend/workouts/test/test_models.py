@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from clients.models import Client
+from gamification.models import Season
 from workouts.models import WorkoutCheckin, WorkoutCheckinProof, WorkoutPlan, WorkoutStreak
 from status.models import Status
 from profiles.models import Profile
@@ -19,8 +21,24 @@ class WorkoutCheckinModelTest(TestCase):
             password='testpass123'
         )
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
         # Criar profile para o usuário
-        self.profile = Profile.objects.create(user=self.user)
+        self.profile = Profile.objects.create(user=self.user, employer=self.employer)
 
         # Criar status necessário
         self.status = Status.objects.create(
@@ -106,50 +124,6 @@ class WorkoutCheckinModelTest(TestCase):
             )
             checkin2.full_clean()
 
-    def test_multiplier_calculation_levels(self):
-        """Testa cálculo do multiplicador baseado no streak"""
-        test_cases = [
-            (3, 1.0),    # < 5 check-ins
-            (7, 1.25),   # 5-9 check-ins
-            (15, 1.50),  # 10-19 check-ins
-            (25, 1.75),  # 20-39 check-ins
-            (50, 2.0),   # 40-79 check-ins
-        ]
-
-        for streak, expected_multiplier in test_cases:
-            with self.subTest(streak=streak):
-                self.workout_streak.current_streak = streak
-                self.workout_streak.save()
-
-                checkin = WorkoutCheckin.objects.create(
-                    user=self.user,
-                    workout_date=timezone.now() - timedelta(hours=1),
-                    duration=timedelta(minutes=60)
-                )
-
-                self.assertEqual(checkin.multiplier, expected_multiplier)
-                checkin.delete()  # Limpar para próximo teste
-
-    def test_base_points_calculation(self):
-        """Testa cálculo dos pontos base"""
-        duration_minutes = 60
-        multiplier = 1
-
-        self.workout_streak.current_streak = 15  # Para ter multiplier 1.5
-        self.workout_streak.save()
-
-        checkin = WorkoutCheckin.objects.create(
-            user=self.user,
-            workout_date=timezone.now() - timedelta(hours=1),
-            duration=timedelta(minutes=duration_minutes)
-        )
-
-        # O modelo multiplica duration por 60 no save, então temos que ajustar
-        # Fórmula: 10 * ((duration_total_seconds / 60) / 50) * multiplier
-        # Como duration é multiplicado por 60 no save: duration_minutes * 60 = seconds
-        expected_points = float(40 * ((duration_minutes * 60 / 60) / 50)) * multiplier
-        self.assertEqual(checkin.base_points, expected_points)
-
     def test_profile_score_update(self):
         """Testa atualização da pontuação do perfil"""
         initial_score = self.profile.score
@@ -173,7 +147,23 @@ class WorkoutCheckinProofModelTest(TestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
 
         self.status = Status.objects.create(
             name='Published',
@@ -272,7 +262,23 @@ class WorkoutStreakModelTest(TestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
 
         self.status = Status.objects.create(
             name='Published',
@@ -376,6 +382,7 @@ class WorkoutStreakModelTest(TestCase):
         streak = WorkoutStreak.objects.create(
             user=self.user,
             frequency=5,
+            last_workout_datetime=(timezone.now() - timedelta(days=2))
         )
 
         # Criar apenas 1 check-in na semana atual (insuficiente para frequência 5)

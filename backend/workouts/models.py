@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Count, Q
 from django.utils import timezone
 
+from gamification.services import Gamification
 from profiles.models import Profile
 from status.models import Status
 from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist
@@ -19,7 +20,7 @@ class WorkoutCheckin(models.Model):
     workout date, duration, validation status, and points.
     Automatically calculates points based on workout duration and streak multiplier.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workouts')
     location = models.CharField(max_length=100, null=True, blank=True)
     comments = models.TextField(blank=True)
     workout_date = models.DateTimeField()
@@ -37,31 +38,29 @@ class WorkoutCheckin(models.Model):
         Automatically sets validation status and updates user's score.
         """
         self.clean()
-        self.duration = self.duration
         # Set validation status to published for workouts
         self.validation_status = Status.objects.filter(app_name='WORKOUT', action='PUBLISHED', is_active=True).first()
 
-        try:
-            # Update user's workout streak
-            self.user.workout_streak.update_streak(self.workout_date)
-        except RelatedObjectDoesNotExist:
-            # Create workout streak if it doesn't exist
-            WorkoutStreak.objects.create(
-                user=self.user,
-                current_streak=1,
-                longest_streak=1,
-                last_workout_datetime=self.workout_date,
-            )
+        streak, created = WorkoutStreak.objects.get_or_create(
+            user=self.user,
+            defaults={
+                'current_streak': 1,
+                'longest_streak': 1,
+                'last_workout_datetime': self.workout_date.astimezone(),
+            }
+        )
+
+        if not created:
+            streak.update_streak(self.workout_date.astimezone())
 
         # Calculate multiplier and points based on streak and duration
-        self.multiplier = self.update_multiplier()
-        self.base_points = float(2 * ((self.duration.total_seconds() / 60) / 50)) * self.multiplier
+        self.multiplier = Gamification.Workout.get_multiplier(self.user)
+        self.base_points = Gamification.Workout.calculate(self.user, self.duration)
 
         super().save(*args, **kwargs)
 
         # Update the user's profile with the new points
-        self.user.profile.score += self.base_points
-        self.user.profile.save()
+        Gamification().add_xp(self.user, self.base_points)
 
     def clean(self):
         """
@@ -93,31 +92,6 @@ class WorkoutCheckin(models.Model):
                 raise ValidationError(
                     f"This check-in is overlapping an existing check-in (ID: {workout.id}) "
                 )
-
-    def update_multiplier(self):
-        """
-        The multiplier will be updated based on the check-in sequence. In the first scenario, the multiplier will increase according to the following rule.
-            1. Minor 5 check-ins the multiplier will be 1 (defult value);
-            2. Between 5 and 10: check-ins:  Multiplier recieve 1.25 (increase of the 25%);
-            3. Between 10 and 20 check-ins: Multiplier recieve 1.50 (increase of the 20%)
-            4. Between 20 and 40: Multiplier recieve 1.75 (increase o the 16% approximately)
-            5. Between 40 and 80 check-ins: Multiplier recieve 2.0 (Increase of the 14% approximately)
-        At first, multiplier equal 2.0 is the roof, but this value can be altered, base on the first test version app.
-        """
-        streak = self.user.workout_streak.current_streak
-
-        if streak < 5:
-            self.multiplier = 1.0
-        elif 5 <= streak < 10:
-            self.multiplier = 1.25
-        elif 10 <= streak < 20:
-            self.multiplier = 1.50
-        elif 20 <= streak < 40:
-            self.multiplier = 1.75
-        elif streak >= 40:
-            self.multiplier = 2.0
-
-        return self.multiplier
 
 
 class WorkoutCheckinProof(models.Model):

@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'corsheaders',
     'django_extensions',
+    'gamification.apps.GamificationConfig',
+    'clients.apps.ClientsConfig',
     'authentication.apps.AuthenticationConfig',
     'profiles.apps.ProfilesConfig',
     'groups.apps.GroupsConfig',

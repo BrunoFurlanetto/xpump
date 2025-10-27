@@ -7,6 +7,8 @@ from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
+from clients.models import Client
+from gamification.models import Season
 from workouts.models import WorkoutCheckin, WorkoutCheckinProof, WorkoutPlan, WorkoutStreak
 from workouts.views import IsOwnerOrReadOnly
 from status.models import Status
@@ -27,8 +29,24 @@ class IsOwnerOrReadOnlyPermissionTest(TestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user1, score=0)
-        Profile.objects.create(user=self.user2, score=0)
+        self.client = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.client
+        )
+
+        Profile.objects.create(user=self.user1, score=0, employer=self.client)
+        Profile.objects.create(user=self.user2, score=0, employer=self.client)
         WorkoutStreak.objects.create(user=self.user1)
         WorkoutStreak.objects.create(user=self.user2)
 
@@ -102,7 +120,23 @@ class WorkoutCheckinsAPIViewTest(APITestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
         WorkoutStreak.objects.create(user=self.user)
 
         self.status = Status.objects.create(
@@ -226,8 +260,24 @@ class WorkoutCheckinAPIViewTest(APITestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
-        Profile.objects.create(user=self.other_user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
+        Profile.objects.create(user=self.other_user, score=0, employer=self.employer)
         WorkoutStreak.objects.create(user=self.user)
         WorkoutStreak.objects.create(user=self.other_user)
 
@@ -313,7 +363,23 @@ class WorkoutCheckinsByUserAPIViewTest(APITestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
         WorkoutStreak.objects.create(user=self.user)
 
         self.status = Status.objects.create(
@@ -380,7 +446,23 @@ class WorkoutPlansAPIViewTest(APITestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
 
         self.plan1 = WorkoutPlan.objects.create(
             title='Plano de Hipertrofia',
@@ -432,7 +514,23 @@ class WorkoutPlanAPIViewTest(APITestCase):
             is_superuser=True
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
 
         self.plan = WorkoutPlan.objects.create(
             title='Plano Teste',
@@ -495,7 +593,23 @@ class WorkoutViewsIntegrationTest(APITestCase):
             password='testpass123'
         )
 
-        Profile.objects.create(user=self.user, score=0)
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+
+        Profile.objects.create(user=self.user, score=0, employer=self.employer)
         WorkoutStreak.objects.create(user=self.user)
 
         self.status = Status.objects.create(

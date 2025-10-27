@@ -6,6 +6,7 @@ from django.db import models
 from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist, ValidationError
 from django.utils import timezone
 
+from gamification.services import Gamification
 from status.models import Status
 
 meal_choices = [
@@ -32,7 +33,7 @@ class MealConfig(models.Model):
 
 
 class Meal(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meals')
     meal_type = models.ForeignKey(MealConfig, on_delete=models.PROTECT)
     meal_time = models.DateTimeField()
     comments = models.TextField(blank=True, null=True)
@@ -51,27 +52,26 @@ class Meal(models.Model):
             'action': 'PUBLISHED',
         })
 
-        try:
-            # Update user's workout streak
-            self.user.meal_streak.update_streak(self.meal_time.astimezone())
-        except RelatedObjectDoesNotExist:
-            # Create workout streak if it doesn't exist
-            MealStreak.objects.create(
-                user=self.user,
-                current_streak=1,
-                longest_streak=1,
-                last_meal_datetime=self.meal_time.astimezone(),
-            )
+        streak, created = MealStreak.objects.get_or_create(
+            user=self.user,
+            defaults={
+                'current_streak': 1,
+                'longest_streak': 1,
+                'last_meal_datetime': self.meal_time.astimezone(),
+            }
+        )
+
+        if not created:
+            streak.update_streak(self.meal_time.astimezone())
 
         # Calculate multiplier and points based on streak
-        self.multiplier = self.update_multiplier()
-        self.base_points = float(1 * self.multiplier)
+        self.multiplier = Gamification.Meal.get_multiplier(self.user)
+        self.base_points = Gamification.Meal.calculate(self.user)
 
         super().save(*args, **kwargs)
 
         # Update the user's profile with the new points
-        self.user.profile.score += self.base_points
-        self.user.profile.save()
+        Gamification().add_xp(self.user, self.base_points)
 
     def clean(self):
         if not MealConfig.objects.filter(
@@ -86,33 +86,6 @@ class Meal(models.Model):
         if self.id is None:  # Only check for duplicates on creation
             if Meal.objects.filter(user=self.user, meal_type=self.meal_type, meal_time__date=self.meal_time.date()).exists():
                 raise ValidationError({"meal_type": "A meal of this type has already been recorded for today."})
-
-    def update_multiplier(self):
-        try:
-            streak = self.user.meal_streak.current_streak
-        except RelatedObjectDoesNotExist:
-            MealStreak.objects.create(
-                user=self.user,
-                current_streak=1,
-                longest_streak=1,
-                last_meal_datetime=self.meal_time.astimezone(),
-            )
-            streak = 1
-
-        meal_records = MealConfig.objects.count()
-
-        if streak < meal_records * 2:
-            self.multiplier = 1.0
-        elif meal_records * 2 <= streak < meal_records * 8:
-            self.multiplier = 1.25
-        elif meal_records * 8 <= streak < meal_records * 16:
-            self.multiplier = 1.50
-        elif meal_records * 16 <= streak < meal_records * 32:
-            self.multiplier = 1.75
-        elif streak >= meal_records * 32:
-            self.multiplier = 2.0
-
-        return self.multiplier
 
 
 class MealProof(models.Model):
@@ -209,6 +182,7 @@ class MealStreak(models.Model):
         self.last_meal_datetime = meal_datetime
 
         self.save()
+
         return self.current_streak
 
     def check_streak_ended(self, meal_datetime):

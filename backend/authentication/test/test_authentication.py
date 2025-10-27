@@ -4,6 +4,7 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from django.urls import reverse
 
+from clients.models import Client
 from profiles.models import Profile
 
 
@@ -26,6 +27,15 @@ class UserAuthenticationTests(APITestCase):
         self.detail_url = reverse('user-detail', args=[self.user.id])  # URL for the user detail endpoint
         self.client.login(username=self.user_data['username'], password=self.user_data['password'])
 
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj='12.345.678/0001-90',
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
     def test_user_creation(self):
         """
         Tests the creation of a new user and the automatic creation of their profile.
@@ -36,7 +46,8 @@ class UserAuthenticationTests(APITestCase):
             "password2": "newpassword123",
             "first_name": "New",
             "last_name": "User",
-            "email": "newuser@example.com"
+            "email": "newuser@example.com",
+            "client_code": self.employer.client_code
         }
 
         # Obtain the JWT token (login)
@@ -72,7 +83,8 @@ class UserAuthenticationTests(APITestCase):
             "password2": "newpassword123",
             "first_name": "New",
             "last_name": "User",
-            "email": "newuser@example.com"
+            "email": "newuser@example.com",
+            "client_code": self.employer.client_code
         }
 
         response = self.client.post(reverse('users-list'), data, format='json')
@@ -111,7 +123,8 @@ class UserAuthenticationTests(APITestCase):
             "password2": "newpassword123",
             "first_name": "New",
             "last_name": "User",
-            "email": "newuser@example.com"
+            "email": "newuser@example.com",
+            "client_code": self.employer.client_code
         }
 
         # Login to obtain the JWT token
