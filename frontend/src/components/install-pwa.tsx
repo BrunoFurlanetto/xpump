@@ -23,6 +23,7 @@ export function InstallPWA() {
     // Verificar se já está instalado
     const checkInstalled = () => {
       const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const isIOSStandalone = (window.navigator as any).standalone === true;
       setIsInstalled(isStandalone || isIOSStandalone);
     };

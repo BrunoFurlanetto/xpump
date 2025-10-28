@@ -38,6 +38,7 @@ export function PWADebugPanel() {
 
   const checkPWAStatus = () => {
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isIOSStandalone = (window.navigator as any).standalone === true;
     const hasServiceWorker = "serviceWorker" in navigator;
     const notificationPermission = "Notification" in window ? Notification.permission : "default";
