@@ -1,6 +1,6 @@
 "use server";
 
-import { authFetch, authFetchWithRetry } from "@/lib/auth-fetch-with-retry";
+import { authFetch, authFetchWithRetry } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 // Types
 export interface Group {

@@ -16,9 +16,9 @@ export class AuthError extends Error {
 }
 
 /**
- * Authenticated fetch for Server Components (without automatic token refresh)
+ * Authenticated fetch for Server Components (with automatic token refresh)
  * Use this when calling from Server Components during rendering
- * If token is expired, user will be redirected to login by verifySession
+ * If token is expired, will try to refresh before redirecting to login
  */
 export const authFetch = async (url: string | URL, options: FetchOptions = {}) => {
   console.log("🔐 authFetch - Iniciando requisição para:", url.toString());
@@ -48,11 +48,59 @@ export const authFetch = async (url: string | URL, options: FetchOptions = {}) =
     throw new AuthError("Erro ao fazer requisição", true);
   }
 
-  // If we get a 401, the token is expired - redirect to login
-  // Cannot delete cookies in Server Component rendering, just redirect
-  // The login page will handle clearing the invalid session
-  if (response.status === 401) {
-    console.error("❌ Token expirado - redirecionando para login");
+  // If we get a 401, try to refresh the token before redirecting
+  if (response.status === 401 && session.refresh) {
+    console.log("🔄 Token expirado, tentando renovar...");
+
+    try {
+      const refreshResponse = await fetch(`${BACKEND_URL}/auth/token/refresh/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh: session.refresh }),
+      });
+
+      if (!refreshResponse.ok) {
+        console.error("❌ Falha ao renovar token:", refreshResponse.status, refreshResponse.statusText);
+        const errorData = await refreshResponse.json().catch(() => ({}));
+        console.error("Erro do backend:", errorData);
+        console.error("❌ Refresh token expirado - redirecionando para login");
+        redirect("/login");
+      }
+
+      const data = await refreshResponse.json();
+
+      if (!data.access) {
+        console.error("❌ Token renovado não contém access token - redirecionando para login");
+        redirect("/login");
+      }
+
+      console.log("✅ Token renovado com sucesso");
+
+      // Update the token in cookies
+      await updateToken({
+        accessToken: data.access,
+        refreshToken: session.refresh,
+      });
+
+      // Retry the original request with the new token
+      options.headers.Authorization = `Bearer ${data.access}`;
+      response = await fetch(url, options);
+
+      if (response.status === 401) {
+        console.error("❌ Requisição ainda retorna 401 após renovação - redirecionando para login");
+        redirect("/login");
+      }
+
+      console.log("✅ Requisição bem-sucedida após renovação do token");
+    } catch (error) {
+      console.error("❌ Erro durante renovação de token:", error);
+      // If there's any error during refresh, redirect to login
+      redirect("/login");
+    }
+  } else if (response.status === 401) {
+    console.error("❌ Token expirado e sem refresh token disponível - redirecionando para login");
     redirect("/login");
   }
 
