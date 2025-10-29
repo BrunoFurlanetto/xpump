@@ -94,7 +94,7 @@ export function CreateGroupModal() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full cursor-pointer sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button variant={"outline"} className="w-full cursor-pointer sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Criar Grupo
         </Button>

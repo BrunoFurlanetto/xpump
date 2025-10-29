@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from 'react';
-import { useActivityTimeline } from '@/hooks/useActivityTimeline';
+import { useState } from "react";
+import { useActivityTimeline } from "@/hooks/useActivityTimeline";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Activity,
   Filter,
   Calendar,
@@ -19,7 +19,7 @@ import {
   Clock,
   Target,
   MoreHorizontal,
-  Trash2
+  Trash2,
 } from "lucide-react";
 
 export default function ActivitiesPage() {
@@ -33,7 +33,7 @@ export default function ActivitiesPage() {
     getRelativeTime,
     getActivityIcon,
     deleteActivity,
-    clearOldActivities
+    clearOldActivities,
   } = useActivityTimeline();
 
   const [showFilters, setShowFilters] = useState(false);
@@ -47,12 +47,12 @@ export default function ActivitiesPage() {
   }
 
   const filterOptions = [
-    { value: 'all', label: 'Todas', icon: Activity, count: stats.total },
-    { value: 'workout', label: 'Treinos', icon: Dumbbell, count: stats.byType.workout },
-    { value: 'meal', label: 'Refeições', icon: Utensils, count: stats.byType.meal },
-    { value: 'achievement', label: 'Conquistas', icon: Trophy, count: stats.byType.achievement },
-    { value: 'group', label: 'Grupos', icon: Users, count: stats.byType.group },
-    { value: 'social', label: 'Social', icon: Heart, count: stats.byType.social },
+    { value: "all", label: "Todas", icon: Activity, count: stats.total },
+    { value: "workout", label: "Treinos", icon: Dumbbell, count: stats.byType.workout },
+    { value: "meal", label: "Refeições", icon: Utensils, count: stats.byType.meal },
+    { value: "achievement", label: "Conquistas", icon: Trophy, count: stats.byType.achievement },
+    { value: "group", label: "Grupos", icon: Users, count: stats.byType.group },
+    { value: "social", label: "Social", icon: Heart, count: stats.byType.social },
   ];
 
   return (
@@ -61,9 +61,7 @@ export default function ActivitiesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Timeline de Atividades</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Acompanhe todas suas atividades e progresso
-          </p>
+          <p className="text-muted-foreground text-sm sm:text-base">Acompanhe todas suas atividades e progresso</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -71,13 +69,8 @@ export default function ActivitiesPage() {
             <Calendar className="h-3 w-3 mr-1" />
             {stats.today} hoje
           </Badge>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="gap-2"
-          >
+
+          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="gap-2">
             <Filter className="h-4 w-4" />
             Filtros
           </Button>
@@ -145,7 +138,7 @@ export default function ActivitiesPage() {
 
       {/* Filtros */}
       {showFilters && (
-        <Card>
+        <Card className="border-border">
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-2">
               {filterOptions.map((option) => {
@@ -155,7 +148,9 @@ export default function ActivitiesPage() {
                     key={option.value}
                     variant={filter === option.value ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setFilter(option.value as 'all' | 'workout' | 'meal' | 'achievement' | 'group' | 'social')}
+                    onClick={() =>
+                      setFilter(option.value as "all" | "workout" | "meal" | "achievement" | "group" | "social")
+                    }
                     className="gap-2"
                   >
                     <IconComponent className="h-4 w-4" />
@@ -167,7 +162,7 @@ export default function ActivitiesPage() {
                 );
               })}
             </div>
-            
+
             {Object.keys(groupedActivities).length > 7 && (
               <div className="flex justify-end mt-4 pt-4 border-t">
                 <Button
@@ -188,15 +183,14 @@ export default function ActivitiesPage() {
       {/* Timeline */}
       <div className="space-y-6">
         {Object.keys(groupedActivities).length === 0 ? (
-          <Card>
+          <Card className="border-border">
             <CardContent className="p-8 text-center">
               <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">Nenhuma atividade encontrada</h3>
               <p className="text-muted-foreground">
-                {filter === 'all' 
-                  ? 'Comece a treinar e registrar refeições para ver suas atividades aqui!'
-                  : `Nenhuma atividade do tipo "${filterOptions.find(f => f.value === filter)?.label}" encontrada.`
-                }
+                {filter === "all"
+                  ? "Comece a treinar e registrar refeições para ver suas atividades aqui!"
+                  : `Nenhuma atividade do tipo "${filterOptions.find((f) => f.value === filter)?.label}" encontrada.`}
               </p>
             </CardContent>
           </Card>
@@ -209,15 +203,15 @@ export default function ActivitiesPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Calendar className="h-4 w-4" />
-                    {new Date(date).toLocaleDateString('pt-BR', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long'
+                    {new Date(date).toLocaleDateString("pt-BR", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
                     })}
                   </div>
                   <div className="flex-1 h-px bg-border" />
                   <Badge variant="outline" className="text-xs">
-                    {dayActivities.length} atividade{dayActivities.length !== 1 ? 's' : ''}
+                    {dayActivities.length} atividade{dayActivities.length !== 1 ? "s" : ""}
                   </Badge>
                 </div>
 
@@ -226,7 +220,10 @@ export default function ActivitiesPage() {
                   {dayActivities
                     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
                     .map((activity) => (
-                      <Card key={activity.id} className="bg-card border-border hover:border-primary/20 transition-colors">
+                      <Card
+                        key={activity.id}
+                        className="bg-card border-border hover:border-primary/20 transition-colors"
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex items-start gap-3 flex-1">
@@ -238,19 +235,15 @@ export default function ActivitiesPage() {
                               {/* Conteúdo */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="font-medium text-foreground text-sm sm:text-base">
-                                    {activity.title}
-                                  </h3>
+                                  <h3 className="font-medium text-foreground text-sm sm:text-base">{activity.title}</h3>
                                   {activity.points && (
                                     <Badge variant="outline" className="text-xs border-yellow-500/20 text-yellow-400">
                                       +{activity.points} pts
                                     </Badge>
                                   )}
                                 </div>
-                                
-                                <p className="text-xs sm:text-sm text-muted-foreground mb-2">
-                                  {activity.description}
-                                </p>
+
+                                <p className="text-xs sm:text-sm text-muted-foreground mb-2">{activity.description}</p>
 
                                 {/* Metadados */}
                                 {activity.metadata && (
@@ -287,7 +280,7 @@ export default function ActivitiesPage() {
                               <span className="text-xs text-muted-foreground">
                                 {getRelativeTime(activity.timestamp)}
                               </span>
-                              
+
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -318,7 +311,7 @@ export default function ActivitiesPage() {
                   {stats.total} atividades registradas • {stats.totalPoints} pontos acumulados
                 </p>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="h-4 w-4" />
                 Média de {Math.round(stats.thisWeek / 7)} atividades por dia esta semana

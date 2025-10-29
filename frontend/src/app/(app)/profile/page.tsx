@@ -1,14 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Trophy,
-  Target,
-  TrendingUp,
-  Award,
-  Utensils,
-  Dumbbell,
-} from "lucide-react";
+import { Trophy, Target, TrendingUp, Award, Utensils, Dumbbell } from "lucide-react";
 import { getCurrentUser } from "../_actions/getCurrentUser";
 import { getProfileById } from "../_actions/getProfileById";
 import GroupListCard from "./group-list-card";
@@ -24,14 +17,14 @@ const mockLevels = {
     { id: 3, name: "Nutri Expert", description: "50 refeições registradas", icon: "🥗", earned: true },
     { id: 4, name: "Lenda", description: "100 treinos realizados", icon: "👑", earned: false },
   ],
-}
+};
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) return <div className="text-center text-muted-foreground">Usuário não encontrado</div>;
   const profile = await getProfileById(user.profile_id);
   if (!profile) return <div className="text-center text-muted-foreground">Perfil não encontrado</div>;
-console.log(profile);
+  console.log(profile);
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header do Perfil */}
@@ -45,7 +38,7 @@ console.log(profile);
 
       {/* Estatísticas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -57,8 +50,7 @@ console.log(profile);
           </CardContent>
         </Card>
 
-
-        <Card>
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -70,7 +62,7 @@ console.log(profile);
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -84,7 +76,7 @@ console.log(profile);
       </div>
 
       {/* Progresso do Nível */}
-      <Card>
+      <Card className="border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
@@ -106,7 +98,7 @@ console.log(profile);
       </Card>
 
       {/* Estatísticas da Semana */}
-      <Card>
+      <Card className="border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
@@ -120,11 +112,16 @@ console.log(profile);
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Treinos</span>
                 <span className="text-sm text-muted-foreground">
-                  {profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining}/{profile.workout_streak.weekly_expected}
+                  {profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining}/
+                  {profile.workout_streak.weekly_expected}
                 </span>
               </div>
               <Progress
-                value={((profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining) / profile.workout_streak.weekly_expected) * 100}
+                value={
+                  ((profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining) /
+                    profile.workout_streak.weekly_expected) *
+                  100
+                }
                 className="h-2"
               />
             </div>
@@ -133,11 +130,16 @@ console.log(profile);
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Refeições</span>
                 <span className="text-sm text-muted-foreground">
-                  {profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining}/{profile.meal_streak.weekly_expected}
+                  {profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining}/
+                  {profile.meal_streak.weekly_expected}
                 </span>
               </div>
               <Progress
-                value={((profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining) / profile.meal_streak.weekly_expected) * 100}
+                value={
+                  ((profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining) /
+                    profile.meal_streak.weekly_expected) *
+                  100
+                }
                 className="h-2"
               />
             </div>
@@ -146,7 +148,7 @@ console.log(profile);
       </Card>
 
       {/* Conquistas */}
-      <Card>
+      <Card className="border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />

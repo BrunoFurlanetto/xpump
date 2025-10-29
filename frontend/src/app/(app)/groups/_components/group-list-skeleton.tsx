@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function GroupCardSkeleton() {
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300">
+    <Card className="group hover:shadow-lg transition-all duration-300 border-border">
       <CardHeader className="space-y-3">
         {/* Header com nome e badge */}
         <div className="flex items-start justify-between gap-2">

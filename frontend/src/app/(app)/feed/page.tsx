@@ -472,7 +472,7 @@ export default function FeedPage() {
         </div>
 
         {/* Criar Post */}
-        <Card>
+        <Card className="bg-card border-border">
           <CardHeader className="pb-3 px-4 md:px-6">
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
@@ -511,7 +511,12 @@ export default function FeedPage() {
                   <span className=" md:inline">Refeição</span>
                 </Button>
               </div>
-              <Button onClick={handleCreatePost} disabled={!newPost.trim()} className="w-full md:w-auto">
+              <Button
+                variant={"outline"}
+                onClick={handleCreatePost}
+                disabled={!newPost.trim()}
+                className="w-full md:w-auto"
+              >
                 Publicar
               </Button>
             </div>
@@ -521,7 +526,7 @@ export default function FeedPage() {
         {/* Posts */}
         <div className="space-y-4">
           {posts.map((post) => (
-            <Card key={post.id}>
+            <Card key={post.id} className="bg-card border-border">
               <CardHeader className="pb-3 px-4 md:px-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -650,7 +655,7 @@ export default function FeedPage() {
                 )}
 
                 {/* Ações do Post */}
-                <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex items-center justify-between pt-2 border-t border-border">
                   <div className="flex items-center gap-3 md:gap-6">
                     <Button
                       variant="ghost"

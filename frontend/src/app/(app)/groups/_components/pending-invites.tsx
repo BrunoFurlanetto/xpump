@@ -77,7 +77,7 @@ export function PendingInvites({ groupsPromise }: PendingInvitesProps) {
   }
 
   return (
-    <Card>
+    <Card className="border-border">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="h-5 w-5" />
