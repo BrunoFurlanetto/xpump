@@ -1,6 +1,6 @@
 "use server";
 
-import { authFetch, authFetchWithRetry } from "@/lib/auth-fetch";
+import { authFetchWithRetry } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 // Types
 export interface Group {
@@ -39,9 +39,9 @@ export interface InviteResponse {
 
 // API Functions
 export const groupsApi = async () => ({
-  // List all groups - Uses authFetch (no retry) because it's called during Server Component rendering
+  // List all groups - Uses authFetchWithRetry for proper token refresh in Server Actions
   async list() {
-    const response = await authFetch(`${BACKEND_URL}/groups/me`);
+    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/me`);
     if (!response.ok) {
       return {
         error: "Falha ao carregar grupos",
@@ -54,9 +54,9 @@ export const groupsApi = async () => ({
     };
   },
 
-  // Get single group - Uses authFetch for initial load
+  // Get single group - Uses authFetchWithRetry for proper token refresh in Server Actions
   async get(groupId: number): Promise<Group> {
-    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/`, {
+    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/`, {
       method: "GET",
     });
     if (!response.ok) {
