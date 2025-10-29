@@ -289,7 +289,7 @@ export function GroupDetails({ group }: GroupDetailsProps) {
             {/* Informações Detalhadas */}
             <div className="space-y-4">
               {/* Top 3 */}
-              <Card>
+              <Card className="border-border">
                 <CardHeader>
                   <CardTitle className="text-lg">Pódium da Semana</CardTitle>
                 </CardHeader>
@@ -341,7 +341,7 @@ export function GroupDetails({ group }: GroupDetailsProps) {
               </Card>
 
               {/* Progresso do Grupo */}
-              <Card>
+              <Card className="border-border">
                 <CardHeader>
                   <CardTitle className="text-lg">Meta Semanal do Grupo</CardTitle>
                 </CardHeader>
@@ -373,7 +373,7 @@ export function GroupDetails({ group }: GroupDetailsProps) {
               </Card>
 
               {/* Informações do Grupo */}
-              <Card>
+              <Card className="border-border">
                 <CardHeader>
                   <CardTitle className="text-lg">Informações</CardTitle>
                 </CardHeader>

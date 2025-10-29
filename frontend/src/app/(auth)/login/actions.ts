@@ -1,6 +1,6 @@
 "use server";
 
-import { authFetch } from "@/lib/auth-fetch";
+import { authFetchWithRetry } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 import { createSession, deleteSession, updateToken } from "@/lib/session";
 import { z } from "zod";
@@ -111,7 +111,7 @@ type userAuth = {
 
 export const getUserById = async (userId: string): Promise<userAuth | null> => {
   try {
-    const response = await authFetch(`${BACKEND_URL}/auth/users/${userId}/`);
+    const response = await authFetchWithRetry(`${BACKEND_URL}/auth/users/${userId}/`);
 
     if (!response.ok) {
       return null;
@@ -119,7 +119,7 @@ export const getUserById = async (userId: string): Promise<userAuth | null> => {
 
     const user = await response.json();
 
-    const profileResponse = await authFetch(`${BACKEND_URL}/profiles/${user.profile_id}/`);
+    const profileResponse = await authFetchWithRetry(`${BACKEND_URL}/profiles/${user.profile_id}/`);
     let avatar = null;
 
     if (profileResponse.ok) {

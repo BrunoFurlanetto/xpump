@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import { useSettings } from '@/hooks/useSettings';
+import { useState } from "react";
+import { useSettings } from "@/hooks/useSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
+import {
   Bell,
   Dumbbell,
   Utensils,
@@ -34,30 +34,30 @@ import {
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { 
-    settings, 
-    isLoading, 
-    hasChanges, 
-    updateSettings, 
-    saveSettings, 
+  const {
+    settings,
+    isLoading,
+    hasChanges,
+    updateSettings,
+    saveSettings,
     resetSettings,
     exportSettings,
-    importSettings 
+    importSettings,
   } = useSettings();
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("notifications");
 
   const handleSave = async () => {
     setIsSaving(true);
     const result = await saveSettings();
-    
+
     if (result.success) {
       toast.success("Configurações salvas com sucesso!");
     } else {
       toast.error("Erro ao salvar configurações");
     }
-    
+
     setIsSaving(false);
   };
 
@@ -93,9 +93,7 @@ export default function SettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Configurações</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Personalize sua experiência no XPump
-          </p>
+          <p className="text-muted-foreground text-sm sm:text-base">Personalize sua experiência no XPump</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -105,13 +103,8 @@ export default function SettingsPage() {
               Alterações não salvas
             </Badge>
           )}
-          
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            size="sm"
-            className="gap-2"
-          >
+
+          <Button onClick={handleSave} disabled={!hasChanges || isSaving} size="sm" className="gap-2">
             {isSaving ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             ) : (
@@ -152,7 +145,7 @@ export default function SettingsPage() {
 
         {/* Notificações */}
         <TabsContent value="notifications" className="space-y-6">
-          <Card>
+          <Card className="border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-primary" />
@@ -166,11 +159,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">Conquistas</Label>
                     <p className="text-xs text-muted-foreground">Receber notificações de novas conquistas</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.notifications.achievements}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, achievements: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, achievements: checked },
                       })
                     }
                   />
@@ -181,11 +174,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">Lembretes</Label>
                     <p className="text-xs text-muted-foreground">Lembretes de treinos e refeições</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.notifications.reminders}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, reminders: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, reminders: checked },
                       })
                     }
                   />
@@ -196,11 +189,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">Atividades Sociais</Label>
                     <p className="text-xs text-muted-foreground">Curtidas, comentários e seguidas</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.notifications.social}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, social: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, social: checked },
                       })
                     }
                   />
@@ -211,11 +204,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">Sequências</Label>
                     <p className="text-xs text-muted-foreground">Alertas sobre sequências de treinos</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.notifications.streaks}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, streaks: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, streaks: checked },
                       })
                     }
                   />
@@ -226,11 +219,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">Desafios</Label>
                     <p className="text-xs text-muted-foreground">Novos desafios e competições</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.notifications.challenges}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, challenges: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, challenges: checked },
                       })
                     }
                   />
@@ -241,17 +234,17 @@ export default function SettingsPage() {
 
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-muted-foreground">Canais de Notificação</h4>
-                
+
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-sm font-medium">Notificações Push</Label>
                     <p className="text-xs text-muted-foreground">Notificações no dispositivo</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.notifications.push}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, push: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, push: checked },
                       })
                     }
                   />
@@ -262,11 +255,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">E-mail</Label>
                     <p className="text-xs text-muted-foreground">Resumos semanais por e-mail</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.notifications.email}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, email: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, email: checked },
                       })
                     }
                   />
@@ -278,7 +271,7 @@ export default function SettingsPage() {
 
         {/* Treinos */}
         <TabsContent value="workout" className="space-y-6">
-          <Card>
+          <Card className="border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Dumbbell className="h-5 w-5 text-primary" />
@@ -292,9 +285,9 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Slider
                       value={[settings.workout.defaultDuration]}
-                      onValueChange={([value]: [number]) => 
-                        updateSettings({ 
-                          workout: { ...settings.workout, defaultDuration: value }
+                      onValueChange={([value]: [number]) =>
+                        updateSettings({
+                          workout: { ...settings.workout, defaultDuration: value },
                         })
                       }
                       max={180}
@@ -314,9 +307,9 @@ export default function SettingsPage() {
                   <Label className="text-sm font-medium">Horário Preferido</Label>
                   <Select
                     value={settings.workout.preferredTime}
-                    onValueChange={(value: 'morning' | 'afternoon' | 'evening' | 'any') =>
-                      updateSettings({ 
-                        workout: { ...settings.workout, preferredTime: value }
+                    onValueChange={(value: "morning" | "afternoon" | "evening" | "any") =>
+                      updateSettings({
+                        workout: { ...settings.workout, preferredTime: value },
                       })
                     }
                   >
@@ -336,9 +329,9 @@ export default function SettingsPage() {
                   <Label className="text-sm font-medium">Nível de Intensidade</Label>
                   <Select
                     value={settings.workout.intensityLevel}
-                    onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') =>
-                      updateSettings({ 
-                        workout: { ...settings.workout, intensityLevel: value }
+                    onValueChange={(value: "beginner" | "intermediate" | "advanced") =>
+                      updateSettings({
+                        workout: { ...settings.workout, intensityLevel: value },
                       })
                     }
                   >
@@ -358,11 +351,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">Lembretes Automáticos</Label>
                     <p className="text-xs text-muted-foreground">Lembrar de treinar no horário definido</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.workout.autoReminders}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        workout: { ...settings.workout, autoReminders: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        workout: { ...settings.workout, autoReminders: checked },
                       })
                     }
                   />
@@ -375,8 +368,8 @@ export default function SettingsPage() {
                       type="time"
                       value={settings.workout.reminderTime}
                       onChange={(e) =>
-                        updateSettings({ 
-                          workout: { ...settings.workout, reminderTime: e.target.value }
+                        updateSettings({
+                          workout: { ...settings.workout, reminderTime: e.target.value },
                         })
                       }
                       className="w-full"
@@ -390,7 +383,7 @@ export default function SettingsPage() {
 
         {/* Interface */}
         <TabsContent value="interface" className="space-y-6">
-          <Card>
+          <Card className="border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="h-5 w-5 text-primary" />
@@ -401,14 +394,14 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-2">
-                    {settings.interface.theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                    {settings.interface.theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                     Tema
                   </Label>
                   <Select
                     value={settings.interface.theme}
-                    onValueChange={(value: 'dark' | 'light' | 'system') =>
-                      updateSettings({ 
-                        interface: { ...settings.interface, theme: value }
+                    onValueChange={(value: "dark" | "light" | "system") =>
+                      updateSettings({
+                        interface: { ...settings.interface, theme: value },
                       })
                     }
                   >
@@ -430,9 +423,9 @@ export default function SettingsPage() {
                   </Label>
                   <Select
                     value={settings.interface.language}
-                    onValueChange={(value: 'pt' | 'en' | 'es') =>
-                      updateSettings({ 
-                        interface: { ...settings.interface, language: value }
+                    onValueChange={(value: "pt" | "en" | "es") =>
+                      updateSettings({
+                        interface: { ...settings.interface, language: value },
                       })
                     }
                   >
@@ -452,11 +445,11 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">Modo Compacto</Label>
                     <p className="text-xs text-muted-foreground">Interface mais densa com menos espaçamentos</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.interface.compactMode}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        interface: { ...settings.interface, compactMode: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        interface: { ...settings.interface, compactMode: checked },
                       })
                     }
                   />
@@ -470,11 +463,11 @@ export default function SettingsPage() {
                     </Label>
                     <p className="text-xs text-muted-foreground">Animações e transições visuais</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.interface.animations}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        interface: { ...settings.interface, animations: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        interface: { ...settings.interface, animations: checked },
                       })
                     }
                   />
@@ -488,11 +481,11 @@ export default function SettingsPage() {
                     </Label>
                     <p className="text-xs text-muted-foreground">Sons de notificação e feedback</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={settings.interface.sounds}
-                    onCheckedChange={(checked: boolean) => 
-                      updateSettings({ 
-                        interface: { ...settings.interface, sounds: checked }
+                    onCheckedChange={(checked: boolean) =>
+                      updateSettings({
+                        interface: { ...settings.interface, sounds: checked },
                       })
                     }
                   />
@@ -504,7 +497,7 @@ export default function SettingsPage() {
 
         {/* Metas */}
         <TabsContent value="goals" className="space-y-6">
-          <Card>
+          <Card className="border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-primary" />
@@ -518,9 +511,9 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Slider
                       value={[settings.goals.weeklyWorkouts]}
-                      onValueChange={([value]: [number]) => 
-                        updateSettings({ 
-                          goals: { ...settings.goals, weeklyWorkouts: value }
+                      onValueChange={([value]: [number]) =>
+                        updateSettings({
+                          goals: { ...settings.goals, weeklyWorkouts: value },
                         })
                       }
                       max={7}
@@ -541,9 +534,9 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Slider
                       value={[settings.goals.dailyMeals]}
-                      onValueChange={([value]: [number]) => 
-                        updateSettings({ 
-                          goals: { ...settings.goals, dailyMeals: value }
+                      onValueChange={([value]: [number]) =>
+                        updateSettings({
+                          goals: { ...settings.goals, dailyMeals: value },
                         })
                       }
                       max={6}
@@ -564,9 +557,9 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Slider
                       value={[settings.goals.weeklyPoints]}
-                      onValueChange={([value]: [number]) => 
-                        updateSettings({ 
-                          goals: { ...settings.goals, weeklyPoints: value }
+                      onValueChange={([value]: [number]) =>
+                        updateSettings({
+                          goals: { ...settings.goals, weeklyPoints: value },
                         })
                       }
                       max={3000}
@@ -585,7 +578,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
 
       {/* Ações de configuração */}
@@ -594,28 +586,21 @@ export default function SettingsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="font-medium text-foreground">Gerenciar Configurações</h3>
-              <p className="text-sm text-muted-foreground">
-                Exporte, importe ou redefina suas configurações
-              </p>
+              <p className="text-sm text-muted-foreground">Exporte, importe ou redefina suas configurações</p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportSettings}
-                className="gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={exportSettings} className="gap-2">
                 <Download className="h-4 w-4" />
                 Exportar
               </Button>
-              
+
               <div className="relative">
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-2"
-                  onClick={() => document.getElementById('import-settings')?.click()}
+                  onClick={() => document.getElementById("import-settings")?.click()}
                 >
                   <Upload className="h-4 w-4" />
                   Importar
@@ -628,7 +613,7 @@ export default function SettingsPage() {
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"

@@ -1,14 +1,21 @@
 "use client";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Users } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
 const ButtonGroupInside = () => {
   return (
-    <Button variant="outline" className="w-full">
+    <Link
+      href="/groups"
+      className={buttonVariants({
+        variant: "outline",
+        className: "w-full justify-center",
+      })}
+    >
       <Users className="h-4 w-4 mr-2" />
-      Entrar em Novo Grupo
-    </Button>
+      Ver todos
+    </Link>
   );
 };
 

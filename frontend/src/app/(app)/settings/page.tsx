@@ -1,50 +1,35 @@
 "use client";
 
-import { useState } from 'react';
-import { useSettings } from '@/hooks/useSettings';
+import { useState } from "react";
+import { useSettings } from "@/hooks/useSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Bell,
-  Dumbbell,
-  Utensils,
-  Target,
-  Save,
-  AlertTriangle,
-  Palette,
-} from "lucide-react";
+import { Bell, Dumbbell, Utensils, Target, Save, AlertTriangle, Palette } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from '@/lib/utils';
-import { ThemeSelector } from '@/components/ui/theme-selector';
+import { cn } from "@/lib/utils";
+import { ThemeSelector } from "@/components/ui/theme-selector";
 
 export default function SettingsPage() {
-  const { 
-    settings, 
-    isLoading, 
-    hasChanges, 
-    updateSettings, 
-    saveSettings, 
-  } = useSettings();
-  
+  const { settings, isLoading, hasChanges, updateSettings, saveSettings } = useSettings();
+
   const [isSaving, setIsSaving] = useState(false);
   const [activeSection, setActiveSection] = useState("interface");
 
   const handleSave = async () => {
     setIsSaving(true);
     const result = await saveSettings();
-    
+
     if (result.success) {
       toast.success("Configurações salvas com sucesso!");
     } else {
       toast.error("Erro ao salvar configurações");
     }
-    
+
     setIsSaving(false);
   };
-
 
   if (isLoading) {
     return (
@@ -55,11 +40,11 @@ export default function SettingsPage() {
   }
 
   const sections = [
-    { id: 'interface', label: 'Interface', icon: Palette },
-    { id: 'notifications', label: 'Notificações', icon: Bell },
-    { id: 'workout', label: 'Treinos', icon: Dumbbell },
-    { id: 'nutrition', label: 'Nutrição', icon: Utensils },
-    { id: 'goals', label: 'Metas', icon: Target },
+    { id: "interface", label: "Interface", icon: Palette },
+    { id: "notifications", label: "Notificações", icon: Bell },
+    { id: "workout", label: "Treinos", icon: Dumbbell },
+    { id: "nutrition", label: "Nutrição", icon: Utensils },
+    { id: "goals", label: "Metas", icon: Target },
   ];
 
   return (
@@ -68,9 +53,7 @@ export default function SettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Configurações</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Personalize sua experiência no XPump
-          </p>
+          <p className="text-muted-foreground text-sm sm:text-base">Personalize sua experiência no XPump</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -80,13 +63,8 @@ export default function SettingsPage() {
               Alterações não salvas
             </Badge>
           )}
-          
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            size="sm"
-            className="gap-2"
-          >
+
+          <Button onClick={handleSave} disabled={!hasChanges || isSaving} size="sm" className="gap-2">
             {isSaving ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             ) : (
@@ -107,9 +85,7 @@ export default function SettingsPage() {
               variant={activeSection === section.id ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveSection(section.id)}
-              className={cn("gap-2", 
-                activeSection !== section.id && "text-muted-foreground"
-              )}
+              className={cn("gap-2", activeSection !== section.id && "text-muted-foreground")}
             >
               <IconComponent className="h-4 w-4" />
               {section.label}
@@ -119,8 +95,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Interface */}
-      {activeSection === 'interface' && (
-        <Card>
+      {activeSection === "interface" && (
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="h-5 w-5 text-primary" />
@@ -136,8 +112,8 @@ export default function SettingsPage() {
       )}
 
       {/* Notificações */}
-      {activeSection === 'notifications' && (
-        <Card>
+      {activeSection === "notifications" && (
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-primary" />
@@ -151,25 +127,25 @@ export default function SettingsPage() {
                   <div>
                     <Label className="text-sm font-medium capitalize">{key}</Label>
                     <p className="text-xs text-muted-foreground">
-                      {key === 'achievements' && 'Receber notificações de novas conquistas'}
-                      {key === 'reminders' && 'Lembretes de treinos e refeições'}
-                      {key === 'social' && 'Curtidas, comentários e seguidas'}
-                      {key === 'streaks' && 'Alertas sobre sequências de treinos'}
-                      {key === 'challenges' && 'Novos desafios e competições'}
-                      {key === 'email' && 'Resumos semanais por e-mail'}
-                      {key === 'push' && 'Notificações no dispositivo'}
+                      {key === "achievements" && "Receber notificações de novas conquistas"}
+                      {key === "reminders" && "Lembretes de treinos e refeições"}
+                      {key === "social" && "Curtidas, comentários e seguidas"}
+                      {key === "streaks" && "Alertas sobre sequências de treinos"}
+                      {key === "challenges" && "Novos desafios e competições"}
+                      {key === "email" && "Resumos semanais por e-mail"}
+                      {key === "push" && "Notificações no dispositivo"}
                     </p>
                   </div>
                   <Button
                     variant={value ? "default" : "outline"}
                     size="sm"
-                    onClick={() => 
-                      updateSettings({ 
-                        notifications: { ...settings.notifications, [key]: !value }
+                    onClick={() =>
+                      updateSettings({
+                        notifications: { ...settings.notifications, [key]: !value },
                       })
                     }
                   >
-                    {value ? 'Ativado' : 'Desativado'}
+                    {value ? "Ativado" : "Desativado"}
                   </Button>
                 </div>
               ))}
@@ -179,8 +155,8 @@ export default function SettingsPage() {
       )}
 
       {/* Treinos */}
-      {activeSection === 'workout' && (
-        <Card>
+      {activeSection === "workout" && (
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Dumbbell className="h-5 w-5 text-primary" />
@@ -198,8 +174,8 @@ export default function SettingsPage() {
                   step="15"
                   value={settings.workout.defaultDuration}
                   onChange={(e) =>
-                    updateSettings({ 
-                      workout: { ...settings.workout, defaultDuration: parseInt(e.target.value) }
+                    updateSettings({
+                      workout: { ...settings.workout, defaultDuration: parseInt(e.target.value) },
                     })
                   }
                 />
@@ -210,8 +186,11 @@ export default function SettingsPage() {
                 <select
                   value={settings.workout.preferredTime}
                   onChange={(e) =>
-                    updateSettings({ 
-                      workout: { ...settings.workout, preferredTime: e.target.value as 'morning' | 'afternoon' | 'evening' | 'any' }
+                    updateSettings({
+                      workout: {
+                        ...settings.workout,
+                        preferredTime: e.target.value as "morning" | "afternoon" | "evening" | "any",
+                      },
                     })
                   }
                   className="w-full p-2 border rounded-md bg-background"
@@ -228,8 +207,11 @@ export default function SettingsPage() {
                 <select
                   value={settings.workout.intensityLevel}
                   onChange={(e) =>
-                    updateSettings({ 
-                      workout: { ...settings.workout, intensityLevel: e.target.value as 'beginner' | 'intermediate' | 'advanced' }
+                    updateSettings({
+                      workout: {
+                        ...settings.workout,
+                        intensityLevel: e.target.value as "beginner" | "intermediate" | "advanced",
+                      },
                     })
                   }
                   className="w-full p-2 border rounded-md bg-background"
@@ -248,13 +230,13 @@ export default function SettingsPage() {
                 <Button
                   variant={settings.workout.autoReminders ? "default" : "outline"}
                   size="sm"
-                  onClick={() => 
-                    updateSettings({ 
-                      workout: { ...settings.workout, autoReminders: !settings.workout.autoReminders }
+                  onClick={() =>
+                    updateSettings({
+                      workout: { ...settings.workout, autoReminders: !settings.workout.autoReminders },
                     })
                   }
                 >
-                  {settings.workout.autoReminders ? 'Ativado' : 'Desativado'}
+                  {settings.workout.autoReminders ? "Ativado" : "Desativado"}
                 </Button>
               </div>
 
@@ -265,8 +247,8 @@ export default function SettingsPage() {
                     type="time"
                     value={settings.workout.reminderTime}
                     onChange={(e) =>
-                      updateSettings({ 
-                        workout: { ...settings.workout, reminderTime: e.target.value }
+                      updateSettings({
+                        workout: { ...settings.workout, reminderTime: e.target.value },
                       })
                     }
                   />
@@ -278,8 +260,8 @@ export default function SettingsPage() {
       )}
 
       {/* Metas */}
-      {activeSection === 'goals' && (
-        <Card>
+      {activeSection === "goals" && (
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
@@ -297,8 +279,8 @@ export default function SettingsPage() {
                     max="7"
                     value={settings.goals.weeklyWorkouts}
                     onChange={(e) =>
-                      updateSettings({ 
-                        goals: { ...settings.goals, weeklyWorkouts: parseInt(e.target.value) }
+                      updateSettings({
+                        goals: { ...settings.goals, weeklyWorkouts: parseInt(e.target.value) },
                       })
                     }
                   />
@@ -312,8 +294,8 @@ export default function SettingsPage() {
                     max="6"
                     value={settings.goals.dailyMeals}
                     onChange={(e) =>
-                      updateSettings({ 
-                        goals: { ...settings.goals, dailyMeals: parseInt(e.target.value) }
+                      updateSettings({
+                        goals: { ...settings.goals, dailyMeals: parseInt(e.target.value) },
                       })
                     }
                   />
@@ -328,8 +310,8 @@ export default function SettingsPage() {
                     step="100"
                     value={settings.goals.weeklyPoints}
                     onChange={(e) =>
-                      updateSettings({ 
-                        goals: { ...settings.goals, weeklyPoints: parseInt(e.target.value) }
+                      updateSettings({
+                        goals: { ...settings.goals, weeklyPoints: parseInt(e.target.value) },
                       })
                     }
                   />
@@ -342,16 +324,16 @@ export default function SettingsPage() {
                   <Input
                     type="number"
                     placeholder="70"
-                    value={settings.goals.weight.target || ''}
+                    value={settings.goals.weight.target || ""}
                     onChange={(e) =>
-                      updateSettings({ 
-                        goals: { 
-                          ...settings.goals, 
-                          weight: { 
-                            ...settings.goals.weight, 
-                            target: e.target.value ? parseFloat(e.target.value) : null 
-                          }
-                        }
+                      updateSettings({
+                        goals: {
+                          ...settings.goals,
+                          weight: {
+                            ...settings.goals.weight,
+                            target: e.target.value ? parseFloat(e.target.value) : null,
+                          },
+                        },
                       })
                     }
                   />
@@ -362,15 +344,15 @@ export default function SettingsPage() {
                   <Input
                     type="number"
                     placeholder="15"
-                    value={settings.goals.bodyFat.target || ''}
+                    value={settings.goals.bodyFat.target || ""}
                     onChange={(e) =>
-                      updateSettings({ 
-                        goals: { 
-                          ...settings.goals, 
-                          bodyFat: { 
-                            target: e.target.value ? parseFloat(e.target.value) : null 
-                          }
-                        }
+                      updateSettings({
+                        goals: {
+                          ...settings.goals,
+                          bodyFat: {
+                            target: e.target.value ? parseFloat(e.target.value) : null,
+                          },
+                        },
                       })
                     }
                   />

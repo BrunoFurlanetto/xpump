@@ -1,4 +1,6 @@
-import { authFetch } from "@/lib/auth-fetch";
+"use server";
+
+import { authFetchWithRetry } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 import { getCurrentUser } from "./getCurrentUser";
 
@@ -40,7 +42,7 @@ interface Profile {
 
 export const getProfileById = async (profileId: string): Promise<Profile | null> => {
   try {
-    const response = await authFetch(`${BACKEND_URL}/profiles/${profileId}/`);
+    const response = await authFetchWithRetry(`${BACKEND_URL}/profiles/${profileId}/`);
     if (!response.ok) {
       throw new Error("Erro ao buscar perfil");
     }
