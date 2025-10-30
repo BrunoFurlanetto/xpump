@@ -7,7 +7,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare, Utensils, Trophy } from "lucide-react";
+import {
+  Home,
+  Dumbbell,
+  Users,
+  BarChart3,
+  User,
+  Settings,
+  LogOut,
+  Activity,
+  MessageSquare,
+  Utensils,
+  Trophy,
+} from "lucide-react";
 import { logout } from "@/app/(auth)/login/actions";
 
 interface SidebarProps {
@@ -47,21 +59,21 @@ const navigationItems: NavItem[] = [
     href: "/groups",
     icon: Users,
   },
-  {
-    title: "Conquistas",
-    href: "/achievements",
-    icon: Trophy,
-  },
-  {
-    title: "Estatísticas",
-    href: "/stats",
-    icon: BarChart3,
-  },
-  {
-    title: "Atividades",
-    href: "/activities",
-    icon: Activity,
-  },
+  // {
+  //   title: "Conquistas",
+  //   href: "/achievements",
+  //   icon: Trophy,
+  // },
+  // {
+  //   title: "Estatísticas",
+  //   href: "/stats",
+  //   icon: BarChart3,
+  // },
+  // {
+  //   title: "Atividades",
+  //   href: "/activities",
+  //   icon: Activity,
+  // },
 ];
 
 const bottomItems: NavItem[] = [
@@ -92,12 +104,16 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Logo */}
         <div className="px-3 py-2">
           <Link href="/" className="flex items-center pl-3 mb-2">
-            <Image 
-              src={actualTheme === 'light' ? "/logo/dark_simple.png" : "/logo/simple.png"} 
-              alt="XPump Logo" 
-              width={120} 
-              height={40} 
-              className="h-8" 
+            <Image
+              src={
+                actualTheme === "light"
+                  ? "/logo/dark_simple.png"
+                  : "/logo/simple.png"
+              }
+              alt="XPump Logo"
+              width={120}
+              height={40}
+              className="h-8"
             />
           </Link>
         </div>
@@ -114,7 +130,7 @@ export function Sidebar({ className }: SidebarProps) {
                     variant={isActive ? "secondary" : "ghost"}
                     className={cn(
                       "w-full justify-start text-sidebarlink h-10",
-                      isActive && "bg-muted font-medium text-foreground"
+                      isActive && "bg-muted font-medium text-foreground",
                     )}
                     asChild
                   >
@@ -137,7 +153,9 @@ export function Sidebar({ className }: SidebarProps) {
         {/* User Section */}
         <div className="px-3">
           <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-sm font-semibold tracking-tight text-muted-foreground">Conta</h2>
+            <h2 className="mb-2 px-4 text-sm font-semibold tracking-tight text-muted-foreground">
+              Conta
+            </h2>
             <div className="space-y-1">
               {bottomItems.map((item) => {
                 const isActive = pathname === item.href;
@@ -147,7 +165,7 @@ export function Sidebar({ className }: SidebarProps) {
                     variant={isActive ? "secondary" : "ghost"}
                     className={cn(
                       "w-full justify-start text-sidebarlink h-10",
-                      isActive && "bg-muted font-medium text-foreground"
+                      isActive && "bg-muted font-medium text-foreground",
                     )}
                     asChild
                   >
