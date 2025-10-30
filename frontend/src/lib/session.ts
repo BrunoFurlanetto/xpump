@@ -14,7 +14,7 @@ const key = new TextEncoder().encode(process.env.JWT_SECRET);
 const cookie = {
   name: "session",
   options: {
-    httpOnly: true,
+    httpOnly: false,
     secure: true,
     sameSite: "lax" as const,
     path: "/",
