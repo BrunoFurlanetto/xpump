@@ -1,6 +1,6 @@
 "use server";
 
-import { authFetchWithRetry } from "@/lib/auth-fetch";
+import { authFetch } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 import { getCurrentUser } from "./getCurrentUser";
 
@@ -46,7 +46,7 @@ export const getProfileById = async (
   profileId: string,
 ): Promise<Profile | null> => {
   try {
-    const response = await authFetchWithRetry(
+    const response = await authFetch(
       `${BACKEND_URL}/profiles/${profileId}/`,
     );
     if (!response.ok) {

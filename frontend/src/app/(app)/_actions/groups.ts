@@ -1,6 +1,6 @@
 "use server";
 
-import { authFetchWithRetry } from "@/lib/auth-fetch";
+import { authFetch } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 // Types
 export interface Group {
@@ -41,7 +41,7 @@ export interface InviteResponse {
 export const groupsApi = async () => ({
   // List all groups - Uses authFetchWithRetry for proper token refresh in Server Actions
   async list() {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/me`);
+    const response = await authFetch(`${BACKEND_URL}/groups/me`);
     if (!response.ok) {
       return {
         error: "Falha ao carregar grupos",
@@ -56,7 +56,7 @@ export const groupsApi = async () => ({
 
   // Get single group - Uses authFetchWithRetry for proper token refresh in Server Actions
   async get(groupId: number): Promise<Group> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/`, {
       method: "GET",
     });
     if (!response.ok) {
@@ -69,7 +69,7 @@ export const groupsApi = async () => ({
 
   // Create new group
   async create(data: CreateGroupData): Promise<Group> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -84,7 +84,7 @@ export const groupsApi = async () => ({
 
   // Update group
   async update(groupId: number, data: Partial<CreateGroupData>): Promise<Group> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
@@ -99,7 +99,7 @@ export const groupsApi = async () => ({
 
   // Delete group
   async delete(groupId: number): Promise<void> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/`, {
       method: "DELETE",
     });
 
@@ -111,7 +111,7 @@ export const groupsApi = async () => ({
 
   // Invite user to group
   async inviteUser(groupId: number, username: string): Promise<{ detail: string }> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/invite/${username}/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/invite/${username}/`, {
       method: "POST",
     });
 
@@ -125,7 +125,7 @@ export const groupsApi = async () => ({
 
   // Accept or reject invite
   async respondToInvite(groupId: number, action: "accept" | "reject"): Promise<{ detail: string }> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/accept-invite/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/accept-invite/`, {
       method: "POST",
       body: JSON.stringify({ action }),
     });
@@ -140,7 +140,7 @@ export const groupsApi = async () => ({
 
   // Update member (change admin status)
   async updateMember(groupId: number, memberId: number, data: UpdateMemberData): Promise<GroupMember> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/members/${memberId}/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/members/${memberId}/`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
@@ -155,7 +155,7 @@ export const groupsApi = async () => ({
 
   // Remove member from group
   async removeMember(groupId: number, memberId: number): Promise<void> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/members/${memberId}/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/members/${memberId}/`, {
       method: "DELETE",
     });
 
@@ -167,7 +167,7 @@ export const groupsApi = async () => ({
 
   // Leave group
   async leave(groupId: number): Promise<{ detail: string }> {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/groups/${groupId}/quiting/`, {
+    const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/quiting/`, {
       method: "POST",
     });
 
