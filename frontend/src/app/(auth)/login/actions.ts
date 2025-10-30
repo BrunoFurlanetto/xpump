@@ -138,7 +138,8 @@ export const getUserById = async (userId: string): Promise<userAuth | null> => {
       avatar,
     };
     return aUser;
-  } catch {
+  } catch (error) {
+    console.error("Erro ao buscar usuário:", error);
     return null;
   }
 };

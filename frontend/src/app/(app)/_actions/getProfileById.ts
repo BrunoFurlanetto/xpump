@@ -3,6 +3,7 @@
 import { authFetch } from "@/lib/auth-fetch";
 import { BACKEND_URL } from "@/lib/constants";
 import { getCurrentUser } from "./getCurrentUser";
+import { updateToken } from "@/lib/session";
 
 interface Profile {
   id: number;
@@ -42,13 +43,9 @@ interface Profile {
   };
 }
 
-export const getProfileById = async (
-  profileId: string,
-): Promise<Profile | null> => {
+export const getProfileById = async (profileId: string): Promise<Profile | null> => {
   try {
-    const response = await authFetch(
-      `${BACKEND_URL}/profiles/${profileId}/`,
-    );
+    const response = await authFetch(`${BACKEND_URL}/profiles/${profileId}/`);
     if (!response.ok) {
       throw new Error("Erro ao buscar perfil");
     }

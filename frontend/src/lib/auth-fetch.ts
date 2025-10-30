@@ -1,8 +1,9 @@
 import "server-only";
 import { RequestInit } from "next/dist/server/web/spec-extension/request";
-import { verifySession, updateToken, deleteSession } from "./session";
+import { verifySession } from "./session";
 import { BACKEND_URL } from "./constants";
 import { redirect } from "next/navigation";
+import { updateTokenInCookies } from "@/app/(auth)/login/refresh-token-action";
 
 export interface FetchOptions extends RequestInit {
   headers?: Record<string, string>;
@@ -16,12 +17,10 @@ export class AuthError extends Error {
 }
 
 export const authFetch = async (url: string | URL, options: FetchOptions = {}) => {
-
   const session = await verifySession(false);
-
   if (!session?.access) {
     console.error("❌ Sessão não encontrada ou sem access token - redirecionando para login");
-    redirect("/login");
+    throw new AuthError("Sessão inválida, por favor faça login novamente.", true);
   }
 
   options.headers = {
@@ -30,53 +29,44 @@ export const authFetch = async (url: string | URL, options: FetchOptions = {}) =
     Authorization: `Bearer ${session.access}`,
   };
 
-  let response;
-  try {
-    response = await fetch(url, options);
-  } catch {
-    throw new AuthError("Erro ao fazer requisição", true);
-  }
-
+  let response = await fetch(url, options);
   // If we get a 401, try to refresh the token before redirecting
   if (response.status === 401 && session.refresh) {
-    try {
-      const refreshResponse = await fetch(`${BACKEND_URL}/auth/token/refresh/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refresh: session.refresh }),
-      });
+    console.log("🔄 [authFetch] Token expirado (401), tentando renovar...");
 
-      if (!refreshResponse.ok) {
-        redirect("/login");
-      }
+    const refreshResponse = await fetch(`${BACKEND_URL}/auth/token/refresh/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh: session.refresh }),
+    });
 
-      const data = await refreshResponse.json();
+    console.log("📥 [authFetch] Resposta do refresh - Status:", refreshResponse.status);
 
-      if (!data.access) {
-        redirect("/login");
-      }
+    if (!refreshResponse.ok) {
+      console.error("❌ [authFetch] Falha ao renovar token");
+      throw new AuthError("Sessão inválida, por favor faça login novamente.", true);
+    }
 
+    const data = await refreshResponse.json();
 
-      // Update the token in cookies
-      await updateToken({
-        accessToken: data.access,
-        refreshToken: session.refresh,
-      });
+    if (!data.access) {
+      console.error("❌ [authFetch] Resposta não contém access token");
+      throw new AuthError("Sessão inválida, por favor faça login novamente.", true);
+    }
 
-      options.headers.Authorization = `Bearer ${data.access}`;
-      response = await fetch(url, options);
+    options.headers.Authorization = `Bearer ${data.access}`;
+    response = await fetch(url, options);
 
-      if (response.status === 401) {
-        redirect("/login");
-      }
+    console.log("📥 [authFetch] Resposta da requisição reenviada - Status:", response.status);
 
-    } catch {
-      redirect("/login");
+    if (response.status === 401) {
+      console.error("❌ [authFetch] Ainda recebeu 401 após renovar token");
+      throw new AuthError("Sessão inválida, por favor faça login novamente.", true);
     }
   } else if (response.status === 401) {
-    redirect("/login");
+    throw new AuthError("Sessão inválida, por favor faça login novamente.", true);
   }
 
   return response;

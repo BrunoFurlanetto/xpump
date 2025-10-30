@@ -1,20 +1,7 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Trophy,
-  Target,
-  TrendingUp,
-  Award,
-  Utensils,
-  Dumbbell,
-} from "lucide-react";
+import { Trophy, Target, TrendingUp, Award, Utensils, Dumbbell } from "lucide-react";
 import { getCurrentUser } from "../_actions/getCurrentUser";
 import { getProfileById } from "../_actions/getProfileById";
 import GroupListCard from "./group-list-card";
@@ -56,20 +43,9 @@ const mockLevels = {
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-  if (!user)
-    return (
-      <div className="text-center text-muted-foreground">
-        Usuário não encontrado
-      </div>
-    );
+  if (!user) return <div className="text-center text-muted-foreground">Usuário não encontrado</div>;
   const profile = await getProfileById(user.profile_id);
-  if (!profile)
-    return (
-      <div className="text-center text-muted-foreground">
-        Perfil não encontrado
-      </div>
-    );
-  console.log(profile);
+  if (!profile) return <div className="text-center text-muted-foreground">Perfil não encontrado</div>;
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header do Perfil */}
@@ -87,12 +63,8 @@ export default async function ProfilePage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Pontos Totais
-                </p>
-                <p className="text-2xl font-bold text-blue-400">
-                  {profile.score.toLocaleString()}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Pontos Totais</p>
+                <p className="text-2xl font-bold text-blue-400">{profile.score.toLocaleString()}</p>
               </div>
               <Trophy className="h-8 w-8 text-blue-400" />
             </div>
@@ -103,12 +75,8 @@ export default async function ProfilePage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Treinos
-                </p>
-                <p className="text-2xl font-bold text-green-400">
-                  {profile.workout_streak.current_streak}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Treinos</p>
+                <p className="text-2xl font-bold text-green-400">{profile.workout_streak.current_streak}</p>
               </div>
               <Dumbbell className="h-8 w-8 text-green-400" />
             </div>
@@ -119,12 +87,8 @@ export default async function ProfilePage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Refeições
-                </p>
-                <p className="text-2xl font-bold text-purple-400">
-                  {profile.meal_streak.current_streak}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Refeições</p>
+                <p className="text-2xl font-bold text-purple-400">{profile.meal_streak.current_streak}</p>
               </div>
               <Utensils className="h-8 w-8 text-purple-400" />
             </div>
@@ -144,18 +108,11 @@ export default async function ProfilePage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Nível {profile.level}</span>
-              <span>
-                {profile.points_to_next_level} pontos para o próximo nível
-              </span>
+              <span>{profile.points_to_next_level} pontos para o próximo nível</span>
             </div>
-            <Progress
-              value={(profile.score % 1000) / 10}
-              max={100}
-              className="h-3"
-            />
+            <Progress value={(profile.score % 1000) / 10} max={100} className="h-3" />
             <p className="text-xs text-muted-foreground">
-              {profile.score.toLocaleString()} /{" "}
-              {profile.score + profile.points_to_next_level} pontos
+              {profile.score.toLocaleString()} / {profile.score + profile.points_to_next_level} pontos
             </p>
           </div>
         </CardContent>
@@ -176,15 +133,13 @@ export default async function ProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Treinos</span>
                 <span className="text-sm text-muted-foreground">
-                  {profile.workout_streak.weekly_expected -
-                    profile.workout_streak.weekly_remaining}
-                  /{profile.workout_streak.weekly_expected}
+                  {profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining}/
+                  {profile.workout_streak.weekly_expected}
                 </span>
               </div>
               <Progress
                 value={
-                  ((profile.workout_streak.weekly_expected -
-                    profile.workout_streak.weekly_remaining) /
+                  ((profile.workout_streak.weekly_expected - profile.workout_streak.weekly_remaining) /
                     profile.workout_streak.weekly_expected) *
                   100
                 }
@@ -196,15 +151,13 @@ export default async function ProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Refeições</span>
                 <span className="text-sm text-muted-foreground">
-                  {profile.meal_streak.weekly_expected -
-                    profile.meal_streak.weekly_remaining}
-                  /{profile.meal_streak.weekly_expected}
+                  {profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining}/
+                  {profile.meal_streak.weekly_expected}
                 </span>
               </div>
               <Progress
                 value={
-                  ((profile.meal_streak.weekly_expected -
-                    profile.meal_streak.weekly_remaining) /
+                  ((profile.meal_streak.weekly_expected - profile.meal_streak.weekly_remaining) /
                     profile.meal_streak.weekly_expected) *
                   100
                 }
@@ -231,22 +184,16 @@ export default async function ProfilePage() {
               <div
                 key={achievement.id}
                 className={`p-4 rounded-lg border ${
-                  achievement.earned
-                    ? "bg-green-500/10 border-green-500/30"
-                    : "bg-muted/10 border-muted/30"
+                  achievement.earned ? "bg-green-500/10 border-green-500/30" : "bg-muted/10 border-muted/30"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="text-2xl">{achievement.icon}</div>
                   <div className="flex-1">
-                    <h4
-                      className={`font-semibold ${achievement.earned ? "text-green-400" : "text-muted-foreground"}`}
-                    >
+                    <h4 className={`font-semibold ${achievement.earned ? "text-green-400" : "text-muted-foreground"}`}>
                       {achievement.name}
                     </h4>
-                    <p className="text-sm text-muted-foreground">
-                      {achievement.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{achievement.description}</p>
                   </div>
                   {achievement.earned && (
                     <Badge variant="success" className="text-xs">

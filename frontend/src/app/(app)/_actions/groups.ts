@@ -42,6 +42,7 @@ export const groupsApi = async () => ({
   // List all groups - Uses authFetchWithRetry for proper token refresh in Server Actions
   async list() {
     const response = await authFetch(`${BACKEND_URL}/groups/me`);
+
     if (!response.ok) {
       return {
         error: "Falha ao carregar grupos",
@@ -59,6 +60,7 @@ export const groupsApi = async () => ({
     const response = await authFetch(`${BACKEND_URL}/groups/${groupId}/`, {
       method: "GET",
     });
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.detail || "Failed to fetch group");
