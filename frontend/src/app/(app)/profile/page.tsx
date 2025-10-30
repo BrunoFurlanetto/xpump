@@ -155,7 +155,7 @@ export default async function ProfilePage() {
             />
             <p className="text-xs text-muted-foreground">
               {profile.score.toLocaleString()} /{" "}
-              {Math.ceil(profile.score / 1000) * 1000} pontos
+              {profile.score + profile.points_to_next_level} pontos
             </p>
           </div>
         </CardContent>
