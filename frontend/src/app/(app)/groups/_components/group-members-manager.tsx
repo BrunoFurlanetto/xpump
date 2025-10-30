@@ -5,7 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Crown, Shield, MoreVertical, UserMinus, UserCheck, UserX, Filter } from "lucide-react";
+import {
+  Users,
+  Search,
+  Crown,
+  Shield,
+  MoreVertical,
+  UserMinus,
+  UserCheck,
+  UserX,
+  Filter,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +43,9 @@ export function GroupMembersManager({
 }: GroupMembersManagerProps) {
   console.log(groupId);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "owner" | "admin" | "member">("all");
+  const [roleFilter, setRoleFilter] = useState<
+    "all" | "owner" | "admin" | "member"
+  >("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   //   const canManageMembers = currentUserRole === 'owner' || currentUserRole === 'admin';
@@ -46,7 +58,9 @@ export function GroupMembersManager({
 
     const matchesRole =
       roleFilter === "all" ||
-      (roleFilter === "owner" && member.id === members.find((m) => m.is_admin && m.id === currentUserId)?.id) ||
+      (roleFilter === "owner" &&
+        member.id ===
+          members.find((m) => m.is_admin && m.id === currentUserId)?.id) ||
       (roleFilter === "admin" && member.is_admin) ||
       (roleFilter === "member" && !member.is_admin);
 
@@ -140,7 +154,9 @@ export function GroupMembersManager({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setRoleFilter("all")}>Todos os papéis</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setRoleFilter("all")}>
+                Todos os papéis
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setRoleFilter("owner")}>
                 <Crown className="h-4 w-4 mr-2" />
                 Dono
@@ -166,10 +182,15 @@ export function GroupMembersManager({
             const isLoading = actionLoading === member.id;
 
             return (
-              <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-card"
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="font-semibold text-sm">{member.username.charAt(0).toUpperCase()}</span>
+                    <span className="font-semibold text-sm">
+                      {member.username.charAt(0).toUpperCase()}
+                    </span>
                   </div>
 
                   <div>
@@ -181,9 +202,12 @@ export function GroupMembersManager({
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {member.email}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Entrou em {new Date(member.joined_at).toLocaleDateString("pt-BR")}
+                      Entrou em{" "}
+                      {new Date(member.joined_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 </div>
@@ -191,20 +215,35 @@ export function GroupMembersManager({
                 <div className="flex items-center gap-2">
                   {/* Badge do papel */}
                   <Badge
-                    variant={memberRole === "owner" ? "default" : memberRole === "admin" ? "secondary" : "outline"}
+                    variant={
+                      memberRole === "owner"
+                        ? "default"
+                        : memberRole === "admin"
+                          ? "secondary"
+                          : "outline"
+                    }
                     className="flex items-center gap-1"
                   >
                     {memberRole === "owner" && <Crown className="h-3 w-3" />}
                     {memberRole === "admin" && <Shield className="h-3 w-3" />}
                     {memberRole === "member" && <Users className="h-3 w-3" />}
-                    {memberRole === "owner" ? "Dono" : memberRole === "admin" ? "Admin" : "Membro"}
+                    {memberRole === "owner"
+                      ? "Dono"
+                      : memberRole === "admin"
+                        ? "Admin"
+                        : "Membro"}
                   </Badge>
 
                   {/* Menu de ações */}
                   {canManage && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={isLoading}
+                          className="h-8 w-8"
+                        >
                           {isLoading ? (
                             <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
                           ) : (
@@ -235,7 +274,10 @@ export function GroupMembersManager({
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem onClick={() => handleRemoveMember(member.id)} className="text-destructive">
+                        <DropdownMenuItem
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-destructive"
+                        >
                           <UserMinus className="h-4 w-4 mr-2" />
                           Remover do Grupo
                         </DropdownMenuItem>

@@ -68,15 +68,24 @@ const mockRankingData = [
 ];
 
 export function GroupDetails({ group }: GroupDetailsProps) {
+  console.log(group);
   const [activeTab, setActiveTab] = useState("ranking");
 
   // Simular usuário atual (em um app real, viria do contexto de auth)
   const currentUserId = 1;
   const currentUserMember = group.members.find((m) => m.id === currentUserId);
-  const currentUserRole = group.owner === currentUserId ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
+  const currentUserRole =
+    group.owner === currentUserId
+      ? "owner"
+      : currentUserMember?.is_admin
+        ? "admin"
+        : "member";
 
-  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
-  const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "all">("week");
+  const canManageMembers =
+    currentUserRole === "owner" || currentUserRole === "admin";
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "week" | "month" | "all"
+  >("week");
 
   const getPositionIcon = (position: number) => {
     switch (position) {
@@ -135,8 +144,12 @@ export function GroupDetails({ group }: GroupDetailsProps) {
         </Link>
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words">{group.name}</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">{group.description}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words">
+            {group.name}
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            {group.description}
+          </p>
         </div>
       </div>
 
@@ -146,8 +159,12 @@ export function GroupDetails({ group }: GroupDetailsProps) {
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Membros</p>
-                <p className="text-2xl font-bold text-foreground">{group.members.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total de Membros
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {group.members.length}
+                </p>
               </div>
               <Users className="h-8 w-8 text-primary" />
             </div>
@@ -158,7 +175,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Treinos da Semana</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Treinos da Semana
+                </p>
                 <p className="text-2xl font-bold text-foreground">47</p>
               </div>
               <Target className="h-8 w-8 text-primary" />
@@ -170,7 +189,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Sequência Média</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Sequência Média
+                </p>
                 <p className="text-2xl font-bold text-foreground">8.5</p>
               </div>
               <Flame className="h-8 w-8 text-primary" />
@@ -182,7 +203,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pontos Totais</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Pontos Totais
+                </p>
                 <p className="text-2xl font-bold text-foreground">3,410</p>
               </div>
               <Star className="h-8 w-8 text-primary" />
@@ -192,7 +215,11 @@ export function GroupDetails({ group }: GroupDetailsProps) {
       </div>
 
       {/* Conteúdo Principal com Abas */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="ranking" className="flex items-center gap-2">
             <Trophy className="h-4 w-4" />
@@ -213,15 +240,23 @@ export function GroupDetails({ group }: GroupDetailsProps) {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-foreground">Ranking do Grupo</CardTitle>
+                  <CardTitle className="text-foreground">
+                    Ranking do Grupo
+                  </CardTitle>
                 </div>
 
                 <div className="flex gap-1 flex-wrap">
-                  {(Object.keys(periodLabels) as Array<keyof typeof periodLabels>).map((period) => (
+                  {(
+                    Object.keys(periodLabels) as Array<
+                      keyof typeof periodLabels
+                    >
+                  ).map((period) => (
                     <Button
                       key={period}
                       onClick={() => setSelectedPeriod(period)}
-                      variant={selectedPeriod === period ? "default" : "outline"}
+                      variant={
+                        selectedPeriod === period ? "default" : "outline"
+                      }
                       size="sm"
                       className={
                         selectedPeriod === period
@@ -252,7 +287,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
                     <div
                       key={member.id}
                       className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
-                        index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
+                        index < 3
+                          ? "bg-primary/10 border border-primary/20"
+                          : "bg-muted/30 border border-border"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -266,7 +303,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-foreground truncate">{member.username}</h4>
+                          <h4 className="font-semibold text-foreground truncate">
+                            {member.username}
+                          </h4>
                           {getTrendIcon(member.trend)}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -277,8 +316,12 @@ export function GroupDetails({ group }: GroupDetailsProps) {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-xl font-bold text-primary">{member.points}</p>
-                        <p className="text-sm text-muted-foreground">+{member.weeklyPoints} esta semana</p>
+                        <p className="text-xl font-bold text-primary">
+                          {member.points}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          +{member.weeklyPoints} esta semana
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -305,8 +348,12 @@ export function GroupDetails({ group }: GroupDetailsProps) {
                           {getInitials(mockRankingData[1].username)}
                         </AvatarFallback>
                       </Avatar>
-                      <p className="text-sm font-medium">{mockRankingData[1].username}</p>
-                      <p className="text-xs text-muted-foreground">{mockRankingData[1].weeklyPoints} pts</p>
+                      <p className="text-sm font-medium">
+                        {mockRankingData[1].username}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {mockRankingData[1].weeklyPoints} pts
+                      </p>
                     </div>
 
                     {/* 1º Lugar */}
@@ -319,8 +366,12 @@ export function GroupDetails({ group }: GroupDetailsProps) {
                           {getInitials(mockRankingData[0].username)}
                         </AvatarFallback>
                       </Avatar>
-                      <p className="text-sm font-medium">{mockRankingData[0].username}</p>
-                      <p className="text-xs text-muted-foreground">{mockRankingData[0].weeklyPoints} pts</p>
+                      <p className="text-sm font-medium">
+                        {mockRankingData[0].username}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {mockRankingData[0].weeklyPoints} pts
+                      </p>
                     </div>
 
                     {/* 3º Lugar */}
@@ -333,8 +384,12 @@ export function GroupDetails({ group }: GroupDetailsProps) {
                           {getInitials(mockRankingData[2].username)}
                         </AvatarFallback>
                       </Avatar>
-                      <p className="text-sm font-medium">{mockRankingData[2].username}</p>
-                      <p className="text-xs text-muted-foreground">{mockRankingData[2].weeklyPoints} pts</p>
+                      <p className="text-sm font-medium">
+                        {mockRankingData[2].username}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {mockRankingData[2].weeklyPoints} pts
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -343,7 +398,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
               {/* Progresso do Grupo */}
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="text-lg">Meta Semanal do Grupo</CardTitle>
+                  <CardTitle className="text-lg">
+                    Meta Semanal do Grupo
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -383,12 +440,18 @@ export function GroupDetails({ group }: GroupDetailsProps) {
                       <Calendar className="h-3 w-3" />
                       Criado em:
                     </span>
-                    <span>{new Date(group.created_at).toLocaleDateString("pt-BR")}</span>
+                    <span>
+                      {new Date(group.created_at).toLocaleDateString("pt-BR")}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Administradores:</span>
-                    <span>{group.members.filter((m) => m.is_admin).length}</span>
+                    <span className="text-muted-foreground">
+                      Administradores:
+                    </span>
+                    <span>
+                      {group.members.filter((m) => m.is_admin).length}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

@@ -12,6 +12,8 @@ interface Profile {
   photo: string | null;
   notification_preferences: undefined;
   score: number;
+  level: number;
+  points_to_next_level: number;
   groups: {
     id: number;
     name: string;
@@ -40,9 +42,13 @@ interface Profile {
   };
 }
 
-export const getProfileById = async (profileId: string): Promise<Profile | null> => {
+export const getProfileById = async (
+  profileId: string,
+): Promise<Profile | null> => {
   try {
-    const response = await authFetchWithRetry(`${BACKEND_URL}/profiles/${profileId}/`);
+    const response = await authFetchWithRetry(
+      `${BACKEND_URL}/profiles/${profileId}/`,
+    );
     if (!response.ok) {
       throw new Error("Erro ao buscar perfil");
     }
