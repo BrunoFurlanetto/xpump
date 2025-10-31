@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { GroupDetails } from "@/app/(app)/groups/_components/group-details";
 import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
 import { Group } from "@/lib/api/groups";
+import { GroupDetailsSkeleton } from "@/app/(app)/groups/_components/group-details-skeleton";
 
 function SingleGroupPageContent({ params }: { params: Promise<{ id: string }> }) {
   const [groupId, setGroupId] = useState<number | null>(null);
@@ -26,9 +27,9 @@ function SingleGroupPageContent({ params }: { params: Promise<{ id: string }> })
     }
   }, [groupId, fetchGroup]);
 
-  if (!groupId) return <div>ID do grupo não fornecido</div>;
-  if (isLoading) return <div>Carregando...</div>;
-  if (!group) return <div>Grupo não encontrado</div>;
+  if (!groupId) return <div className="text-center text-muted-foreground py-8">ID do grupo não fornecido</div>;
+  if (isLoading) return <GroupDetailsSkeleton />;
+  if (!group) return <div className="text-center text-muted-foreground py-8">Grupo não encontrado</div>;
 
   return <GroupDetails group={group} />;
 }

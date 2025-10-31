@@ -9,6 +9,7 @@ import GroupListCard from "./group-list-card";
 import ProfileCardHeader from "./profile-card-header";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useEffect, useState } from "react";
+import { ProfileSkeleton } from "./profile-skeleton";
 
 // Mock data - em um app real, isso viria de uma API
 const mockLevels = {
@@ -65,8 +66,8 @@ export default function ProfilePage() {
     });
   }, [fetchProfile]);
 
-  if (isLoading || !profile) return <div className="text-center text-muted-foreground">Carregando...</div>;
-  if (!user) return <div className="text-center text-muted-foreground">Usuário não encontrado</div>;
+  if (isLoading || !profile) return <ProfileSkeleton />;
+  if (!user) return <div className="text-center text-muted-foreground py-8">Usuário não encontrado</div>;
 
   console.log("Profile data:", profile);
   return (
