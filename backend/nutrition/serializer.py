@@ -11,6 +11,8 @@ class MealChoicesSerializer(serializers.Serializer):
 
 
 class MealConfigSerializer(serializers.ModelSerializer):
+    meal_name = serializers.CharField(source='get_meal_name_display', read_only=True)
+
     class Meta:
         model = MealConfig
         fields = '__all__'
