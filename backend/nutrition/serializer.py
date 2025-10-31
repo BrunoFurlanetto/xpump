@@ -41,6 +41,7 @@ class MealSerializer(serializers.ModelSerializer):
     proofs = MealProofSerializer(many=True, read_only=True)
     current_streak = serializers.SerializerMethodField(read_only=True)
     longest_streak = serializers.SerializerMethodField(read_only=True)
+    level_up = serializers.BooleanField(read_only=True, default=False)
 
     class Meta:
         model = Meal
@@ -48,7 +49,7 @@ class MealSerializer(serializers.ModelSerializer):
             'id', 'user', 'meal_type', 'meal_time',
             'comments', 'validation_status', 'base_points',
             'multiplier', 'proof_files', 'proofs',
-            'current_streak', 'longest_streak'
+            'current_streak', 'longest_streak', 'level_up'
         ]
         # Prevent modification of automatically calculated fields
         read_only_fields = ('user', 'base_points', 'multiplier', 'validation_status')
@@ -92,7 +93,14 @@ class MealSerializer(serializers.ModelSerializer):
         Handles file uploads and creates proof records.
         """
         files = validated_data.pop('proof_files', [])  # Extract proof files
+        user_level = validated_data['user'].profile.level
         checkin = Meal.objects.create(**validated_data)  # Create check-in
+
+        if not files:
+            raise serializers.ValidationError('At least one proof file is required.')
+
+        level_up = checkin.user.profile.level > user_level
+        setattr(checkin, 'level_up', level_up)
 
         # Create proof file records
         for f in files:

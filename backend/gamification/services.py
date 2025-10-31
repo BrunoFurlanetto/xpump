@@ -40,7 +40,7 @@ class GamificationService(ABC):
         return float(base_points) * multiplier
 
     def get_multiplier(self, user):
-        streak = self.get_streak(user)
+        streak = 1  # self.get_streak(user)  TODO: implement streak logic in the future
         candidates = []
         cfg_collection = getattr(self.settings, self.multiplier_streak_attr)
 
