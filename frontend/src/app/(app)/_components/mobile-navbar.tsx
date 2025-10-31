@@ -62,10 +62,10 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
 
           <div className="ml-auto flex items-center space-x-2">
             <NotificationBell />
-            <Button variant="ghost" size="sm" onClick={toggleMobileMenu} className="h-9 w-9 p-0">
+            {/* <Button variant="ghost" size="sm" onClick={toggleMobileMenu} className="h-9 w-9 p-0">
               <Menu className="h-5 w-5 text-gray-100" />
               <span className="sr-only">Abrir menu</span>
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
