@@ -23,10 +23,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
-import { MealLog, MealType } from "@/hooks/useMeals";
+import { Meal } from "@/lib/api/nutrition";
+import { MealType } from "@/hooks/useMeals";
 
 interface MealCardProps {
-  meal: MealLog;
+  meal: Meal;
   mealType: MealType;
   onUpdateComments: (id: number, comments: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
@@ -34,7 +35,7 @@ interface MealCardProps {
 
 export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedComments, setEditedComments] = useState(meal.comments);
+  const [editedComments, setEditedComments] = useState(meal.comments || "");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -45,14 +46,14 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
       await onUpdateComments(meal.id, editedComments);
       setIsEditing(false);
     } catch {
-      setEditedComments(meal.comments); // Revert on error
+      setEditedComments(meal.comments || ""); // Revert on error
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleCancelEdit = () => {
-    setEditedComments(meal.comments);
+    setEditedComments(meal.comments || "");
     setIsEditing(false);
   };
 
@@ -87,12 +88,12 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
                   <h4 className="font-semibold text-foreground">{mealType.name}</h4>
                   <Badge variant="secondary" className="text-xs">
                     <Trophy className="h-3 w-3 mr-1" />
-                    {meal.points} pts
+                    {Math.round(meal.base_points * meal.multiplier)} pts
                   </Badge>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  <span>{formatTime(meal.meal_date)}</span>
+                  <span>{formatTime(meal.meal_time)}</span>
                 </div>
               </div>
             </div>
@@ -155,10 +156,10 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
             </div>
           )}
 
-          {meal.photo && (
+          {meal.proofs && meal.proofs.length > 0 && (
             <div className="mt-3">
               <img
-                src={meal.photo}
+                src={meal.proofs[0].file}
                 alt="Foto da refeição"
                 className="w-full h-32 object-cover rounded-lg border border-border"
               />
