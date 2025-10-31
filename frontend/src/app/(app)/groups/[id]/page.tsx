@@ -1,13 +1,45 @@
-import React from "react";
-import { groupsApi } from "../../_actions/groups";
-import { GroupDetails } from "@/app/(app)/groups/_components/group-details";
+"use client";
 
-const SingleGroupPage = async ({ params }: { params: Promise<{ id: string }> }) => {
-  const groups = await groupsApi();
-  const { id } = await params;
-  if (!id) return <div>ID do grupo não fornecido</div>;
-  const group = await groups.get(Number(id));
+import React, { useEffect, useState } from "react";
+import { GroupDetails } from "@/app/(app)/groups/_components/group-details";
+import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
+import { Group } from "@/lib/api/groups";
+import { GroupDetailsSkeleton } from "@/app/(app)/groups/_components/group-details-skeleton";
+
+function SingleGroupPageContent({ params }: { params: Promise<{ id: string }> }) {
+  const [groupId, setGroupId] = useState<number | null>(null);
+  const [group, setGroup] = useState<Group | null>(null);
+  const { fetchGroup, isLoading } = useGroupsContext();
+
+  useEffect(() => {
+    params.then(({ id }) => {
+      if (id) {
+        setGroupId(Number(id));
+      }
+    });
+  }, [params]);
+
+  useEffect(() => {
+    if (groupId) {
+      fetchGroup(groupId).then((data) => {
+        if (data) setGroup(data);
+      });
+    }
+  }, [groupId, fetchGroup]);
+
+  if (!groupId) return <div className="text-center text-muted-foreground py-8">ID do grupo não fornecido</div>;
+  if (isLoading) return <GroupDetailsSkeleton />;
+  if (!group) return <div className="text-center text-muted-foreground py-8">Grupo não encontrado</div>;
+
   return <GroupDetails group={group} />;
+}
+
+const SingleGroupPage = ({ params }: { params: Promise<{ id: string }> }) => {
+  return (
+    <GroupsProvider>
+      <SingleGroupPageContent params={params} />
+    </GroupsProvider>
+  );
 };
 
 export default SingleGroupPage;

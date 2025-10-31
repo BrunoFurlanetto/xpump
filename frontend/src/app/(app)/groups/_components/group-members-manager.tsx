@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { GroupMember } from "@/app/(app)/_actions/groups";
+import { GroupMember } from "@/lib/api/groups";
 
 interface GroupMembersManagerProps {
   groupId: number;
@@ -166,7 +166,10 @@ export function GroupMembersManager({
             const isLoading = actionLoading === member.id;
 
             return (
-              <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-card"
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="font-semibold text-sm">{member.username.charAt(0).toUpperCase()}</span>

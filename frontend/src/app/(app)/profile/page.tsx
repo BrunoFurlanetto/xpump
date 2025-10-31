@@ -1,30 +1,76 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Target, TrendingUp, Award, Utensils, Dumbbell } from "lucide-react";
 import { getCurrentUser } from "../_actions/getCurrentUser";
-import { getProfileById } from "../_actions/getProfileById";
 import GroupListCard from "./group-list-card";
 import ProfileCardHeader from "./profile-card-header";
+import { useProfiles } from "@/hooks/useProfiles";
+import { useEffect, useState } from "react";
+import { ProfileSkeleton } from "./profile-skeleton";
 
 // Mock data - em um app real, isso viria de uma API
 const mockLevels = {
-  level: 12,
-  pointsForNextLevel: 550,
   achievements: [
-    { id: 1, name: "Primeira Semana", description: "Complete 7 dias consecutivos", icon: "🔥", earned: true },
-    { id: 2, name: "Consistência", description: "30 treinos realizados", icon: "💪", earned: true },
-    { id: 3, name: "Nutri Expert", description: "50 refeições registradas", icon: "🥗", earned: true },
-    { id: 4, name: "Lenda", description: "100 treinos realizados", icon: "👑", earned: false },
+    {
+      id: 1,
+      name: "Primeira Semana",
+      description: "Complete 7 dias consecutivos",
+      icon: "🔥",
+      earned: true,
+    },
+    {
+      id: 2,
+      name: "Consistência",
+      description: "30 treinos realizados",
+      icon: "💪",
+      earned: true,
+    },
+    {
+      id: 3,
+      name: "Nutri Expert",
+      description: "50 refeições registradas",
+      icon: "🥗",
+      earned: true,
+    },
+    {
+      id: 4,
+      name: "Lenda",
+      description: "100 treinos realizados",
+      icon: "👑",
+      earned: false,
+    },
   ],
 };
 
-export default async function ProfilePage() {
-  const user = await getCurrentUser();
-  if (!user) return <div className="text-center text-muted-foreground">Usuário não encontrado</div>;
-  const profile = await getProfileById(user.profile_id);
-  if (!profile) return <div className="text-center text-muted-foreground">Perfil não encontrado</div>;
-  console.log(profile);
+interface User {
+  id: string;
+  profile_id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+}
+
+export default function ProfilePage() {
+  const { profile, isLoading, fetchProfile } = useProfiles();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then((userData) => {
+      if (userData) {
+        setUser(userData);
+        fetchProfile(userData.profile_id);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Execute apenas uma vez ao montar
+
+  if (isLoading || !profile) return <ProfileSkeleton />;
+  if (!user) return <div className="text-center text-muted-foreground py-8">Usuário não encontrado</div>;
+
+  console.log("Profile data:", profile);
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header do Perfil */}
@@ -32,7 +78,7 @@ export default async function ProfilePage() {
         avatar={user.avatar}
         email={user.email}
         name={user.name}
-        level={mockLevels.level}
+        level={profile.level}
         current_streak={profile.workout_streak.current_streak}
       />
 
@@ -86,12 +132,12 @@ export default async function ProfilePage() {
         <CardContent>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Nível {mockLevels.level}</span>
-              <span>{mockLevels.pointsForNextLevel} pontos para o próximo nível</span>
+              <span>Nível {profile.level}</span>
+              <span>{profile.points_to_next_level} pontos para o próximo nível</span>
             </div>
             <Progress value={(profile.score % 1000) / 10} max={100} className="h-3" />
             <p className="text-xs text-muted-foreground">
-              {profile.score.toLocaleString()} / {Math.ceil(profile.score / 1000) * 1000} pontos
+              {profile.score.toLocaleString()} / {profile.score + profile.points_to_next_level} pontos
             </p>
           </div>
         </CardContent>
@@ -148,7 +194,8 @@ export default async function ProfilePage() {
       </Card>
 
       {/* Conquistas */}
-      <Card className="border-border">
+      {/* TODO: DEIXEI COMO HIDDEN POIS AINDA NÂO FOI DESENVOLVIDO NA API */}
+      <Card className="border-border hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />

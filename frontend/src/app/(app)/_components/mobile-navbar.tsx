@@ -1,12 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNavigation } from "@/context/navigationContext";
-import { Home, Dumbbell, Menu, Utensils, MoreHorizontal, MessageSquare } from "lucide-react";
+import { Home, Dumbbell, Utensils, MoreHorizontal, MessageSquare } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface MobileNavbarProps {
@@ -62,10 +61,10 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
 
           <div className="ml-auto flex items-center space-x-2">
             <NotificationBell />
-            <Button variant="ghost" size="sm" onClick={toggleMobileMenu} className="h-9 w-9 p-0">
+            {/* <Button variant="ghost" size="sm" onClick={toggleMobileMenu} className="h-9 w-9 p-0">
               <Menu className="h-5 w-5 text-gray-100" />
               <span className="sr-only">Abrir menu</span>
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
@@ -89,7 +88,7 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
               </Link>
             );
           })}
-          
+
           {/* Menu button */}
           <button
             onClick={toggleMobileMenu}

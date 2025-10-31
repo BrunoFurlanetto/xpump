@@ -10,7 +10,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallPWA() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -22,7 +23,9 @@ export function InstallPWA() {
 
     // Verificar se já está instalado
     const checkInstalled = () => {
-      const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+      const isStandalone = window.matchMedia(
+        "(display-mode: standalone)",
+      ).matches;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const isIOSStandalone = (window.navigator as any).standalone === true;
       setIsInstalled(isStandalone || isIOSStandalone);
@@ -41,7 +44,8 @@ export function InstallPWA() {
 
       // Mostrar novamente após 7 dias se foi dispensado
       if (dismissed && dismissedDate) {
-        const daysSinceDismissed = (Date.now() - parseInt(dismissedDate)) / (1000 * 60 * 60 * 24);
+        const daysSinceDismissed =
+          (Date.now() - parseInt(dismissedDate)) / (1000 * 60 * 60 * 24);
         if (daysSinceDismissed > 7) {
           localStorage.removeItem("pwa-install-dismissed");
           localStorage.removeItem("pwa-install-dismissed-date");
@@ -94,7 +98,9 @@ export function InstallPWA() {
 
   // Banner para iOS (instruções manuais)
   if (isIOS && !showInstallBanner) {
-    const iosInstructionsDismissed = localStorage.getItem("ios-install-instructions-dismissed");
+    const iosInstructionsDismissed = localStorage.getItem(
+      "ios-install-instructions-dismissed",
+    );
     if (iosInstructionsDismissed) return null;
 
     return (
@@ -106,8 +112,12 @@ export function InstallPWA() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm mb-1">Instalar X-Pump no iOS</h3>
-              <p className="text-xs text-muted-foreground mb-2">Para instalar o app no seu iPhone/iPad:</p>
+              <h3 className="font-semibold text-primary text-sm mb-1">
+                Instalar X-Pump no iOS
+              </h3>
+              <p className="text-xs text-muted-foreground mb-2">
+                Para instalar o app no seu iPhone/iPad:
+              </p>
               <ol className="text-xs text-muted-foreground space-y-1 mb-3 list-decimal list-inside">
                 <li>Toque no ícone de compartilhar (📤)</li>
                 <li>Role e selecione &quot;Adicionar à Tela Inicial&quot;</li>
@@ -118,7 +128,10 @@ export function InstallPWA() {
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  localStorage.setItem("ios-install-instructions-dismissed", "true");
+                  localStorage.setItem(
+                    "ios-install-instructions-dismissed",
+                    "true",
+                  );
                   window.location.reload();
                 }}
                 className="w-full"
@@ -129,7 +142,10 @@ export function InstallPWA() {
 
             <button
               onClick={() => {
-                localStorage.setItem("ios-install-instructions-dismissed", "true");
+                localStorage.setItem(
+                  "ios-install-instructions-dismissed",
+                  "true",
+                );
                 window.location.reload();
               }}
               className="flex-shrink-0 text-muted-foreground hover:text-foreground"
@@ -154,16 +170,24 @@ export function InstallPWA() {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm mb-1">Instalar X-Pump</h3>
+          <h3 className="font-semibold text-primary text-sm mb-1">
+            Instalar X-Pump
+          </h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Instale nosso app para acesso rápido e experiência completa, mesmo offline!
+            Instale nosso app para acesso rápido e experiência completa, mesmo
+            offline!
           </p>
 
           <div className="flex gap-2">
             <Button size="sm" onClick={handleInstallClick} className="flex-1">
               Instalar
             </Button>
-            <Button size="sm" variant="ghost" onClick={handleDismiss}>
+            <Button
+              size="sm"
+              className="text-primary"
+              variant="ghost"
+              onClick={handleDismiss}
+            >
               Agora não
             </Button>
           </div>

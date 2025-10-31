@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { useUserAuth } from "@/context/userAuthContext";
+import { NutritionAPI, Meal, MealConfig, MealStats, DailyMeals } from "@/lib/api/nutrition";
 
 export interface MealType {
   id: string;
@@ -23,30 +25,12 @@ export interface MealLog {
   created_at: string;
 }
 
-export interface MealStats {
-  total_meals: number;
-  total_points: number;
-  this_week_meals: number;
-  this_month_meals: number;
-  streak_days: number;
-  completion_rate: number; // % de refeições completas por dia
-  favorite_meal_type: string;
-}
-
-export interface DailyMeals {
-  date: string;
-  meals: {
-    [key: string]: MealLog | null; // breakfast, lunch, snack, dinner
-  };
-  completion_percentage: number;
-  total_points: number;
-}
-
 interface UseMealsReturn {
-  meals: MealLog[];
+  meals: Meal[];
   dailyMeals: DailyMeals[];
   stats: MealStats | null;
   mealTypes: MealType[];
+  mealConfigs: MealConfig[];
   isLoading: boolean;
   isSubmitting: boolean;
   createMeal: (data: CreateMealData) => Promise<void>;
@@ -57,206 +41,107 @@ interface UseMealsReturn {
 }
 
 export interface CreateMealData {
-  meal_type: string;
-  meal_date: string;
-  comments: string;
+  meal_type: number;
+  meal_time: string;
+  comments?: string;
   photo?: File;
   share_to_feed?: boolean;
 }
 
-// Tipos de refeição padrão do sistema
-export const DEFAULT_MEAL_TYPES: MealType[] = [
-  {
-    id: 'breakfast',
-    name: 'Café da Manhã',
-    icon: '🌅',
-    timeRange: '06:00 - 10:00',
-    order: 1
-  },
-  {
-    id: 'lunch',
-    name: 'Almoço',
-    icon: '🍽️',
-    timeRange: '11:00 - 15:00',
-    order: 2
-  },
-  {
-    id: 'snack',
-    name: 'Lanche',
-    icon: '🥪',
-    timeRange: '15:00 - 18:00',
-    order: 3
-  },
-  {
-    id: 'dinner',
-    name: 'Jantar',
-    icon: '🌙',
-    timeRange: '18:00 - 22:00',
-    order: 4
-  }
-];
+// Re-export types from API
+export type { Meal, MealConfig, MealStats, DailyMeals } from "@/lib/api/nutrition";
+
+// Mapping from MealConfig to MealType for UI display
+const getMealTypeIcon = (mealName: string): string => {
+  const icons: { [key: string]: string } = {
+    breakfast: "🌅",
+    lunch: "🍽️",
+    afternoon_snack: "🥪",
+    dinner: "🌙",
+    snack: "🍎",
+  };
+  return icons[mealName] || "🍽️";
+};
 
 export function useMeals(): UseMealsReturn {
-  const [meals, setMeals] = useState<MealLog[]>([]);
+  const { user } = useUserAuth();
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [mealConfigs, setMealConfigs] = useState<MealConfig[]>([]);
   const [dailyMeals, setDailyMeals] = useState<DailyMeals[]>([]);
   const [stats, setStats] = useState<MealStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const mealTypes = DEFAULT_MEAL_TYPES;
+  // Convert MealConfigs to MealTypes for UI
+  const mealTypes: MealType[] = mealConfigs.map((config, index) => ({
+    id: config.id.toString(),
+    name: config.meal_name,
+    icon: getMealTypeIcon(config.meal_name),
+    timeRange: `${config.interval_start} - ${config.interval_end}`,
+    order: index + 1,
+  }));
 
   const fetchMeals = useCallback(async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
-      // TODO: Implementar chamadas para API real
-      // Por enquanto, dados mock para desenvolvimento
-      const mockMeals: MealLog[] = [
-        {
-          id: 1,
-          user: 1,
-          meal_type: 'breakfast',
-          meal_date: '2025-08-29T08:00:00Z',
-          comments: 'Aveia com frutas e mel. Começando o dia com energia!',
-          points: 25,
-          validation_status: 1,
-          created_at: '2025-08-29T08:00:00Z'
-        },
-        {
-          id: 2,
-          user: 1,
-          meal_type: 'lunch',
-          meal_date: '2025-08-29T12:30:00Z',
-          comments: 'Frango grelhado com salada e arroz integral',
-          points: 30,
-          validation_status: 1,
-          created_at: '2025-08-29T12:30:00Z'
-        },
-        {
-          id: 3,
-          user: 1,
-          meal_type: 'breakfast',
-          meal_date: '2025-08-28T07:45:00Z',
-          comments: 'Smoothie de banana com whey protein',
-          points: 25,
-          validation_status: 1,
-          created_at: '2025-08-28T07:45:00Z'
-        },
-        {
-          id: 4,
-          user: 1,
-          meal_type: 'dinner',
-          meal_date: '2025-08-28T19:15:00Z',
-          comments: 'Salmão grelhado com legumes no vapor',
-          points: 35,
-          validation_status: 1,
-          created_at: '2025-08-28T19:15:00Z'
-        }
-      ];
 
-      const mockStats: MealStats = {
-        total_meals: 68,
-        total_points: 1890,
-        this_week_meals: 18,
-        this_month_meals: 52,
-        streak_days: 4,
-        completion_rate: 75, // 75% das refeições diárias completas
-        favorite_meal_type: 'breakfast'
-      };
+      // Fetch meal configs and meals in parallel
+      const [configsData, mealsData] = await Promise.all([
+        NutritionAPI.getMealConfigs(),
+        NutritionAPI.getMeals(parseInt(user.id)),
+      ]);
 
-      // Organizar refeições por dia
-      const mealsByDay = groupMealsByDay(mockMeals);
+      setMealConfigs(configsData);
+      setMeals(mealsData);
 
-      setMeals(mockMeals);
-      setDailyMeals(mealsByDay);
-      setStats(mockStats);
+      // Calculate stats from meals
+      const calculatedStats = NutritionAPI.calculateStats(mealsData);
+      setStats(calculatedStats);
+
+      // Group meals by day
+      const groupedMeals = NutritionAPI.groupMealsByDay(mealsData, configsData);
+      setDailyMeals(groupedMeals);
     } catch (error) {
-      console.error('Erro ao buscar refeições:', error);
-      toast.error('Erro ao carregar refeições');
+      console.error("Erro ao buscar refeições:", error);
+      toast.error("Erro ao carregar refeições");
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const groupMealsByDay = (mealsList: MealLog[]): DailyMeals[] => {
-    const grouped: { [key: string]: DailyMeals } = {};
-
-    mealsList.forEach(meal => {
-      const date = new Date(meal.meal_date).toISOString().split('T')[0];
-      
-      if (!grouped[date]) {
-        grouped[date] = {
-          date,
-          meals: {
-            breakfast: null,
-            lunch: null,
-            snack: null,
-            dinner: null
-          },
-          completion_percentage: 0,
-          total_points: 0
-        };
-      }
-
-      grouped[date].meals[meal.meal_type] = meal;
-      grouped[date].total_points += meal.points;
-    });
-
-    // Calcular porcentagem de completude e ordenar por data
-    return Object.values(grouped)
-      .map(day => {
-        const completedMeals = Object.values(day.meals).filter(meal => meal !== null).length;
-        day.completion_percentage = (completedMeals / 4) * 100; // 4 refeições por dia
-        return day;
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  };
+  }, [user?.id]);
 
   const createMeal = async (data: CreateMealData) => {
     try {
       setIsSubmitting(true);
-      
-      // TODO: Implementar upload de imagem e chamada para API
-      console.log('Criando refeição:', data);
-      
+
+      const apiData = {
+        meal_type: data.meal_type,
+        meal_time: data.meal_time,
+        comments: data.comments,
+        proof_files: data.photo ? [data.photo] : undefined,
+      };
+
+      await NutritionAPI.createMeal(apiData);
+
       if (data.share_to_feed) {
-        console.log('Compartilhando refeição no feed...');
+        console.log("Compartilhando refeição no feed...");
         // TODO: Implementar compartilhamento no feed
       }
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Calcular pontos baseado no tipo de refeição
-      const basePoints = {
-        breakfast: 25,
-        lunch: 30,
-        snack: 20,
-        dinner: 35
-      };
 
-      const newMeal: MealLog = {
-        id: Date.now(),
-        user: 1,
-        meal_type: data.meal_type,
-        meal_date: data.meal_date,
-        comments: data.comments,
-        points: basePoints[data.meal_type as keyof typeof basePoints] || 25,
-        validation_status: 1,
-        created_at: new Date().toISOString()
-      };
+      const message = data.share_to_feed
+        ? "Refeição registrada e compartilhada no feed! 🍽️📢"
+        : "Refeição registrada com sucesso! 🍽️";
 
-      setMeals(prev => [newMeal, ...prev]);
-      
-      const message = data.share_to_feed 
-        ? 'Refeição registrada e compartilhada no feed! 🍽️📢' 
-        : 'Refeição registrada com sucesso! 🍽️';
-      
       toast.success(message);
-      await fetchMeals(); // Recarregar para recalcular dados
+      await fetchMeals(); // Reload data
     } catch (error) {
-      console.error('Erro ao criar refeição:', error);
-      toast.error('Erro ao registrar refeição');
+      console.error("Erro ao criar refeição:", error);
+      const errorMessage = error instanceof Error ? error.message : "Erro ao registrar refeição";
+      toast.error(errorMessage);
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -265,35 +150,30 @@ export function useMeals(): UseMealsReturn {
 
   const updateMeal = async (id: number, comments: string) => {
     try {
-      // TODO: Implementar chamada para API
-      console.log('Atualizando refeição:', id, comments);
-      
-      setMeals(prev => 
-        prev.map(meal => 
-          meal.id === id 
-            ? { ...meal, comments }
-            : meal
-        )
-      );
-      
-      toast.success('Comentário atualizado!');
+      await NutritionAPI.updateMeal(id, comments);
+
+      setMeals((prev) => prev.map((meal) => (meal.id === id ? { ...meal, comments } : meal)));
+
+      toast.success("Comentário atualizado!");
     } catch (error) {
-      console.error('Erro ao atualizar refeição:', error);
-      toast.error('Erro ao atualizar comentário');
+      console.error("Erro ao atualizar refeição:", error);
+      toast.error("Erro ao atualizar comentário");
       throw error;
     }
   };
 
   const deleteMeal = async (id: number) => {
     try {
-      // TODO: Implementar chamada para API
-      console.log('Deletando refeição:', id);
-      
-      setMeals(prev => prev.filter(meal => meal.id !== id));
-      toast.success('Refeição removida');
+      await NutritionAPI.deleteMeal(id);
+
+      setMeals((prev) => prev.filter((meal) => meal.id !== id));
+      toast.success("Refeição removida");
+
+      // Recalculate after deletion
+      await fetchMeals();
     } catch (error) {
-      console.error('Erro ao deletar refeição:', error);
-      toast.error('Erro ao remover refeição');
+      console.error("Erro ao deletar refeição:", error);
+      toast.error("Erro ao remover refeição");
       throw error;
     }
   };
@@ -303,24 +183,27 @@ export function useMeals(): UseMealsReturn {
   };
 
   const getDayMeals = (date: string): DailyMeals | null => {
-    return dailyMeals.find(day => day.date === date) || null;
+    return dailyMeals.find((day) => day.date === date) || null;
   };
 
   useEffect(() => {
-    fetchMeals();
-  }, [fetchMeals]);
+    if (user?.id) {
+      fetchMeals();
+    }
+  }, [user?.id, fetchMeals]);
 
   return {
     meals,
     dailyMeals,
     stats,
     mealTypes,
+    mealConfigs,
     isLoading,
     isSubmitting,
     createMeal,
     updateMeal,
     deleteMeal,
     refreshMeals,
-    getDayMeals
+    getDayMeals,
   };
 }

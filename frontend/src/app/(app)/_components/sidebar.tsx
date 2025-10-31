@@ -7,8 +7,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Home, Dumbbell, Users, BarChart3, User, Settings, LogOut, Activity, MessageSquare, Utensils, Trophy } from "lucide-react";
+import { Home, Dumbbell, Users, User, Settings, LogOut, MessageSquare, Utensils, Bell } from "lucide-react";
 import { logout } from "@/app/(auth)/login/actions";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface SidebarProps {
   className?: string;
@@ -47,29 +48,36 @@ const navigationItems: NavItem[] = [
     href: "/groups",
     icon: Users,
   },
-  {
-    title: "Conquistas",
-    href: "/achievements",
-    icon: Trophy,
-  },
-  {
-    title: "Estatísticas",
-    href: "/stats",
-    icon: BarChart3,
-  },
-  {
-    title: "Atividades",
-    href: "/activities",
-    icon: Activity,
-  },
+  // {
+  //   title: "Conquistas",
+  //   href: "/achievements",
+  //   icon: Trophy,
+  // },
+  // {
+  //   title: "Estatísticas",
+  //   href: "/stats",
+  //   icon: BarChart3,
+  // },
+  // {
+  //   title: "Atividades",
+  //   href: "/activities",
+  //   icon: Activity,
+  // },
 ];
 
 const bottomItems: NavItem[] = [
+  
   {
     title: "Perfil",
     href: "/profile",
     icon: User,
   },
+  {
+    title: "Notificações",
+    href: "/notifications",
+    icon: Bell,
+  },
+  
   {
     title: "Configurações",
     href: "/settings",
@@ -80,6 +88,7 @@ const bottomItems: NavItem[] = [
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { actualTheme } = useTheme();
+  const { unreadCount } = useNotifications();
 
   const { user } = useUserAuth();
   async function handleLogout() {
@@ -92,12 +101,12 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Logo */}
         <div className="px-3 py-2">
           <Link href="/" className="flex items-center pl-3 mb-2">
-            <Image 
-              src={actualTheme === 'light' ? "/logo/dark_simple.png" : "/logo/simple.png"} 
-              alt="XPump Logo" 
-              width={120} 
-              height={40} 
-              className="h-8" 
+            <Image
+              src={actualTheme === "light" ? "/logo/dark_simple.png" : "/logo/simple.png"}
+              alt="XPump Logo"
+              width={120}
+              height={40}
+              className="h-8"
             />
           </Link>
         </div>
@@ -141,6 +150,8 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="space-y-1">
               {bottomItems.map((item) => {
                 const isActive = pathname === item.href;
+                const showNotificationBadge = item.href === "/notifications" && unreadCount > 0;
+                
                 return (
                   <Button
                     key={item.href}
@@ -154,6 +165,11 @@ export function Sidebar({ className }: SidebarProps) {
                     <Link href={item.href}>
                       <item.icon className="mr-2 h-4 w-4" />
                       {item.title}
+                      {showNotificationBadge && (
+                        <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                          {unreadCount}
+                        </span>
+                      )}
                     </Link>
                   </Button>
                 );
@@ -168,14 +184,14 @@ export function Sidebar({ className }: SidebarProps) {
               </div>
 
               {/* Logout */}
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
-              </Button>
+                 <Button
+            variant="outline"
+            className="w-full justify-start text-red-600 border-none hover:bg-red-900 hover:text-red-300"
+            onClick={handleLogout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair da conta
+          </Button>
             </div>
           </div>
         </div>

@@ -1,17 +1,15 @@
+"use client";
+
 import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-modal";
 import { PendingInvites } from "@/app/(app)/groups/_components/pending-invites";
 import GroupTips from "./_components/group-tips";
-import { groupsApi } from "../_actions/groups";
-import GroupsErrorRequest from "./_components/group-error-request";
 import GroupList from "./_components/group-list";
-import { Suspense } from "react";
-import { PendingInvitesSkeleton } from "./_components/pending-invites-skeleton";
 import { GroupListSkeleton } from "./_components/group-list-skeleton";
 import { GroupsLoadingProvider } from "./_components/groups-loading-context";
+import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
 
-export default async function GroupsPage() {
-  const groups = await groupsApi();
-  const groupsPromise = groups.list();
+function GroupsPageContent() {
+  const { groups, isLoading } = useGroupsContext();
 
   return (
     <GroupsLoadingProvider>
@@ -24,25 +22,24 @@ export default async function GroupsPage() {
               Conecte-se e treine com outros atletas. Compete em grupos e conquiste o topo!
             </p>
           </div>
-
           <CreateGroupModal />
         </div>
-
-        <Suspense fallback={<PendingInvitesSkeleton />}>
-          <PendingInvites groupsPromise={groupsPromise} />
-        </Suspense>
-        <Suspense fallback={null}>
-          <GroupsErrorRequest groupsPromise={groupsPromise} />
-        </Suspense>
+        <PendingInvites groups={groups} />
 
         {/* Grupos */}
         <div className="space-y-6">
-          <Suspense fallback={<GroupListSkeleton />}>
-            <GroupList groupsPromise={groupsPromise} />
-          </Suspense>
+          {isLoading ? <GroupListSkeleton /> : <GroupList groups={groups} />}
           <GroupTips />
         </div>
       </div>
     </GroupsLoadingProvider>
+  );
+}
+
+export default function GroupsPage() {
+  return (
+    <GroupsProvider>
+      <GroupsPageContent />
+    </GroupsProvider>
   );
 }

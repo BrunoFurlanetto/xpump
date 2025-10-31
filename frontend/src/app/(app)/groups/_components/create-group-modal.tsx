@@ -8,14 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Users } from "lucide-react";
 import { DialogTrigger } from "@radix-ui/react-dialog";
-import { CreateGroupData } from "@/app/(app)/_actions/groups";
-import { createGroupAction } from "@/app/(app)/_actions/group-actions";
+import { CreateGroupData } from "@/lib/api/groups";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
+import { useGroupsContext } from "@/context/groupsContext";
 
 export function CreateGroupModal() {
   const router = useRouter();
+  const { createGroup } = useGroupsContext();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<CreateGroupData>({
@@ -52,20 +53,15 @@ export function CreateGroupModal() {
     setIsLoading(true);
 
     try {
-      const result = await createGroupAction(formData);
+      await createGroup(formData);
+      toast.success("Grupo criado com sucesso!");
+      handleClose();
 
-      if (result.success) {
-        toast.success("Grupo criado com sucesso!");
-        handleClose();
-
-        // Show global loading overlay during refresh
-        startRefresh();
-        startTransition(() => {
-          router.refresh();
-        });
-      } else {
-        toast.error(result.error || "Erro ao criar grupo");
-      }
+      // Show global loading overlay during refresh
+      startRefresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Erro ao criar grupo:", error);
       toast.error("Erro ao criar grupo");

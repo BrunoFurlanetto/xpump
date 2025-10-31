@@ -7,7 +7,7 @@ import { useUserAuth } from "@/context/userAuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Users, BarChart3, Settings, LogOut, Activity, User, Utensils,  Trophy, MessageSquare } from "lucide-react";
+import { Users, Settings, LogOut, User } from "lucide-react";
 
 import { logout } from "@/app/(auth)/login/actions";
 
@@ -19,49 +19,49 @@ interface NavItem {
 }
 
 const menuItems: NavItem[] = [
-  {
-    title: "Treinos",
-    href: "/workouts",
-    icon: Dumbbell,
-    description: "Seus treinos e exercícios",
-  },
-  {
-    title: "Refeições",
-    href: "/meals",
-    icon: Utensils,
-    description: "Planejamento alimentar",
-  },
-  {
-    title: "Feed",
-    href: "/feed",
-    icon: MessageSquare,
-    description: "Atualizações e novidades",
-  },
+  // {
+  //   title: "Treinos",
+  //   href: "/workouts",
+  //   icon: Dumbbell,
+  //   description: "Seus treinos e exercícios",
+  // },
+  // {
+  //   title: "Refeições",
+  //   href: "/meals",
+  //   icon: Utensils,
+  //   description: "Planejamento alimentar",
+  // },
+  // {
+  //   title: "Feed",
+  //   href: "/feed",
+  //   icon: MessageSquare,
+  //   description: "Atualizações e novidades",
+  // },
   {
     title: "Grupos",
     href: "/groups",
     icon: Users,
     description: "Conecte-se com outros atletas",
   },
-  {
-    title: "Conquistas",
-    href: "/achievements",
-    icon: Trophy,
-    description: "Suas conquistas e progresso",
-  },
+  // {
+  //   title: "Conquistas",
+  //   href: "/achievements",
+  //   icon: Trophy,
+  //   description: "Suas conquistas e progresso",
+  // },
   
-  {
-    title: "Estatísticas",
-    href: "/stats",
-    icon: BarChart3,
-    description: "Acompanhe seu progresso",
-  },
-  {
-    title: "Atividades",
-    href: "/activities",
-    icon: Activity,
-    description: "Histórico de atividades",
-  },
+  // {
+  //   title: "Estatísticas",
+  //   href: "/stats",
+  //   icon: BarChart3,
+  //   description: "Acompanhe seu progresso",
+  // },
+  // {
+  //   title: "Atividades",
+  //   href: "/activities",
+  //   icon: Activity,
+  //   description: "Histórico de atividades",
+  // },
   {
     title: "Perfil",
     href: "/profile",

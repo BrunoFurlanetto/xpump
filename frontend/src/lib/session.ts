@@ -14,7 +14,7 @@ const key = new TextEncoder().encode(process.env.JWT_SECRET);
 const cookie = {
   name: "session",
   options: {
-    httpOnly: true,
+    httpOnly: false,
     secure: true,
     sameSite: "lax" as const,
     path: "/",
@@ -55,35 +55,20 @@ export async function verifySession(redirectToLogin = true) {
     const ck = (await cookies()).get(cookie.name)?.value || "";
 
     if (!ck) {
-      console.log("⚠️ Nenhum cookie de sessão encontrado");
       if (redirectToLogin) redirect("/login");
       return null;
     }
 
     const session = await decrypt(ck);
 
-    // Verificar se a sessão é válida e não expirou
+    // Verificar se a sessão é válida
     if (!session?.user_id || !session?.expires) {
-      console.log("⚠️ Sessão inválida - faltando user_id ou expires");
       if (redirectToLogin) {
         redirect("/login");
       }
       return null;
     }
 
-    // Verificar se a sessão expirou
-    const now = Date.now();
-    const expiresAt = new Date(session.expires as string).getTime();
-
-    if (now > expiresAt) {
-      console.log("⚠️ Sessão expirada");
-      if (redirectToLogin) {
-        redirect("/login");
-      }
-      return null;
-    }
-
-    console.log("✅ Sessão válida encontrada");
     return session as Session;
   } catch (error) {
     console.error("❌ Erro ao verificar sessão:", error);
@@ -114,5 +99,8 @@ export async function updateToken({ accessToken, refreshToken }: { accessToken: 
     refresh: refreshToken,
     expires,
   });
-  (await cookies()).set(cookie.name, newSession, { ...cookie.options, expires });
+  (await cookies()).set(cookie.name, newSession, {
+    ...cookie.options,
+    expires,
+  });
 }

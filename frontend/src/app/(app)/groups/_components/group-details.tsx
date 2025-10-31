@@ -20,7 +20,7 @@ import {
   UserCog,
 } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
-import { Group } from "@/app/(app)/_actions/groups";
+import { Group } from "@/lib/api/groups";
 import Link from "next/link";
 
 interface GroupDetailsProps {
@@ -68,6 +68,7 @@ const mockRankingData = [
 ];
 
 export function GroupDetails({ group }: GroupDetailsProps) {
+  console.log(group);
   const [activeTab, setActiveTab] = useState("ranking");
 
   // Simular usuário atual (em um app real, viria do contexto de auth)

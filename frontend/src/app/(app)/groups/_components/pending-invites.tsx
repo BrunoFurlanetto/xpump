@@ -1,33 +1,24 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Check, X, Clock, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Group } from "@/app/(app)/_actions/groups";
-import { respondToInviteAction } from "@/app/(app)/_actions/group-actions";
+import { Group } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
+import { useGroupsContext } from "@/context/groupsContext";
 
 interface PendingInvitesProps {
-  groupsPromise: Promise<
-    | {
-        error: string;
-        groups: Group[];
-      }
-    | {
-        groups: Group[];
-        error?: undefined;
-      }
-  >;
+  groups: Group[];
 }
 
-export function PendingInvites({ groupsPromise }: PendingInvitesProps) {
+export function PendingInvites({ groups }: PendingInvitesProps) {
   const router = useRouter();
-  const groupsRequest = use(groupsPromise);
-  const pendingGroups = groupsRequest.groups.filter((group) => group.pending);
+  const { respondToInvite } = useGroupsContext();
+  const pendingGroups = groups.filter((group) => group.pending);
 
   const [respondingTo, setRespondingTo] = useState<number | null>(null);
   const { startRefresh, startTransition } = useGroupsLoading();
@@ -36,24 +27,20 @@ export function PendingInvites({ groupsPromise }: PendingInvitesProps) {
     setRespondingTo(groupId);
 
     try {
-      const result = await respondToInviteAction(groupId, action);
+      await respondToInvite(groupId, action);
 
-      if (result.success) {
-        const group = pendingGroups.find((g) => g.id === groupId);
-        if (action === "accept") {
-          toast.success(`Você entrou no grupo "${group?.name}"!`);
-        } else {
-          toast.success("Convite recusado");
-        }
-
-        // Show global loading overlay during refresh
-        startRefresh();
-        startTransition(() => {
-          router.refresh();
-        });
+      const group = pendingGroups.find((g) => g.id === groupId);
+      if (action === "accept") {
+        toast.success(`Você entrou no grupo "${group?.name}"!`);
       } else {
-        toast.error(result.error || "Erro ao responder convite");
+        toast.success("Convite recusado");
       }
+
+      // Show global loading overlay during refresh
+      startRefresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao responder convite");
     } finally {
