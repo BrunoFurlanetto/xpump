@@ -5,24 +5,14 @@ import { useSettings } from "@/hooks/useSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Bell,
-  Dumbbell,
-  Utensils,
-  Target,
-  Save,
-  AlertTriangle,
-  Palette,
-} from "lucide-react";
+import { Bell, Save, AlertTriangle, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 
 export default function SettingsPage() {
-  const { settings, isLoading, hasChanges, updateSettings, saveSettings } =
-    useSettings();
+  const { settings, isLoading, hasChanges, updateSettings, saveSettings } = useSettings();
 
   const [isSaving, setIsSaving] = useState(false);
   const [activeSection, setActiveSection] = useState("interface");
@@ -58,31 +48,19 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            Configurações
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Personalize sua experiência no XPump
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Configurações</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Personalize sua experiência no XPump</p>
         </div>
 
         <div className="flex items-center gap-2">
           {hasChanges && (
-            <Badge
-              variant="outline"
-              className="border-orange-500/20 text-orange-400"
-            >
+            <Badge variant="outline" className="border-orange-500/20 text-orange-400">
               <AlertTriangle className="h-3 w-3 mr-1" />
               Alterações não salvas
             </Badge>
           )}
 
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            size="sm"
-            className="gap-2"
-          >
+          <Button onClick={handleSave} disabled={!hasChanges || isSaving} size="sm" className="gap-2">
             {isSaving ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             ) : (
@@ -103,10 +81,7 @@ export default function SettingsPage() {
               variant={activeSection === section.id ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveSection(section.id)}
-              className={cn(
-                "gap-2",
-                activeSection !== section.id && "text-muted-foreground",
-              )}
+              className={cn("gap-2", activeSection !== section.id && "text-muted-foreground")}
             >
               <IconComponent className="h-4 w-4" />
               {section.label}
@@ -146,17 +121,12 @@ export default function SettingsPage() {
               {Object.entries(settings.notifications).map(([key, value]) => (
                 <div key={key} className="flex items-center justify-between">
                   <div>
-                    <Label className="text-sm font-medium capitalize">
-                      {key}
-                    </Label>
+                    <Label className="text-sm font-medium capitalize">{key}</Label>
                     <p className="text-xs text-muted-foreground">
-                      {key === "achievements" &&
-                        "Receber notificações de novas conquistas"}
-                      {key === "reminders" &&
-                        "Lembretes de treinos e refeições"}
+                      {key === "achievements" && "Receber notificações de novas conquistas"}
+                      {key === "reminders" && "Lembretes de treinos e refeições"}
                       {key === "social" && "Curtidas, comentários e seguidas"}
-                      {key === "streaks" &&
-                        "Alertas sobre sequências de treinos"}
+                      {key === "streaks" && "Alertas sobre sequências de treinos"}
                       {key === "challenges" && "Novos desafios e competições"}
                       {key === "email" && "Resumos semanais por e-mail"}
                       {key === "push" && "Notificações no dispositivo"}

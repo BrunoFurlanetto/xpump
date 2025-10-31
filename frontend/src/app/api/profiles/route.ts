@@ -51,13 +51,13 @@ export async function GET(request: NextRequest) {
 
     const endpoint = request.nextUrl.searchParams.get("endpoint") || "";
 
-    console.log("📥 GET Nutrition request:", {
+    console.log("📥 GET Profile request:", {
       endpoint,
-      fullUrl: `${BACKEND_URL}/meals/${endpoint}`,
+      fullUrl: `${BACKEND_URL}/profiles/${endpoint}`,
     });
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/${endpoint}`,
+      `${BACKEND_URL}/profiles/${endpoint}`,
       {
         headers: {
           Authorization: `Bearer ${session.access}`,
@@ -74,71 +74,17 @@ export async function GET(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error fetching nutrition data" };
+        error = { detail: errorText || "Error fetching profile data" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Nutrition data fetched successfully");
+    console.log("✅ Profile data fetched successfully");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error fetching nutrition data:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await verifySession(false);
-    if (!session?.access) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const formData = await request.formData();
-
-    // Log dos dados recebidos
-    console.log("📤 Creating meal with data:");
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
-
-    const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access}`,
-        },
-        body: formData,
-      },
-      session
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Backend error response:", errorText);
-
-      let error;
-      try {
-        error = JSON.parse(errorText);
-      } catch {
-        error = { detail: errorText || "Error creating meal" };
-      }
-
-      return NextResponse.json(error, { status: response.status });
-    }
-
-    const data = await response.json();
-    console.log("✅ Meal created successfully:", data);
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("💥 Error creating meal:", error);
+    console.error("💥 Error fetching profile data:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

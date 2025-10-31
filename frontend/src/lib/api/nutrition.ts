@@ -1,5 +1,3 @@
-import { BACKEND_URL } from "../constants";
-
 export interface MealConfig {
   id: number;
   meal_name: string;

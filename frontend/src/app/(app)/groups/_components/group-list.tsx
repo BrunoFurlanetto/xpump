@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Crown } from "lucide-react";
 import { GroupCard } from "@/app/(app)/groups/_components/group-card";
 import React from "react";
-import { Group } from "../../_actions/groups";
+import { Group } from "@/lib/api/groups";
 import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-modal";
 
 const GroupList = ({ groupsPromise }: { groupsPromise: Promise<{ groups: Group[] }> }) => {

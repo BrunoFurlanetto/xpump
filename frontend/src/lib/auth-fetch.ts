@@ -2,8 +2,6 @@ import "server-only";
 import { RequestInit } from "next/dist/server/web/spec-extension/request";
 import { verifySession } from "./session";
 import { BACKEND_URL } from "./constants";
-import { redirect } from "next/navigation";
-import { updateTokenInCookies } from "@/app/(auth)/login/refresh-token-action";
 
 export interface FetchOptions extends RequestInit {
   headers?: Record<string, string>;

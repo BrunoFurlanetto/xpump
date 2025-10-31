@@ -6,7 +6,6 @@ import { updateTokenInCookies } from "@/app/(auth)/login/refresh-token-action";
 async function fetchWithTokenRefresh(url: string, options: RequestInit, session: Session) {
   let response = await fetch(url, options);
 
-  // If token expired, try to refresh
   if (response.status === 401 && session.refresh) {
     console.log("🔄 Token expired, attempting refresh...");
 
@@ -22,11 +21,8 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
       const data = await refreshResponse.json();
       if (data.access) {
         console.log("✅ Token refreshed successfully");
-
-        // Update cookies with new token (keep same refresh token)
         await updateTokenInCookies(data.access, session.refresh);
 
-        // Retry original request with new token
         const newOptions = {
           ...options,
           headers: {
@@ -42,26 +38,31 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
   return response;
 }
 
-export async function GET(request: NextRequest) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; memberId: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const endpoint = request.nextUrl.searchParams.get("endpoint") || "";
+    const { id, memberId } = await params;
+    const body = await request.json();
 
-    console.log("📥 GET Nutrition request:", {
-      endpoint,
-      fullUrl: `${BACKEND_URL}/meals/${endpoint}`,
+    console.log("🔄 Updating member:", {
+      groupId: id,
+      memberId,
+      body,
     });
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/${endpoint}`,
+      `${BACKEND_URL}/groups/${id}/members/${memberId}/`,
       {
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${session.access}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify(body),
       },
       session
     );
@@ -74,71 +75,64 @@ export async function GET(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error fetching nutrition data" };
+        error = { detail: errorText || "Error updating member" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Nutrition data fetched successfully");
+    console.log("✅ Member updated successfully");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error fetching nutrition data:", error);
+    console.error("💥 Error updating member:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string; memberId: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    const { id, memberId } = await params;
 
-    // Log dos dados recebidos
-    console.log("📤 Creating meal with data:");
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
+    console.log("🗑️ Removing member:", {
+      groupId: id,
+      memberId,
+    });
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/`,
+      `${BACKEND_URL}/groups/${id}/members/${memberId}/`,
       {
-        method: "POST",
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${session.access}`,
         },
-        body: formData,
       },
       session
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Backend error response:", errorText);
-
-      let error;
-      try {
-        error = JSON.parse(errorText);
-      } catch {
-        error = { detail: errorText || "Error creating meal" };
-      }
-
-      return NextResponse.json(error, { status: response.status });
+    if (response.ok) {
+      console.log("✅ Member removed successfully");
+      return new NextResponse(null, { status: 204 });
     }
 
-    const data = await response.json();
-    console.log("✅ Meal created successfully:", data);
-    return NextResponse.json(data);
+    const errorText = await response.text();
+    console.error("❌ Backend error response:", errorText);
+
+    let data;
+    try {
+      data = JSON.parse(errorText);
+    } catch {
+      data = { detail: errorText || "Error removing member" };
+    }
+
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("💥 Error creating meal:", error);
+    console.error("💥 Error removing member:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

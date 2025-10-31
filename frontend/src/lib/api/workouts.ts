@@ -1,5 +1,3 @@
-import { BACKEND_URL } from "../constants";
-
 export interface WorkoutCheckin {
   id: number;
   user: number;

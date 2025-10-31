@@ -42,22 +42,19 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
   return response;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const endpoint = request.nextUrl.searchParams.get("endpoint") || "";
+    const { id } = await params;
 
-    console.log("📥 GET Nutrition request:", {
-      endpoint,
-      fullUrl: `${BACKEND_URL}/meals/${endpoint}`,
-    });
+    console.log("📥 GET Profile by ID:", id);
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/${endpoint}`,
+      `${BACKEND_URL}/profiles/${id}/`,
       {
         headers: {
           Authorization: `Bearer ${session.access}`,
@@ -74,44 +71,37 @@ export async function GET(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error fetching nutrition data" };
+        error = { detail: errorText || "Error fetching profile" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Nutrition data fetched successfully");
+    console.log("✅ Profile fetched successfully");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error fetching nutrition data:", error);
+    console.error("💥 Error fetching profile:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const formData = await request.formData();
 
-    // Log dos dados recebidos
-    console.log("📤 Creating meal with data:");
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
+    console.log("🔄 Updating profile:", { id });
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/`,
+      `${BACKEND_URL}/profiles/${id}/`,
       {
-        method: "POST",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${session.access}`,
         },
@@ -128,17 +118,17 @@ export async function POST(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error creating meal" };
+        error = { detail: errorText || "Error updating profile" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Meal created successfully:", data);
+    console.log("✅ Profile updated successfully:", data);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error creating meal:", error);
+    console.error("💥 Error updating profile:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

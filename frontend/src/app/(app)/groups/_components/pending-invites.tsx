@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Check, X, Clock, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Group } from "@/app/(app)/_actions/groups";
-import { respondToInviteAction } from "@/app/(app)/_actions/group-actions";
+import { Group } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
+import { useGroups } from "@/hooks/useGroups";
 
 interface PendingInvitesProps {
   groupsPromise: Promise<
@@ -26,6 +26,7 @@ interface PendingInvitesProps {
 
 export function PendingInvites({ groupsPromise }: PendingInvitesProps) {
   const router = useRouter();
+  const { respondToInvite } = useGroups();
   const groupsRequest = use(groupsPromise);
   const pendingGroups = groupsRequest.groups.filter((group) => group.pending);
 
@@ -36,24 +37,20 @@ export function PendingInvites({ groupsPromise }: PendingInvitesProps) {
     setRespondingTo(groupId);
 
     try {
-      const result = await respondToInviteAction(groupId, action);
+      await respondToInvite(groupId, action);
 
-      if (result.success) {
-        const group = pendingGroups.find((g) => g.id === groupId);
-        if (action === "accept") {
-          toast.success(`Você entrou no grupo "${group?.name}"!`);
-        } else {
-          toast.success("Convite recusado");
-        }
-
-        // Show global loading overlay during refresh
-        startRefresh();
-        startTransition(() => {
-          router.refresh();
-        });
+      const group = pendingGroups.find((g) => g.id === groupId);
+      if (action === "accept") {
+        toast.success(`Você entrou no grupo "${group?.name}"!`);
       } else {
-        toast.error(result.error || "Erro ao responder convite");
+        toast.success("Convite recusado");
       }
+
+      // Show global loading overlay during refresh
+      startRefresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao responder convite");
     } finally {

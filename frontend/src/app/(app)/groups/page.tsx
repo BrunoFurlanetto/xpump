@@ -1,17 +1,22 @@
+"use client";
+
 import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-modal";
 import { PendingInvites } from "@/app/(app)/groups/_components/pending-invites";
 import GroupTips from "./_components/group-tips";
-import { groupsApi } from "../_actions/groups";
 import GroupsErrorRequest from "./_components/group-error-request";
 import GroupList from "./_components/group-list";
 import { Suspense } from "react";
 import { PendingInvitesSkeleton } from "./_components/pending-invites-skeleton";
 import { GroupListSkeleton } from "./_components/group-list-skeleton";
 import { GroupsLoadingProvider } from "./_components/groups-loading-context";
+import { useGroups } from "@/hooks/useGroups";
 
-export default async function GroupsPage() {
-  const groups = await groupsApi();
-  const groupsPromise = groups.list();
+export default function GroupsPage() {
+  const { groups, isLoading } = useGroups();
+
+  // Create a promise-like structure for compatibility with existing components
+  const groupsPromise = Promise.resolve({ groups });
+  const errorPromise = Promise.resolve({});
 
   return (
     <GroupsLoadingProvider>
@@ -28,20 +33,29 @@ export default async function GroupsPage() {
           <CreateGroupModal />
         </div>
 
-        <Suspense fallback={<PendingInvitesSkeleton />}>
-          <PendingInvites groupsPromise={groupsPromise} />
-        </Suspense>
-        <Suspense fallback={null}>
-          <GroupsErrorRequest groupsPromise={groupsPromise} />
-        </Suspense>
+        {isLoading ? (
+          <>
+            <PendingInvitesSkeleton />
+            <GroupListSkeleton />
+          </>
+        ) : (
+          <>
+            <Suspense fallback={<PendingInvitesSkeleton />}>
+              <PendingInvites groupsPromise={groupsPromise} />
+            </Suspense>
+            <Suspense fallback={null}>
+              <GroupsErrorRequest groupsPromise={errorPromise} />
+            </Suspense>
 
-        {/* Grupos */}
-        <div className="space-y-6">
-          <Suspense fallback={<GroupListSkeleton />}>
-            <GroupList groupsPromise={groupsPromise} />
-          </Suspense>
-          <GroupTips />
-        </div>
+            {/* Grupos */}
+            <div className="space-y-6">
+              <Suspense fallback={<GroupListSkeleton />}>
+                <GroupList groupsPromise={groupsPromise} />
+              </Suspense>
+              <GroupTips />
+            </div>
+          </>
+        )}
       </div>
     </GroupsLoadingProvider>
   );

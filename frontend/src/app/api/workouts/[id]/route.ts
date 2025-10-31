@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BACKEND_URL } from "@/lib/constants";
-import { verifySession } from "@/lib/session";
+import { verifySession, Session } from "@/lib/session";
 import { updateTokenInCookies } from "@/app/(auth)/login/refresh-token-action";
 
-async function fetchWithTokenRefresh(url: string, options: RequestInit, session: any) {
+async function fetchWithTokenRefresh(url: string, options: RequestInit, session: Session) {
   let response = await fetch(url, options);
 
   // If token expired, try to refresh
@@ -42,17 +42,18 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
   return response;
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/workouts/${params.id}/`,
+      `${BACKEND_URL}/workouts/${id}/`,
       {
         method: "PATCH",
         headers: {
@@ -77,15 +78,17 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/workouts/${params.id}/`,
+      `${BACKEND_URL}/workouts/${id}/`,
       {
         method: "DELETE",
         headers: {

@@ -51,13 +51,13 @@ export async function GET(request: NextRequest) {
 
     const endpoint = request.nextUrl.searchParams.get("endpoint") || "";
 
-    console.log("📥 GET Nutrition request:", {
+    console.log("📥 GET Groups request:", {
       endpoint,
-      fullUrl: `${BACKEND_URL}/meals/${endpoint}`,
+      fullUrl: `${BACKEND_URL}/groups/${endpoint}`,
     });
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/${endpoint}`,
+      `${BACKEND_URL}/groups/${endpoint}`,
       {
         headers: {
           Authorization: `Bearer ${session.access}`,
@@ -74,17 +74,17 @@ export async function GET(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error fetching nutrition data" };
+        error = { detail: errorText || "Error fetching groups data" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Nutrition data fetched successfully");
+    console.log("✅ Groups data fetched successfully");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error fetching nutrition data:", error);
+    console.error("💥 Error fetching groups data:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -96,26 +96,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    const body = await request.json();
 
-    // Log dos dados recebidos
-    console.log("📤 Creating meal with data:");
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
+    console.log("📤 Creating/Updating group with data:", body);
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/`,
+      `${BACKEND_URL}/groups/`,
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access}`,
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify(body),
       },
       session
     );
@@ -128,17 +121,17 @@ export async function POST(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error creating meal" };
+        error = { detail: errorText || "Error creating group" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Meal created successfully:", data);
+    console.log("✅ Group created successfully:", data);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error creating meal:", error);
+    console.error("💥 Error creating group:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

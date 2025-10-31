@@ -42,22 +42,19 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
   return response;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const endpoint = request.nextUrl.searchParams.get("endpoint") || "";
+    const { id } = await params;
 
-    console.log("📥 GET Nutrition request:", {
-      endpoint,
-      fullUrl: `${BACKEND_URL}/meals/${endpoint}`,
-    });
+    console.log("📥 GET Group by ID:", id);
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/${endpoint}`,
+      `${BACKEND_URL}/groups/${id}/`,
       {
         headers: {
           Authorization: `Bearer ${session.access}`,
@@ -74,48 +71,42 @@ export async function GET(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error fetching nutrition data" };
+        error = { detail: errorText || "Error fetching group" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Nutrition data fetched successfully");
+    console.log("✅ Group fetched successfully");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error fetching nutrition data:", error);
+    console.error("💥 Error fetching group:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    const { id } = await params;
+    const body = await request.json();
 
-    // Log dos dados recebidos
-    console.log("📤 Creating meal with data:");
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
+    console.log("🔄 Updating group:", { id, body });
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/meals/`,
+      `${BACKEND_URL}/groups/${id}/`,
       {
-        method: "POST",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${session.access}`,
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify(body),
       },
       session
     );
@@ -128,17 +119,61 @@ export async function POST(request: NextRequest) {
       try {
         error = JSON.parse(errorText);
       } catch {
-        error = { detail: errorText || "Error creating meal" };
+        error = { detail: errorText || "Error updating group" };
       }
 
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Meal created successfully:", data);
+    console.log("✅ Group updated successfully:", data);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error creating meal:", error);
+    console.error("💥 Error updating group:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await verifySession(false);
+    if (!session?.access) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    console.log("🗑️ Deleting group:", { id });
+
+    const response = await fetchWithTokenRefresh(
+      `${BACKEND_URL}/groups/${id}/`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access}`,
+        },
+      },
+      session
+    );
+
+    if (response.ok) {
+      console.log("✅ Group deleted successfully");
+      return new NextResponse(null, { status: 204 });
+    }
+
+    const errorText = await response.text();
+    console.error("❌ Backend error response:", errorText);
+
+    let data;
+    try {
+      data = JSON.parse(errorText);
+    } catch {
+      data = { detail: errorText || "Error deleting group" };
+    }
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("💥 Error deleting group:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { inviteUserAction } from "@/app/(app)/_actions/group-actions";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
+import { useGroups } from "@/hooks/useGroups";
 
 interface InviteUserModalProps {
   open?: boolean;
@@ -20,6 +20,7 @@ interface InviteUserModalProps {
 
 export function InviteUserModal({ groupId, groupName, open, close }: InviteUserModalProps) {
   const router = useRouter();
+  const { inviteUser } = useGroups();
   const [username, setUsername] = useState("");
   const [isSending, setIsSending] = useState(false);
   const { startRefresh, startTransition } = useGroupsLoading();
@@ -32,20 +33,15 @@ export function InviteUserModal({ groupId, groupName, open, close }: InviteUserM
 
     setIsSending(true);
     try {
-      const result = await inviteUserAction(groupId, username.trim());
+      await inviteUser(groupId, username.trim());
+      toast.success(`Convite enviado para ${username}!`);
+      setUsername("");
 
-      if (result.success) {
-        toast.success(`Convite enviado para ${username}!`);
-        setUsername("");
-
-        // Show global loading overlay during refresh
-        startRefresh();
-        startTransition(() => {
-          router.refresh();
-        });
-      } else {
-        toast.error(result.error || "Erro ao enviar convite");
-      }
+      // Show global loading overlay during refresh
+      startRefresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch {
       toast.error("Erro ao enviar convite");
     } finally {

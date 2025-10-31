@@ -26,10 +26,10 @@ import { Users, Crown, MoreVertical, UserPlus, Settings, LogOut, Calendar, Troph
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { InviteUserModal } from "./invite-user-modal";
-import { Group } from "@/app/(app)/_actions/groups";
-import { leaveGroupAction, deleteGroupAction } from "@/app/(app)/_actions/group-actions";
+import { Group } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
+import { useGroups } from "@/hooks/useGroups";
 
 interface GroupCardProps {
   group: Group;
@@ -38,6 +38,7 @@ interface GroupCardProps {
 export function GroupCard({ group }: GroupCardProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { leaveGroup, deleteGroup } = useGroups();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [openInviteModal, setOpenInviteModal] = useState(false);
@@ -54,19 +55,14 @@ export function GroupCard({ group }: GroupCardProps) {
   const handleLeaveGroup = async () => {
     setIsLeaving(true);
     try {
-      const result = await leaveGroupAction(group.id);
+      await leaveGroup(group.id);
+      toast.success("Você saiu do grupo");
 
-      if (result.success) {
-        toast.success("Você saiu do grupo");
-
-        // Show global loading overlay during refresh
-        startRefresh();
-        startTransition(() => {
-          router.refresh();
-        });
-      } else {
-        toast.error(result.error || "Erro ao sair do grupo");
-      }
+      // Show global loading overlay during refresh
+      startRefresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch {
       toast.error("Erro ao sair do grupo");
     } finally {
@@ -78,19 +74,14 @@ export function GroupCard({ group }: GroupCardProps) {
   const handleDeleteGroup = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteGroupAction(group.id);
+      await deleteGroup(group.id);
+      toast.success("Grupo deletado com sucesso");
 
-      if (result.success) {
-        toast.success("Grupo deletado com sucesso");
-
-        // Show global loading overlay during refresh
-        startRefresh();
-        startTransition(() => {
-          router.refresh();
-        });
-      } else {
-        toast.error(result.error || "Erro ao deletar grupo");
-      }
+      // Show global loading overlay during refresh
+      startRefresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch {
       toast.error("Erro ao deletar grupo");
     } finally {

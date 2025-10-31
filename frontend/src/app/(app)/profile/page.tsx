@@ -1,11 +1,14 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Target, TrendingUp, Award, Utensils, Dumbbell } from "lucide-react";
 import { getCurrentUser } from "../_actions/getCurrentUser";
-import { getProfileById } from "../_actions/getProfileById";
 import GroupListCard from "./group-list-card";
 import ProfileCardHeader from "./profile-card-header";
+import { useProfiles } from "@/hooks/useProfiles";
+import { useEffect, useState } from "react";
 
 // Mock data - em um app real, isso viria de uma API
 const mockLevels = {
@@ -41,11 +44,31 @@ const mockLevels = {
   ],
 };
 
-export default async function ProfilePage() {
-  const user = await getCurrentUser();
+interface User {
+  id: string;
+  profile_id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+}
+
+export default function ProfilePage() {
+  const { profile, isLoading, fetchProfile } = useProfiles();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then((userData) => {
+      if (userData) {
+        setUser(userData);
+        fetchProfile(userData.profile_id);
+      }
+    });
+  }, [fetchProfile]);
+
+  if (isLoading || !profile) return <div className="text-center text-muted-foreground">Carregando...</div>;
   if (!user) return <div className="text-center text-muted-foreground">Usuário não encontrado</div>;
-  const profile = await getProfileById(user.profile_id);
-  if (!profile) return <div className="text-center text-muted-foreground">Perfil não encontrado</div>;
+
+  console.log("Profile data:", profile);
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header do Perfil */}
