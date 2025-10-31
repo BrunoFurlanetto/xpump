@@ -1,6 +1,6 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, Flame, Settings, User, Crown, Zap, TrendingUp } from "lucide-react";
+import { Flame, Settings, User, Crown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,10 +24,14 @@ const ProfileCardHeader = ({
       <div className="h-24 sm:h-32 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 relative">
         <div className="absolute inset-0 bg-black/20" />
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        
+
         {/* Action Button - Only visible on desktop in the banner */}
         <div className="hidden sm:block absolute top-4 right-4">
-          <Button variant="secondary" size="sm" className="gap-2 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="gap-2 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+          >
             <Settings className="h-4 w-4" />
             <span>Editar Perfil</span>
           </Button>
@@ -44,7 +48,7 @@ const ProfileCardHeader = ({
                 <User className="h-12 w-12 sm:h-16 sm:w-16" />
               </AvatarFallback>
             </Avatar>
-            
+
             {/* Level Badge on Avatar */}
             <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-full p-2 shadow-lg ring-4 ring-background">
               <Crown className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -55,11 +59,9 @@ const ProfileCardHeader = ({
           <div className="flex-1 text-center sm:text-left space-y-3 w-full sm:pt-16">
             <div className="space-y-2">
               <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3">
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {name}
-                </h1>
-                <Badge 
-                  variant="secondary" 
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{name}</h1>
+                <Badge
+                  variant="secondary"
                   className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30 whitespace-nowrap"
                 >
                   <Crown className="h-3 w-3 mr-1" />
@@ -75,16 +77,14 @@ const ProfileCardHeader = ({
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
                 <Flame className="h-4 w-4 text-orange-500" />
                 <span className="text-sm font-medium text-orange-400">
-                  {current_streak} dia{current_streak !== 1 ? 's' : ''} de sequência
+                  {current_streak} dia{current_streak !== 1 ? "s" : ""} de sequência
                 </span>
               </div>
 
               {/* Level Progress Indicator */}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
                 <Zap className="h-4 w-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-400">
-                  Em progresso
-                </span>
+                <span className="text-sm font-medium text-blue-400">Em progresso</span>
               </div>
             </div>
           </div>
