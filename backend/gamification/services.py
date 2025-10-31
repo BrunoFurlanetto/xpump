@@ -102,7 +102,7 @@ class WorkoutGamification(GamificationService):
         base_points = self.base_xp(user)
         workout_minutes_base = self.settings.workout_minutes
         multiplier = self.get_multiplier(user)
-
+        print(duration)
         return float(base_points * ((duration.total_seconds() / 60) / workout_minutes_base)) * multiplier
 
 
