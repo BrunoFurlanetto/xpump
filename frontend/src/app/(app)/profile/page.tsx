@@ -64,7 +64,8 @@ export default function ProfilePage() {
         fetchProfile(userData.profile_id);
       }
     });
-  }, [fetchProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Execute apenas uma vez ao montar
 
   if (isLoading || !profile) return <ProfileSkeleton />;
   if (!user) return <div className="text-center text-muted-foreground py-8">Usuário não encontrado</div>;
