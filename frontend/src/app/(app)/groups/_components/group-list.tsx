@@ -7,8 +7,7 @@ import React from "react";
 import { Group } from "@/lib/api/groups";
 import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-modal";
 
-const GroupList = ({ groupsPromise }: { groupsPromise: Promise<{ groups: Group[] }> }) => {
-  const { groups } = React.use(groupsPromise);
+const GroupList = ({ groups }: { groups: Group[] }) => {
   const confirmedGroups = groups.filter((group) => !group.pending);
   const companyGroup = confirmedGroups.find((group) => group.main === true);
 

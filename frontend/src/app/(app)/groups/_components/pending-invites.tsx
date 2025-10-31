@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,26 +9,16 @@ import { toast } from "sonner";
 import { Group } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useGroups } from "@/hooks/useGroups";
+import { useGroupsContext } from "@/context/groupsContext";
 
 interface PendingInvitesProps {
-  groupsPromise: Promise<
-    | {
-        error: string;
-        groups: Group[];
-      }
-    | {
-        groups: Group[];
-        error?: undefined;
-      }
-  >;
+  groups: Group[];
 }
 
-export function PendingInvites({ groupsPromise }: PendingInvitesProps) {
+export function PendingInvites({ groups }: PendingInvitesProps) {
   const router = useRouter();
-  const { respondToInvite } = useGroups();
-  const groupsRequest = use(groupsPromise);
-  const pendingGroups = groupsRequest.groups.filter((group) => group.pending);
+  const { respondToInvite } = useGroupsContext();
+  const pendingGroups = groups.filter((group) => group.pending);
 
   const [respondingTo, setRespondingTo] = useState<number | null>(null);
   const { startRefresh, startTransition } = useGroupsLoading();

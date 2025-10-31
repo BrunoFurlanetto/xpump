@@ -245,10 +245,11 @@ export function useGroups(): UseGroupsReturn {
     [currentGroup]
   );
 
-  // Load groups on mount
+  // Load groups on mount - only once
   useEffect(() => {
     fetchGroups();
-  }, [fetchGroups]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - fetch only on mount
 
   return {
     groups,

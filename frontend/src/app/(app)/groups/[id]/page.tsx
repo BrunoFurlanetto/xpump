@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { GroupDetails } from "@/app/(app)/groups/_components/group-details";
-import { useGroups } from "@/hooks/useGroups";
+import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
 import { Group } from "@/lib/api/groups";
 
-const SingleGroupPage = ({ params }: { params: Promise<{ id: string }> }) => {
+function SingleGroupPageContent({ params }: { params: Promise<{ id: string }> }) {
   const [groupId, setGroupId] = useState<number | null>(null);
   const [group, setGroup] = useState<Group | null>(null);
-  const { fetchGroup, isLoading } = useGroups();
+  const { fetchGroup, isLoading } = useGroupsContext();
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -31,6 +31,14 @@ const SingleGroupPage = ({ params }: { params: Promise<{ id: string }> }) => {
   if (!group) return <div>Grupo não encontrado</div>;
 
   return <GroupDetails group={group} />;
+}
+
+const SingleGroupPage = ({ params }: { params: Promise<{ id: string }> }) => {
+  return (
+    <GroupsProvider>
+      <SingleGroupPageContent params={params} />
+    </GroupsProvider>
+  );
 };
 
 export default SingleGroupPage;

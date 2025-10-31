@@ -12,11 +12,11 @@ import { CreateGroupData } from "@/lib/api/groups";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useGroups } from "@/hooks/useGroups";
+import { useGroupsContext } from "@/context/groupsContext";
 
 export function CreateGroupModal() {
   const router = useRouter();
-  const { createGroup } = useGroups();
+  const { createGroup } = useGroupsContext();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<CreateGroupData>({

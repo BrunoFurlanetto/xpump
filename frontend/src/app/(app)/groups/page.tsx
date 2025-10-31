@@ -3,20 +3,13 @@
 import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-modal";
 import { PendingInvites } from "@/app/(app)/groups/_components/pending-invites";
 import GroupTips from "./_components/group-tips";
-import GroupsErrorRequest from "./_components/group-error-request";
 import GroupList from "./_components/group-list";
-import { Suspense } from "react";
-import { PendingInvitesSkeleton } from "./_components/pending-invites-skeleton";
 import { GroupListSkeleton } from "./_components/group-list-skeleton";
 import { GroupsLoadingProvider } from "./_components/groups-loading-context";
-import { useGroups } from "@/hooks/useGroups";
+import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
 
-export default function GroupsPage() {
-  const { groups, isLoading } = useGroups();
-
-  // Create a promise-like structure for compatibility with existing components
-  const groupsPromise = Promise.resolve({ groups });
-  const errorPromise = Promise.resolve({});
+function GroupsPageContent() {
+  const { groups, isLoading } = useGroupsContext();
 
   return (
     <GroupsLoadingProvider>
@@ -29,34 +22,24 @@ export default function GroupsPage() {
               Conecte-se e treine com outros atletas. Compete em grupos e conquiste o topo!
             </p>
           </div>
-
           <CreateGroupModal />
         </div>
+        <PendingInvites groups={groups} />
 
-        {isLoading ? (
-          <>
-            <PendingInvitesSkeleton />
-            <GroupListSkeleton />
-          </>
-        ) : (
-          <>
-            <Suspense fallback={<PendingInvitesSkeleton />}>
-              <PendingInvites groupsPromise={groupsPromise} />
-            </Suspense>
-            <Suspense fallback={null}>
-              <GroupsErrorRequest groupsPromise={errorPromise} />
-            </Suspense>
-
-            {/* Grupos */}
-            <div className="space-y-6">
-              <Suspense fallback={<GroupListSkeleton />}>
-                <GroupList groupsPromise={groupsPromise} />
-              </Suspense>
-              <GroupTips />
-            </div>
-          </>
-        )}
+        {/* Grupos */}
+        <div className="space-y-6">
+          {isLoading ? <GroupListSkeleton /> : <GroupList groups={groups} />}
+          <GroupTips />
+        </div>
       </div>
     </GroupsLoadingProvider>
+  );
+}
+
+export default function GroupsPage() {
+  return (
+    <GroupsProvider>
+      <GroupsPageContent />
+    </GroupsProvider>
   );
 }

@@ -9,7 +9,7 @@ import { UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useGroups } from "@/hooks/useGroups";
+import { useGroupsContext } from "@/context/groupsContext";
 
 interface InviteUserModalProps {
   open?: boolean;
@@ -20,7 +20,7 @@ interface InviteUserModalProps {
 
 export function InviteUserModal({ groupId, groupName, open, close }: InviteUserModalProps) {
   const router = useRouter();
-  const { inviteUser } = useGroups();
+  const { inviteUser } = useGroupsContext();
   const [username, setUsername] = useState("");
   const [isSending, setIsSending] = useState(false);
   const { startRefresh, startTransition } = useGroupsLoading();

@@ -29,7 +29,7 @@ import { InviteUserModal } from "./invite-user-modal";
 import { Group } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useGroups } from "@/hooks/useGroups";
+import { useGroupsContext } from "@/context/groupsContext";
 
 interface GroupCardProps {
   group: Group;
@@ -38,7 +38,7 @@ interface GroupCardProps {
 export function GroupCard({ group }: GroupCardProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const { leaveGroup, deleteGroup } = useGroups();
+  const { leaveGroup, deleteGroup } = useGroupsContext();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [openInviteModal, setOpenInviteModal] = useState(false);
