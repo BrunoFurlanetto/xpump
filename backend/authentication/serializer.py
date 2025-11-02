@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from clients.models import Client
+from groups.models import GroupMembers
 from profiles.models import Profile
 
 
@@ -70,6 +71,8 @@ class UserSerializer(serializers.ModelSerializer):
         validated_data.pop('password2', None)
         # Create user with hashed password
         user = User.objects.create_user(**validated_data)
-        Profile.objects.create(user=user, employer=employer)
+        profile = Profile.objects.create(user=user, employer=employer)
+        profile.groups.add(employer.groups)
+        GroupMembers.objects.create(member=user, group=employer.groups, pending=False)
 
         return user

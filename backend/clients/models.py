@@ -4,7 +4,6 @@ import uuid
 from django.contrib.auth.models import User
 from django.core.validators import EmailValidator
 from django.db import models
-from django.conf import settings
 from django.utils import timezone
 
 from groups.models import Group
@@ -14,7 +13,7 @@ class Client(models.Model):
     name = models.CharField(max_length=255, verbose_name='Nome fantasia')
     cnpj = models.CharField(max_length=20, unique=True, verbose_name="CNPJ")
     contact_email = models.EmailField(validators=[EmailValidator()], verbose_name='E-mail')
-    phone = models.CharField(max_length=14, verbose_name="Telefone")
+    phone = models.CharField(max_length=16, verbose_name="Telefone")
     address = models.TextField(verbose_name='Endereço')
     is_active = models.BooleanField(default=True, verbose_name='Ativo')
     created_at = models.DateTimeField(editable=False, default=timezone.now, verbose_name='Criado em')

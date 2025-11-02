@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from groups.models import Group, GroupMembers
 from groups.permissions import IsMember, IsAdminMember, IsGroupMember
 from groups.serializer import GroupSerializer, GroupMemberSerializer
+from groups.services import compute_group_members_data
 
 
 @extend_schema(tags=['Groups'])
@@ -60,6 +61,35 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("Only the group owner can delete it")
 
         return super().destroy(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Suporta query param `period` = 'all' (padrão), 'week' ou 'month'.
+        - 'all': comportamento padrão do serializer.
+        - 'week' / 'month': delega cálculo de ranking para compute_group_members_data.
+        """
+        group = self.get_object()
+        period = request.GET.get('period', 'all').lower()
+
+        if period == 'all':
+            serializer = self.get_serializer(group)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        group_data = compute_group_members_data(group, period)
+        try:
+            pass
+        except ValidationError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        base = self.get_serializer(group).data
+        base['members'] = group_data.get('members', [])
+        return Response(base, status=status.HTTP_200_OK)
+
+# @extend_schema(tags=['Groups'])
+# class GroupStatsAPIView(APIView):
 
 
 @extend_schema(tags=['Groups'])

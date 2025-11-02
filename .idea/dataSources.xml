@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="nutrition" uuid="eee94cba-c257-429e-9dad-3cdba61670f4">
+    <data-source source="LOCAL" name="xpump-dev-group-endpoint@localhost" uuid="38496eb0-0736-47d2-8e56-8d4628c035db">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-nutritionbackend</jdbc-url>
-      <working-dir>$ProjectFileDir$</working-dir>
-    </data-source>
-    <data-source source="LOCAL" name="xpump-dev-gamification@localhost" uuid="162e607a-8d9e-43bc-9559-29e3a86676c9">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-gamification</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-group-endpoint</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
