@@ -164,9 +164,9 @@ class GroupSerializer(serializers.ModelSerializer):
             "total_points": totals.get('total_points') or 0,
             "total_workouts": totals.get('total_workouts') or 0,
             "total_meals": totals.get('total_meals') or 0,
-            "mean_streak": (totals.get('mean_workout_streak') + totals.get('mean_meal_streak') ) / 2,
-            "mean_workout_streak": totals.get('mean_workout_streak'),
-            "mean_meal_streak": totals.get('mean_meal_streak'),
+            "mean_streak": ((totals.get('mean_workout_streak') or 0) + (totals.get('mean_meal_streak') or 0)) / 2,
+            "mean_workout_streak": totals.get('mean_workout_streak') or 0,
+            "mean_meal_streak": totals.get('mean_meal_streak') or 0,
         }
 
 
@@ -186,14 +186,14 @@ class GroupMemberSerializer(serializers.ModelSerializer):
         Custom validation to ensure read-only fields are not provided in requests.
         Prevents clients from attempting to modify protected fields.
         """
+        errors = {}
         if 'joined_at' in self.initial_data:
-            raise serializers.ValidationError({
-                "joined_at": "This field is read-only and cannot be modified."
-            })
+            errors['joined_at'] = "This field is read-only and cannot be modified."
 
         if 'pending' in self.initial_data:
-            raise serializers.ValidationError({
-                "pending": "This field is read-only and cannot be modified."
-            })
+            errors['pending'] = "This field is read-only and cannot be modified."
+
+        if errors:
+            raise serializers.ValidationError(errors)
 
         return attrs

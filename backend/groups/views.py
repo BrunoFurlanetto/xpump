@@ -76,9 +76,8 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
 
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-        group_data = compute_group_members_data(group, period)
         try:
-            pass
+            group_data = compute_group_members_data(group, period)
         except ValidationError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:

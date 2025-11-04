@@ -1,10 +1,12 @@
 from django.db import transaction
+from faker import Faker
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth.models import User
 from django.urls import reverse
 
 from clients.models import Client
+from groups.models import Group
 from profiles.models import Profile
 
 
@@ -13,6 +15,7 @@ class UserAuthenticationTests(APITestCase):
         """
         Initial setup for the tests. Creates a user and logs them in for testing.
         """
+        faker = Faker('pt_BR')
         self.user_data = {
             "username": "testuser",
             "password": "testpassword123",
@@ -29,12 +32,15 @@ class UserAuthenticationTests(APITestCase):
 
         self.employer = Client.objects.create(
             name='Test Client',
-            cnpj='12.345.678/0001-90',
+            cnpj=faker.unique.cnpj(),
             owners=self.user,
             contact_email='contato@cliente.test',
             phone='(11)99999-9999',
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
+        self.employer_group = Group.objects.create(name='Test Group', owner=self.user, created_by=self.user, main=True)
+        self.employer.groups = self.employer_group
+        self.employer.save()
 
     def test_user_creation(self):
         """

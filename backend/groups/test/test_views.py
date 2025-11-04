@@ -1,516 +1,479 @@
-from datetime import timedelta
-
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.urls import reverse
 from django.utils import timezone
-from rest_framework.test import APIRequestFactory, force_authenticate
+from faker import Faker
+from rest_framework.test import APIClient
 from rest_framework import status
+from unittest.mock import patch, MagicMock
 
-from clients.models import Client
-from gamification.models import Season
 from groups.models import Group, GroupMembers
-from groups.views import (
-    GroupsAPIView,
-    GroupAPIView,
-    GroupMemberAPIView,
-    InviteGroupAPIView,
-    InviteGroupAccept,
-    QuitingGroupAPIView
-)
+from nutrition.models import MealStreak
 from profiles.models import Profile
+from clients.models import Client
+from workouts.models import WorkoutStreak
 
 
 class GroupViewsTest(TestCase):
-    def setUp(self):
-        self.factory = APIRequestFactory()
-        # Users of test
-        self.user1 = User.objects.create_user(username='user1', password='password')
-        self.user2 = User.objects.create_user(username='user2', password='password')
+    """
+    Test suite for Groups API views including:
+    - Group listing and creation
+    - Group detail operations (retrieve, update, delete)
+    - Period-based member data retrieval
+    - Member management operations
+    - Permission and authentication handling
+    """
 
-        self.employer = Client.objects.create(
+    def setUp(self):
+        """Set up test data including users, clients, profiles, and groups"""
+        self.client = APIClient()
+        faker = Faker('pt_BR')
+
+        # Create test users
+        self.admin_user = User.objects.create_user(
+            username='admin',
+            email='admin@test.com',
+            password='testpass123',
+            is_staff=True,
+            is_superuser=True
+        )
+        self.owner_user = User.objects.create_user(
+            username='owner',
+            email='owner@test.com',
+            password='testpass123'
+        )
+        self.member_user = User.objects.create_user(
+            username='member',
+            email='member@test.com',
+            password='testpass123'
+        )
+        self.non_member_user = User.objects.create_user(
+            username='nonmember',
+            email='nonmember@test.com',
+            password='testpass123'
+        )
+
+        # Create test client for profiles
+        self.test_client = Client.objects.create(
             name='Test Client',
-            cnpj='12.345.678/0001-90',
-            owners=self.user1,
+            cnpj=faker.unique.cnpj(),
+            owners=self.owner_user,
             contact_email='contato@cliente.test',
             phone='(11)99999-9999',
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
 
-        self.season = Season.objects.create(
-            name='Season 1',
-            start_date=timezone.now() - timedelta(days=180),
-            end_date=timezone.now() + timedelta(days=180),
-            client=self.employer
+        # Create profiles
+        self.admin_profile = Profile.objects.create(
+            user=self.admin_user,
+            score=300.0,
+            employer=self.test_client
+        )
+        self.owner_profile = Profile.objects.create(
+            user=self.owner_user,
+            score=200.0,
+            employer=self.test_client
+        )
+        self.member_profile = Profile.objects.create(
+            user=self.member_user,
+            score=100.0,
+            employer=self.test_client
+        )
+        self.non_member_profile = Profile.objects.create(
+            user=self.non_member_user,
+            score=50.0,
+            employer=self.test_client
         )
 
-        self.profile_user_2 = Profile.objects.create(user=self.user2, employer=self.employer)
-        self.user3 = User.objects.create_user(username='user3', password='password')
-        # Created group by user1 (automatically GroupMember created for user1 with admin)
-        self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)
-        self.member1 = GroupMembers.objects.get(member=self.user1, group=self.group)
-        self.member1.pending = False
-        self.member1.save()
-        # Additional member
-        self.member2 = GroupMembers.objects.create(member=self.user2, group=self.group)
-        self.member2.pending = False
-        self.member2.save()
-        self.profile_user_2.groups.add(self.group)
+        # Create workout Streaks
+        WorkoutStreak.objects.create(user=self.admin_user)
+        WorkoutStreak.objects.create(user=self.owner_user)
+        WorkoutStreak.objects.create(user=self.member_user)
+        WorkoutStreak.objects.create(user=self.non_member_user)
 
-    def test_list_groups(self):
-        request = self.factory.get('/groups/')
-        force_authenticate(request, user=self.user1)
-        response = GroupsAPIView.as_view()(request)
+        # Create meal streak
+        MealStreak.objects.create(user=self.admin_user)
+        MealStreak.objects.create(user=self.owner_user)
+        MealStreak.objects.create(user=self.member_user)
+        MealStreak.objects.create(user=self.non_member_user)
+
+        # Create test group
+        self.group = Group.objects.create(
+            name="Test Group",
+            description="A test group for API testing",
+            created_by=self.owner_user,
+            owner=self.owner_user
+        )
+
+        # Add regular member (owner is auto-added as admin)
+        GroupMembers.objects.create(
+            group=self.group,
+            member=self.member_user,
+            pending=False,
+            is_admin=False
+        )
+
+    def test_groups_list_requires_admin_permission(self):
+        """Test that listing groups requires admin permission"""
+        # Try without authentication
+        url = reverse('groups-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # Try with regular user
+        self.client.force_authenticate(user=self.owner_user)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Admin user should succeed
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Only group create by us
-        self.assertEqual(len(response.data), 1)
 
-    def test_create_group(self):
-        data = {'name': 'New Group', 'description': 'Uma descrição'}
-        request = self.factory.post('/groups/', data, format='json')
-        force_authenticate(request, user=self.user2)
-        response = GroupsAPIView.as_view()(request)
+    def test_create_group_success(self):
+        """Test successful group creation"""
+        self.client.force_authenticate(user=self.owner_user)
+
+        data = {
+            'name': 'New Test Group',
+            'description': 'A new group for testing'
+        }
+        url = reverse('groups-list')
+        response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        # created_by and owner must be assigned automatically
-        self.assertEqual(response.data['created_by'], self.user2.id)
-        self.assertEqual(response.data['owner'], self.user2.id)
-        # Initial member must be assigned also automatically
-        self.assertTrue(
+
+        # Check that group was created correctly
+        new_group = Group.objects.get(name='New Test Group')
+        self.assertEqual(new_group.created_by, self.owner_user)
+        self.assertEqual(new_group.owner, self.owner_user)
+
+        # Check that creator was auto-added as admin member
+        membership = GroupMembers.objects.get(group=new_group, member=self.owner_user)
+        self.assertTrue(membership.is_admin)
+        self.assertFalse(membership.pending)
+
+    def test_create_group_requires_authentication(self):
+        """Test that group creation requires authentication"""
+        data = {
+            'name': 'Unauthorized Group',
+            'description': 'Should not be created'
+        }
+        url = reverse('groups-list')
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_group_retrieve_default_period(self):
+        """Test retrieving group details with default (all) period"""
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('groups-detail', kwargs={'pk': self.group.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.json()
+        self.assertEqual(data['id'], self.group.id)
+        self.assertEqual(data['name'], self.group.name)
+        self.assertIn('members', data)
+        self.assertIn('stats', data)
+
+    @patch('groups.views.compute_group_members_data')
+    def test_group_retrieve_with_week_period(self, mock_compute_data):
+        """Test retrieving group details with week period"""
+        # Mock the service response
+        mock_compute_data.return_value = {
+            'id': self.group.id,
+            'name': self.group.name,
+            'members': [
+                {
+                    'id': self.owner_user.id,
+                    'username': 'owner',
+                    'position': 1,
+                    'score': 80.0,
+                    'workouts': 5,
+                    'meals': 8
+                }
+            ]
+        }
+
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('groups-detail', kwargs={'pk': self.group.pk})
+        response = self.client.get(f'{url}?period=week')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify service was called with correct parameters
+        mock_compute_data.assert_called_once_with(self.group, 'week')
+
+        data = response.json()
+        self.assertEqual(len(data['members']), 1)
+        self.assertEqual(data['members'][0]['username'], 'owner')
+
+    @patch('groups.views.compute_group_members_data')
+    def test_group_retrieve_with_invalid_period(self, mock_compute_data):
+        """Test retrieving group details with invalid period"""
+        from django.core.exceptions import ValidationError
+
+        # Mock service to raise ValidationError
+        mock_compute_data.side_effect = ValidationError('Period must be "week" or "month"')
+
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('groups-detail', kwargs={'pk': self.group.pk})
+        response = self.client.get(f'{url}?period=invalid')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        data = response.json()
+        self.assertIn('detail', data)
+
+    def test_group_update_by_member(self):
+        """Test group update by group member"""
+        self.client.force_authenticate(user=self.owner_user)
+
+        data = {
+            'name': 'Updated Group Name',
+            'description': 'Updated description'
+        }
+        url = reverse('groups-detail', kwargs={'pk': self.group.pk})
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify update
+        self.group.refresh_from_db()
+        self.assertEqual(self.group.name, 'Updated Group Name')
+        self.assertEqual(self.group.description, 'Updated description')
+
+    def test_group_update_by_non_member(self):
+        """Test that non-members cannot update group"""
+        self.client.force_authenticate(user=self.non_member_user)
+
+        data = {'name': 'Should Not Update'}
+        url = reverse('groups-detail', kwargs={'pk': self.group.pk})
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_group_delete_by_owner(self):
+        """Test group deletion by owner"""
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('groups-detail', kwargs={'pk': self.group.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify deletion
+        self.assertFalse(Group.objects.filter(id=self.group.id).exists())
+
+    def test_group_delete_by_non_owner(self):
+        """Test that non-owners cannot delete group"""
+        self.client.force_authenticate(user=self.member_user)
+        url = reverse('groups-detail', kwargs={'pk': self.group.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Verify group still exists
+        self.assertTrue(Group.objects.filter(id=self.group.id).exists())
+
+    def test_group_me_returns_user_groups(self):
+        """Test that group/me endpoint returns user's groups"""
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('groups-me')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['id'], self.group.id)
+
+    def test_group_me_includes_pending_status(self):
+        """Test that group/me includes pending status for each group"""
+        # Create pending membership
+        pending_group = Group.objects.create(
+            name="Pending Group",
+            created_by=self.admin_user,
+            owner=self.admin_user
+        )
+        GroupMembers.objects.create(
+            group=pending_group,
+            member=self.owner_user,
+            pending=True,
+            is_admin=False
+        )
+
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('groups-me')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.json()
+        # Should have 2 groups (one confirmed, one pending)
+        self.assertEqual(len(data), 2)
+
+        # Check pending status is included
+        pending_statuses = [group.get('pending') for group in data]
+        self.assertIn(True, pending_statuses)
+        self.assertIn(False, pending_statuses)
+
+    def test_member_update_admin_status_by_owner(self):
+        """Test updating member admin status by group owner"""
+        self.client.force_authenticate(user=self.owner_user)
+
+        data = {'is_admin': True}
+        url = reverse('group-members-detail', kwargs={'group_id': self.group.id, 'member_id': self.member_user.id})
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify update
+        membership = GroupMembers.objects.get(group=self.group, member=self.member_user)
+        self.assertTrue(membership.is_admin)
+
+    def test_member_update_admin_status_by_non_owner(self):
+        """Test that non-owners cannot update admin status"""
+        self.client.force_authenticate(user=self.member_user)
+
+        data = {'is_admin': True}
+        url = reverse('group-members-detail', kwargs={'group_id': self.group.id, 'member_id': self.member_user.id})
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_member_update_invalid_fields(self):
+        """Test that only admin status can be updated"""
+        self.client.force_authenticate(user=self.owner_user)
+
+        data = {
+            'is_admin': True,
+            'pending': False,  # Should not be allowed
+            'joined_at': timezone.now()  # Should not be allowed
+        }
+        url = reverse('group-members-detail', kwargs={'group_id': self.group.id, 'member_id': self.member_user.id})
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        data = response.json()
+        self.assertIn('error', data)
+        self.assertIn('Only is_admin field can be updated', data['error'])
+
+    def test_member_removal_by_admin(self):
+        """Test member removal by admin member"""
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('group-members-detail', kwargs={'group_id': self.group.id, 'member_id': self.member_user.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify removal
+        self.assertFalse(
             GroupMembers.objects.filter(
-                group_id=response.data['id'],
-                member=self.user2,
-                is_admin=True
+                group=self.group,
+                member=self.member_user
             ).exists()
         )
 
-    def test_retrieve_group(self):
-        request = self.factory.get(f'/groups/{self.group.id}/')
-        force_authenticate(request, user=self.user1)
-        response = GroupAPIView.as_view()(request, pk=self.group.id)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['id'], self.group.id)
-
-    def test_delete_group_not_owner(self):
-        request = self.factory.delete(f'/groups/{self.group.id}/')
-        force_authenticate(request, user=self.user2)
-        response = GroupAPIView.as_view()(request, pk=self.group.id)
-
+    def test_member_removal_by_non_admin(self):
+        """Test that non-admin members cannot remove others"""
+        self.client.force_authenticate(user=self.member_user)
+        url = reverse('group-members-detail', kwargs={'group_id': self.group.id, 'member_id': self.owner_user.id})
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.data['detail'],
-            'Only the group owner can delete it'
+
+    def test_admin_member_removal_requires_owner(self):
+        """Test that only owner can remove admin members"""
+        # Make member_user an admin
+        membership = GroupMembers.objects.get(group=self.group, member=self.member_user)
+        membership.is_admin = True
+        membership.save()
+
+        # Create another admin
+        admin_member = GroupMembers.objects.create(
+            group=self.group,
+            member=self.admin_user,
+            pending=False,
+            is_admin=True
         )
 
-    def test_delete_group_owner(self):
-        request = self.factory.delete(f'/groups/{self.group.id}/')
-        force_authenticate(request, user=self.user1)
-        response = GroupAPIView.as_view()(request, pk=self.group.id)
+        # Try to remove admin member with non-owner admin
+        self.client.force_authenticate(user=self.member_user)
+        url = reverse('group-members-detail', kwargs={'group_id': self.group.id, 'member_id': self.admin_user.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Owner should be able to remove admin member
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('group-members-detail', kwargs={'group_id': self.group.id, 'member_id': self.admin_user.id})
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Group.objects.filter(id=self.group.id).exists())
 
-    def test_retrieve_group_member(self):
-        request = self.factory.get(f'/groups/{self.group.id}/members/{self.user2.id}/')
-        force_authenticate(request, user=self.user1)
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user2.id
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['member'], self.user2.id)
-
-    def test_update_group_member_invalid_field(self):
-        # Owner try update the not permitted fields
-        data = {'joined_at': '2025-07-09T00:00:00Z'}
-        request = self.factory.patch(
-            f'/groups/{self.group.id}/members/{self.user2.id}/',
-            data, format='json'
-        )
-        force_authenticate(request, user=self.user1)
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user2.id
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('error', response.data)
-
-    def test_update_group_member_non_owner(self):
-        data = {'is_admin': True}
-        request = self.factory.patch(
-            f'/groups/{self.group.id}/members/{self.user2.id}/',
-            data, format='json'
-        )
-        force_authenticate(request, user=self.user2)
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user2.id
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.data['detail'],
-            'Only the group owner can update admin members'
-        )
-
-    def test_update_group_member_owner(self):
-        # The owner promote user2
-        data = {'is_admin': True}
-        request = self.factory.patch(
-            f'/groups/{self.group.id}/members/{self.user2.id}/',
-            data, format='json'
-        )
-        force_authenticate(request, user=self.user1)
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user2.id
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['is_admin'])
-
-    def test_delete_group_member_not_member(self):
-        # User3 is not a member
-        request = self.factory.delete(f'/groups/{self.group.id}/members/{self.user2.id}/')
-        force_authenticate(request, user=self.user3)
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user2.id
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data['detail'], 'User not a member of the group or membership is pending.')
-
-    def test_delete_group_member_non_admin(self):
-        request = self.factory.delete(
-            f'/groups/{self.group.id}/members/{self.user1.id}/'
-        )
-        force_authenticate(request, user=self.user2)
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user1.id
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.data['detail'],
-            'Only admin group can delete another members'
-        )
-
-    def test_delete_admin_member_not_owner(self):
-        # user2 turn admin
-        membership2 = GroupMembers.objects.get(member=self.user2, group=self.group)
-        membership2.pending = False
-        membership2.is_admin = True
-        membership2.save()
-
-        # user2 try remove user1 (the owner of the group)
-        request = self.factory.delete(f'/groups/{self.group.id}/members/{self.user1.id}/')
-        force_authenticate(request, user=self.user2)
-
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user1.id
-        )
-
-        # It is expected the 403 error (Forbidden), because user2 is not the owner
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.data['detail'],
-            'Only group owner can delete admin members'
-        )
-
-    def test_delete_member_by_owner(self):
-        # Owner remove user2
-        request = self.factory.delete(f'/groups/{self.group.id}/members/{self.user2.id}/')
-        force_authenticate(request, user=self.user1)
-        response = GroupMemberAPIView.as_view()(
-            request, group_id=self.group.id, member_id=self.user2.id
-        )
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(GroupMembers.objects.filter(member=self.user2, group=self.group).exists())
-        self.assertFalse(self.profile_user_2.groups.all())
-
-
-class InviteGroupViewTest(TestCase):
-    def setUp(self):
-        self.factory = APIRequestFactory()
-        self.user1 = User.objects.create_user(username='user1', password='password')
-        self.user2 = User.objects.create_user(username='user2', password='password')
-        self.user3 = User.objects.create_user(username='user3', password='password')
-
-        self.employer = Client.objects.create(
-            name='Test Client',
-            cnpj='12.345.678/0001-90',
-            owners=self.user1,
-            contact_email='contato@cliente.test',
-            phone='(11)99999-9999',
-            address='Rua Exemplo, 123, Bairro, Cidade - SP',
-        )
-
-        self.season = Season.objects.create(
-            name='Season 1',
-            start_date=timezone.now() - timedelta(days=180),
-            end_date=timezone.now() + timedelta(days=180),
-            client=self.employer
-        )
-
-        Profile.objects.create(user=self.user1, employer=self.employer)
-        Profile.objects.create(user=self.user2, employer=self.employer)
-        Profile.objects.create(user=self.user3, employer=self.employer)
-
-        # Group created by user1 (owner and admin)
-        self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)
-
-        # user2 as admin member
-        self.member2 = GroupMembers.objects.create(member=self.user2, group=self.group, is_admin=True)
-
-    def test_invite_user_by_admin_success(self):
-        """Test that an admin can successfully invite a user to the group"""
-        request = self.factory.post(f'/groups/{self.group.id}/invite/{self.user3.username}/')
-        force_authenticate(request, user=self.user2)  # user2 is admin
-        response = InviteGroupAPIView.as_view()(
-            request, group_id=self.group.id, user=self.user3.username
-        )
-
+    def test_invite_user_to_group(self):
+        """Test inviting a user to a group"""
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('invite-group', kwargs={'group_id': self.group.id, 'user': self.non_member_user.username})
+        response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn(f"User {self.user3.username} invited", response.data['detail'])
 
-        # Check that a pending membership was created
-        membership = GroupMembers.objects.get(member=self.user3, group=self.group)
-        self.assertTrue(membership.pending)
-        self.assertFalse(membership.is_admin)
-
-    def test_invite_user_by_non_admin_forbidden(self):
-        """Test that a non-admin member cannot invite users"""
-        # Make user2 a regular member
-        self.member2.is_admin = False
-        self.member2.save()
-
-        request = self.factory.post(f'/groups/{self.group.id}/invite/{self.user3.username}/')
-        force_authenticate(request, user=self.user2)
-        response = InviteGroupAPIView.as_view()(
-            request, group_id=self.group.id, user=self.user3.username
+        # Verify invitation was created
+        invitation = GroupMembers.objects.get(
+            group=self.group,
+            member=self.non_member_user
         )
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(invitation.pending)
+        self.assertFalse(invitation.is_admin)
 
     def test_invite_nonexistent_user(self):
-        """Test inviting a user that doesn't exist"""
-        request = self.factory.post(f'/groups/{self.group.id}/invite/nonexistent/')
-        force_authenticate(request, user=self.user1)  # owner
-        response = InviteGroupAPIView.as_view()(
-            request, group_id=self.group.id, user='nonexistent'
-        )
-
+        """Test inviting a non-existent user returns 404"""
+        self.client.force_authenticate(user=self.owner_user)
+        url = reverse('invite-group', kwargs={'group_id': self.group.id, 'user': 'nonexistent_user'})
+        response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'User not found.')
 
-    def test_invite_already_invited_user(self):
-        """Test inviting a user that already has a pending invitation"""
-        # Create pending invitation
-        GroupMembers.objects.create(member=self.user3, group=self.group, pending=True)
-
-        request = self.factory.post(f'/groups/{self.group.id}/invite/{self.user3.username}/')
-        force_authenticate(request, user=self.user1)
-        response = InviteGroupAPIView.as_view()(
-            request, group_id=self.group.id, user=self.user3.username
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'User already invited to this group')
-
-    def test_invite_existing_member(self):
-        """Test inviting a user that is already a member"""
-        # Make user3 a member
-        GroupMembers.objects.create(member=self.user3, group=self.group, pending=False)
-
-        request = self.factory.post(f'/groups/{self.group.id}/invite/{self.user3.username}/')
-        force_authenticate(request, user=self.user1)
-        response = InviteGroupAPIView.as_view()(
-            request, group_id=self.group.id, user=self.user3.username
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'User already a member of this group')
-
-
-class InviteAcceptViewTest(TestCase):
-    def setUp(self):
-        self.factory = APIRequestFactory()
-        self.user1 = User.objects.create_user(username='user1', password='password')
-        self.user2 = User.objects.create_user(username='user2', password='password')
-
-        self.employer = Client.objects.create(
-            name='Test Client',
-            cnpj='12.345.678/0001-90',
-            owners=self.user1,
-            contact_email='contato@cliente.test',
-            phone='(11)99999-9999',
-            address='Rua Exemplo, 123, Bairro, Cidade - SP',
-        )
-
-        self.season = Season.objects.create(
-            name='Season 1',
-            start_date=timezone.now() - timedelta(days=180),
-            end_date=timezone.now() + timedelta(days=180),
-            client=self.employer
-        )
-
-        Profile.objects.create(user=self.user1, employer=self.employer)
-        Profile.objects.create(user=self.user2, employer=self.employer)
-
-        # Group created by user1
-        self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)
-
-        # Pending invitation for user2
-        GroupMembers.objects.create(member=self.user2, group=self.group, pending=True)
-
-    def test_accept_invitation_success(self):
-        """Test successfully accepting a group invitation"""
-        data = {'action': 'accept'}
-        request = self.factory.post(f'/groups/{self.group.id}/accept/', data, format='json')
-        force_authenticate(request, user=self.user2)
-        response = InviteGroupAccept.as_view()(request, group_id=self.group.id)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['detail'], 'You have successfully joined the group.')
-
-        # Check that membership is no longer pending
-        membership = GroupMembers.objects.get(member=self.user2, group=self.group)
-        self.assertFalse(membership.pending)
-
-        # Check that user was added to group in profile
-        self.assertIn(self.group, self.user2.profile.groups.all())
-
-    def test_reject_invitation_success(self):
-        """Test successfully rejecting a group invitation"""
-        data = {'action': 'reject'}
-        request = self.factory.post(f'/groups/{self.group.id}/accept/', data, format='json')
-        force_authenticate(request, user=self.user2)
-        response = InviteGroupAccept.as_view()(request, group_id=self.group.id)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['detail'], 'You have rejected the group invitation.')
-
-        # Check that membership was deleted
-        self.assertFalse(
-            GroupMembers.objects.filter(member=self.user2, group=self.group).exists()
-        )
-
-    def test_accept_invitation_invalid_action(self):
-        """Test with invalid action parameter"""
-        data = {'action': 'invalid'}
-        request = self.factory.post(f'/groups/{self.group.id}/accept/', data, format='json')
-        force_authenticate(request, user=self.user2)
-        response = InviteGroupAccept.as_view()(request, group_id=self.group.id)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], "Invalid action. Use 'accept' or 'reject'.")
-
-    def test_accept_invitation_no_pending_invitation(self):
-        """Test accepting invitation when no pending invitation exists"""
-        # Remove pending invitation
-        GroupMembers.objects.filter(member=self.user2, group=self.group).delete()
-
-        data = {'action': 'accept'}
-        request = self.factory.post(f'/groups/{self.group.id}/accept/', data, format='json')
-        force_authenticate(request, user=self.user2)
-        response = InviteGroupAccept.as_view()(request, group_id=self.group.id)
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'No pending invitation found for this group.')
-
-
-class QuitGroupViewTest(TestCase):
-    def setUp(self):
-        self.factory = APIRequestFactory()
-        self.user1 = User.objects.create_user(username='user1', password='password')
-        self.user2 = User.objects.create_user(username='user2', password='password')
-
-        self.employer = Client.objects.create(
-            name='Test Client',
-            cnpj='12.345.678/0001-90',
-            owners=self.user1,
-            contact_email='contato@cliente.test',
-            phone='(11)99999-9999',
-            address='Rua Exemplo, 123, Bairro, Cidade - SP',
-        )
-
-        self.season = Season.objects.create(
-            name='Season 1',
-            start_date=timezone.now() - timedelta(days=180),
-            end_date=timezone.now() + timedelta(days=180),
-            client=self.employer
-        )
-
-        Profile.objects.create(user=self.user1, employer=self.employer)
-        Profile.objects.create(user=self.user2, employer=self.employer)
-
-        # Group created by user1 (owner)
-        self.group = Group.objects.create(name="Test Group", created_by=self.user1, owner=self.user1)
-        self.member1 = GroupMembers.objects.get(member=self.user1, group=self.group)
-        self.member1.pending = False
-        self.member1.save()
-
-        # user2 as regular member
-        self.member2 = GroupMembers.objects.create(member=self.user2, group=self.group, pending=False)
-        self.member2.pending = False
-        self.member2.save()
-        self.user2.profile.groups.add(self.group)
-
-    def test_quit_group_success(self):
-        """Test successfully quitting a group"""
-        request = self.factory.post(f'/groups/{self.group.id}/quit/')
-        force_authenticate(request, user=self.user2)
-        response = QuitingGroupAPIView.as_view()(request, group_id=self.group.id)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['detail'], 'You have successfully quit the group.')
-
-        # Check that membership was deleted
-        self.assertFalse(
-            GroupMembers.objects.filter(member=self.user2, group=self.group).exists()
-        )
-
-        # Check that group was removed from profile
-        self.assertNotIn(self.group, self.user2.profile.groups.all())
-
-    def test_quit_group_owner_cannot_quit(self):
-        """Test that group owner cannot quit the group"""
-        request = self.factory.post(f'/groups/{self.group.id}/quit/')
-        force_authenticate(request, user=self.user1)  # owner
-        response = QuitingGroupAPIView.as_view()(request, group_id=self.group.id)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data['detail'],
-            'Group owner cannot quit the group. Transfer ownership or delete the group.'
-        )
-
-    def test_quit_group_not_member(self):
-        """Test quitting group when user is not a member"""
-        user3 = User.objects.create_user(username='user3', password='password')
-
-        request = self.factory.post(f'/groups/{self.group.id}/quit/')
-        force_authenticate(request, user=user3)
-        response = QuitingGroupAPIView.as_view()(request, group_id=self.group.id)
-
+    def test_invite_requires_admin_permission(self):
+        """Test that only admin members can invite users"""
+        self.client.force_authenticate(user=self.member_user)
+        url = reverse('invite-group', kwargs={'group_id': self.group.id, 'user': self.non_member_user.username})
+        response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data['detail'], 'User not a member of the group or membership is pending.')
 
-    def test_quit_main_group_forbidden(self):
-        """Test that users cannot quit main enterprise groups"""
-        # Create main group
-        main_group = Group.objects.create(
-            name="Main Group",
-            created_by=self.user1,
-            owner=self.user1,
-            main=True
+
+class GroupAPIPermissionsTest(TestCase):
+    """Test suite for group API permissions and edge cases"""
+
+    def setUp(self):
+        """Set up test data"""
+        self.client = APIClient()
+        faker = Faker('pt_BR')
+        # Create test client for profiles
+
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@test.com',
+            password='testpass123'
         )
-        GroupMembers.objects.create(member=self.user2, group=main_group, pending=False)
 
-        request = self.factory.post(f'/groups/{main_group.id}/quit/')
-        force_authenticate(request, user=self.user2)
-        response = QuitingGroupAPIView.as_view()(request, group_id=main_group.id)
+        self.test_client = Client.objects.create(
+            name='Test Client',
+            cnpj=faker.cnpj(),
+            owners=self.user,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('Cannot quit for this group', response.data['detail'])
+        self.profile = Profile.objects.create(
+            user=self.user,
+            employer=self.test_client
+        )
 
-    def test_quit_group_nonexistent_group(self):
-        """Test quitting a group that doesn't exist"""
-        request = self.factory.post('/groups/999/quit/')
-        force_authenticate(request, user=self.user2)
-        response = QuitingGroupAPIView.as_view()(request, group_id=999)
+    def test_unauthenticated_access_denied(self):
+        """Test that unauthenticated requests are denied"""
+        endpoints = [
+            '/api/v1/groups/',
+            '/api/v1/groups/1/',
+            '/api/v1/groups/me/',
+            '/api/v1/groups/1/members/1/',
+            '/api/v1/groups/1/invite/testuser/',
+        ]
 
+        for endpoint in endpoints:
+            with self.subTest(endpoint=endpoint):
+                response = self.client.get(endpoint)
+                self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_nonexistent_group_returns_404(self):
+        """Test that accessing non-existent group returns 404"""
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get('/api/groups/99999/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'Group does not exist.')

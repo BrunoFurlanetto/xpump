@@ -11,11 +11,17 @@ class MealChoicesSerializer(serializers.Serializer):
 
 
 class MealConfigSerializer(serializers.ModelSerializer):
-    meal_name = serializers.CharField(source='get_meal_name_display', read_only=True)
+    display_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MealConfig
-        fields = '__all__'
+        fields = [
+            'id', 'meal_name', 'display_name', 'interval_start', 'interval_end', 'description'
+        ]
+        read_only_fields = ['id', 'display_name']
+
+    def get_display_name(self, obj):
+        return obj.get_meal_name_display()
 
 
 class MealProofSerializer(serializers.ModelSerializer):

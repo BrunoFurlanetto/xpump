@@ -8,6 +8,7 @@ from PIL import Image
 from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from faker import Faker
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
@@ -15,6 +16,7 @@ from django.contrib.auth import get_user_model
 
 from clients.models import Client
 from core import settings
+from groups.models import Group
 from profiles.models import Profile
 
 
@@ -29,6 +31,8 @@ class ProfilesAPIViewTestCase(APITestCase):
         Setup a user and authenticate the test client for the requests.
         The profile will be created with the user automatically.
         """
+        faker = Faker('pt_BR')
+
         self.user_data = {
             "username": "testuser",
             "password": "testpassword123",
@@ -48,6 +52,9 @@ class ProfilesAPIViewTestCase(APITestCase):
             phone='(11)99999-9999',
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
+        self.employer_group = Group.objects.create(name='Employer Group', owner=self.user, main=True, created_by=self.user)
+        self.client_obj.groups = self.employer_group
+        self.client_obj.save()
 
         self.url = reverse('profiles-list')  # URL for the user list endpoint
         self.detail_url = reverse('profile-detail', args=[self.user.id])  # URL for the user detail endpoint
@@ -127,6 +134,7 @@ class ProfileAPIViewTestCase(APITestCase):
         The profile will be created with the user automatically.
         """
         # Create a temporary directory for MEDIA_ROOT if running tests
+        faker = Faker('pt_BR')
         self.temp_media_root = tempfile.mkdtemp()
         settings.MEDIA_ROOT = self.temp_media_root  # Change MEDIA_ROOT to the temp directory during tests
 
@@ -145,12 +153,16 @@ class ProfileAPIViewTestCase(APITestCase):
 
         self.client_obj = Client.objects.create(
             name='Test Client',
-            cnpj='12.345.678/0001-90',
+            cnpj=faker.unique.cnpj(),
             owners=self.user,
             contact_email='contato@cliente.test',
             phone='(11)99999-9999',
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
+
+        self.employer_group = Group.objects.create(name='Employer Group', owner=self.user, main=True, created_by=self.user)
+        self.client_obj.groups = self.employer_group
+        self.client_obj.save()
 
         # Creation profiles from users-list endpoint
         self.users = []
@@ -283,6 +295,7 @@ class ProfileUnauthorizedAccessTestCase(APITestCase):
         Create a profile for testing without authenticating the client.
         The profile will be created with the user automatically.
         """
+        faker = Faker('pt_BR')
         self.user_data = {
             "username": "testuser",
             "password": "testpassword123",
@@ -298,12 +311,16 @@ class ProfileUnauthorizedAccessTestCase(APITestCase):
 
         self.client_obj = Client.objects.create(
             name='Test Client',
-            cnpj='12.345.678/0001-90',
+            cnpj=faker.unique.cnpj(),
             owners=self.user,
             contact_email='contato@cliente.test',
             phone='(11)99999-9999',
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
+
+        self.employer_group = Group.objects.create(name='Employer Group', owner=self.user, main=True, created_by=self.user)
+        self.client_obj.groups = self.employer_group
+        self.client_obj.save()
 
         # Creation profiles from users-list endpoint
         self.users = []

@@ -262,6 +262,12 @@ class MealsAPIViewTestCase(APITestCase):
         """Test successful meal creation"""
         mock_status.return_value = (self.status, True)
 
+        test_file = SimpleUploadedFile(
+            "test_image.jpg",
+            b"file_content",
+            content_type="image/jpeg"
+        )
+
         self.client.force_authenticate(user=self.user)
         url = reverse('meals-list')
 
@@ -271,10 +277,11 @@ class MealsAPIViewTestCase(APITestCase):
         data = {
             'meal_type': self.meal_config.pk,
             'meal_time': meal_time.isoformat(),
-            'comments': 'Test meal'
+            'comments': 'Test meal',
+            'proof_files': [test_file]
         }
-        response = self.client.post(url, data, format='json')
 
+        response = self.client.post(url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Meal.objects.count(), 1)
 
