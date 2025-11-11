@@ -5,19 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Trophy,
-  Medal,
-  Crown,
-  Users,
-  Star,
-  Flame,
-  Target,
-  ArrowLeft,
-  UserCog,
-  Loader2,
-  Calendar,
-} from "lucide-react";
+import { Trophy, Medal, Crown, Users, Star, Flame, Target, ArrowLeft, UserCog, Loader2, Calendar } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group } from "@/lib/api/groups";
 import Link from "next/link";
@@ -54,8 +42,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
   }, [period]);
 
   const currentUserMember = group.members.find((m) => m.id === Number(user?.id));
-  const currentUserRole =
-    group.owner === Number(user?.id) ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
+  const currentUserRole = group.owner === Number(user?.id) ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
 
   const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
 
@@ -244,9 +231,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
               {/* Lista de Ranking */}
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-lg text-foreground">
-                    Classificação - {periodLabels[period]}
-                  </CardTitle>
+                  <CardTitle className="text-lg text-foreground">Classificação - {periodLabels[period]}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -255,9 +240,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                         <div
                           key={member.id}
                           className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
-                            index < 3
-                              ? "bg-primary/10 border border-primary/20"
-                              : "bg-muted/30 border border-border"
+                            index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
                           }`}
                         >
                           <div className="flex items-center gap-3">
