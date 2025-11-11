@@ -1,5 +1,5 @@
 # python
-from datetime import timedelta, datetime
+from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db.models import Sum, Count, Q, FloatField
@@ -30,12 +30,12 @@ def compute_group_members_data(group, period):
 
     qs = base_qs.annotate(
         workout_points=Coalesce(
-            Sum(f'member__workouts__base_points', filter=Q(member__workouts__workout_date__gte=start)),
+            Sum('member__workouts__base_points', filter=Q(member__workouts__workout_date__gte=start)),
             0.0,
             output_field=FloatField()
         ),
         meal_points=Coalesce(
-            Sum(f'member__meals__base_points', filter=Q(member__meals__meal_time__gte=start)),
+            Sum('member__meals__base_points', filter=Q(member__meals__meal_time__gte=start)),
             0.0,
             output_field=FloatField()
         ),

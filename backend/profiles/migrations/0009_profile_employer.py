@@ -34,10 +34,11 @@ def create_client(apps, schema_editor):
             client.save()
 
     # Garante que a sequência do PostgreSQL está correta para evitar duplicatas
-    with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT setval(pg_get_serial_sequence('auth_user','id'), GREATEST((SELECT MAX(id) FROM auth_user), 1))"
-        )
+    if connection.vendor == 'postgresql':
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT setval(pg_get_serial_sequence('auth_user','id'), GREATEST((SELECT MAX(id) FROM auth_user), 1))"
+            )
 
 
 class Migration(migrations.Migration):

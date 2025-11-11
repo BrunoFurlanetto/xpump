@@ -17,7 +17,7 @@ class ClientSerializer(serializers.ModelSerializer):
                 owner = getattr(client, 'owners')
 
                 if not owner:
-                    raise serializers.ValidationError({'owner': 'Client not have owner user relationship.'})
+                    raise serializers.ValidationError({'owner': 'Client does not have an owner user relationship.'})
 
                 main_group = Group.objects.create(
                     name=client.name,
