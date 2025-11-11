@@ -1,83 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy,
   Medal,
   Crown,
-  TrendingUp,
-  Calendar,
   Users,
   Star,
   Flame,
   Target,
   ArrowLeft,
   UserCog,
+  Loader2,
+  Calendar,
 } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group } from "@/lib/api/groups";
 import Link from "next/link";
+import { useGroupsContext } from "@/context/groupsContext";
+import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface GroupDetailsProps {
   group: Group;
 }
 
-// Mock data para ranking e estatísticas
-const mockRankingData = [
-  {
-    id: 1,
-    username: "João Silva",
-    points: 1250,
-    weeklyPoints: 320,
-    position: 1,
-    streak: 12,
-    workouts: 5,
-    meals: 21,
-    avatar: null,
-    trend: "up",
-  },
-  {
-    id: 2,
-    username: "Maria Santos",
-    points: 1180,
-    weeklyPoints: 290,
-    position: 2,
-    streak: 8,
-    workouts: 4,
-    meals: 20,
-    avatar: null,
-    trend: "up",
-  },
-  {
-    id: 3,
-    username: "Pedro Costa",
-    points: 980,
-    weeklyPoints: 250,
-    position: 3,
-    streak: 5,
-    workouts: 3,
-    meals: 18,
-    avatar: null,
-    trend: "down",
-  },
-];
-
-export function GroupDetails({ group }: GroupDetailsProps) {
-  console.log(group);
+export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
   const [activeTab, setActiveTab] = useState("ranking");
+  const { user } = useAuth();
+  const { fetchGroup, period, setPeriod, isLoading } = useGroupsContext();
+  const [group, setGroup] = useState(initialGroup);
+  const [isFirstMount, setIsFirstMount] = useState(true);
 
-  // Simular usuário atual (em um app real, viria do contexto de auth)
-  const currentUserId = 1;
-  const currentUserMember = group.members.find((m) => m.id === currentUserId);
-  const currentUserRole = group.owner === currentUserId ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
+  // Fetch group data when period changes (skip first mount since we have initialGroup)
+  useEffect(() => {
+    if (isFirstMount) {
+      setIsFirstMount(false);
+      return;
+    }
+
+    const loadGroup = async () => {
+      const updatedGroup = await fetchGroup(initialGroup.id, period);
+      if (updatedGroup) {
+        setGroup(updatedGroup);
+      }
+    };
+    loadGroup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]);
+
+  const currentUserMember = group.members.find((m) => m.id === Number(user?.id));
+  const currentUserRole =
+    group.owner === Number(user?.id) ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
 
   const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
-  const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "all">("week");
 
   const getPositionIcon = (position: number) => {
     switch (position) {
@@ -99,25 +79,24 @@ export function GroupDetails({ group }: GroupDetailsProps) {
   const getInitials = (name: string) => {
     return name
       .split(" ")
-      .map((word) => word[0])
+      .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
-  const getTrendIcon = (trend: string) => {
-    return trend === "up" ? (
-      <TrendingUp className="h-4 w-4 text-green-400" />
-    ) : (
-      <TrendingUp className="h-4 w-4 text-red-400 rotate-180" />
-    );
-  };
-
   const periodLabels = {
-    week: "Esta Semana",
-    month: "Este Mês",
+    week: "Semana",
+    month: "Mês",
     all: "Geral",
   };
+
+  // Ordenar membros por posição
+  const rankedMembers = [...group.members]
+    .filter((m) => m.position !== undefined && m.position !== null)
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
+
+  const topThree = rankedMembers.slice(0, 3);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -148,7 +127,7 @@ export function GroupDetails({ group }: GroupDetailsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total de Membros</p>
-                <p className="text-2xl font-bold text-foreground">{group.members.length}</p>
+                <p className="text-2xl font-bold text-foreground">{group.stats?.total_members || 0}</p>
               </div>
               <Users className="h-8 w-8 text-primary" />
             </div>
@@ -159,8 +138,8 @@ export function GroupDetails({ group }: GroupDetailsProps) {
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Treinos da Semana</p>
-                <p className="text-2xl font-bold text-foreground">47</p>
+                <p className="text-sm font-medium text-muted-foreground">Total de Treinos</p>
+                <p className="text-2xl font-bold text-foreground">{group.stats?.total_workouts || 0}</p>
               </div>
               <Target className="h-8 w-8 text-primary" />
             </div>
@@ -172,7 +151,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Sequência Média</p>
-                <p className="text-2xl font-bold text-foreground">8.5</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {group.stats?.mean_streak ? group.stats.mean_streak.toFixed(1) : "0"}
+                </p>
               </div>
               <Flame className="h-8 w-8 text-primary" />
             </div>
@@ -184,7 +165,9 @@ export function GroupDetails({ group }: GroupDetailsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pontos Totais</p>
-                <p className="text-2xl font-bold text-foreground">3,410</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {group.stats?.total_points?.toLocaleString("pt-BR") || 0}
+                </p>
               </div>
               <Star className="h-8 w-8 text-primary" />
             </div>
@@ -218,19 +201,21 @@ export function GroupDetails({ group }: GroupDetailsProps) {
                 </div>
 
                 <div className="flex gap-1 flex-wrap">
-                  {(Object.keys(periodLabels) as Array<keyof typeof periodLabels>).map((period) => (
+                  {(["week", "month", "all"] as const).map((p) => (
                     <Button
-                      key={period}
-                      onClick={() => setSelectedPeriod(period)}
-                      variant={selectedPeriod === period ? "default" : "outline"}
+                      key={p}
+                      onClick={() => setPeriod(p)}
+                      variant={period === p ? "default" : "outline"}
                       size="sm"
+                      disabled={isLoading}
                       className={
-                        selectedPeriod === period
+                        period === p
                           ? "bg-primary text-primary-foreground"
                           : "border-border text-foreground hover:bg-muted"
                       }
                     >
-                      {periodLabels[period]}
+                      {isLoading && period === p && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                      {periodLabels[p]}
                     </Button>
                   ))}
                 </div>
@@ -238,163 +223,221 @@ export function GroupDetails({ group }: GroupDetailsProps) {
             </CardHeader>
           </Card>
 
-          {/* Ranking */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Lista de Ranking */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-foreground">
-                  Classificação - {periodLabels[selectedPeriod]}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockRankingData.map((member, index) => (
-                    <div
-                      key={member.id}
-                      className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
-                        index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {getPositionIcon(member.position)}
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-                            {getInitials(member.username)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-foreground truncate">{member.username}</h4>
-                          {getTrendIcon(member.trend)}
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>🔥 {member.streak} dias</span>
-                          <span>💪 {member.workouts} treinos</span>
-                          <span>🥗 {member.meals} refeições</span>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-primary">{member.points}</p>
-                        <p className="text-sm text-muted-foreground">+{member.weeklyPoints} esta semana</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Informações Detalhadas */}
-            <div className="space-y-4">
-              {/* Top 3 */}
-              <Card className="border-border">
+          {isLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-lg">Pódium da Semana</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-center gap-4">
-                    {/* 2º Lugar */}
-                    <div className="text-center">
-                      <div className="w-16 h-20 bg-gradient-to-t from-gray-500 to-gray-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
-                        <span className="text-white font-bold text-lg">2º</span>
-                      </div>
-                      <Avatar className="h-12 w-12 mx-auto mb-2">
-                        <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600">
-                          {getInitials(mockRankingData[1].username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="text-sm font-medium">{mockRankingData[1].username}</p>
-                      <p className="text-xs text-muted-foreground">{mockRankingData[1].weeklyPoints} pts</p>
-                    </div>
-
-                    {/* 1º Lugar */}
-                    <div className="text-center">
-                      <div className="w-16 h-24 bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
-                        <span className="text-white font-bold text-lg">1º</span>
-                      </div>
-                      <Avatar className="h-14 w-14 mx-auto mb-2 ring-2 ring-yellow-400">
-                        <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-yellow-600">
-                          {getInitials(mockRankingData[0].username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="text-sm font-medium">{mockRankingData[0].username}</p>
-                      <p className="text-xs text-muted-foreground">{mockRankingData[0].weeklyPoints} pts</p>
-                    </div>
-
-                    {/* 3º Lugar */}
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-t from-amber-600 to-amber-500 rounded-t-lg flex items-end justify-center pb-2 mb-2">
-                        <span className="text-white font-bold text-lg">3º</span>
-                      </div>
-                      <Avatar className="h-10 w-10 mx-auto mb-2">
-                        <AvatarFallback className="bg-gradient-to-br from-amber-600 to-amber-700">
-                          {getInitials(mockRankingData[2].username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="text-sm font-medium">{mockRankingData[2].username}</p>
-                      <p className="text-xs text-muted-foreground">{mockRankingData[2].weeklyPoints} pts</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Progresso do Grupo */}
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="text-lg">Meta Semanal do Grupo</CardTitle>
+                  <Skeleton className="h-6 w-48" />
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Treinos Realizados</span>
-                      <span>47/50</span>
-                    </div>
-                    <Progress value={94} className="h-2" />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Refeições Registradas</span>
-                      <span>132/140</span>
-                    </div>
-                    <Progress value={94} className="h-2" />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Sequências Ativas</span>
-                      <span>8/12</span>
-                    </div>
-                    <Progress value={67} className="h-2" />
-                  </div>
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                  ))}
                 </CardContent>
               </Card>
-
-              {/* Informações do Grupo */}
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="text-lg">Informações</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Criado em:
-                    </span>
-                    <span>{new Date(group.created_at).toLocaleDateString("pt-BR")}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Administradores:</span>
-                    <span>{group.members.filter((m) => m.is_admin).length}</span>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                <Skeleton className="h-64 w-full" />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Lista de Ranking */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg text-foreground">
+                    Classificação - {periodLabels[period]}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {rankedMembers.length > 0 ? (
+                      rankedMembers.map((member, index) => (
+                        <div
+                          key={member.id}
+                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                            index < 3
+                              ? "bg-primary/10 border border-primary/20"
+                              : "bg-muted/30 border border-border"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {getPositionIcon(member.position || 0)}
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+                                {getInitials(member.username)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-foreground truncate">{member.username}</h4>
+                              {member.is_admin && <Crown className="h-4 w-4 text-yellow-400" />}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>💪 {member.workouts || 0} treinos</span>
+                              <span>🥗 {member.meals || 0} refeições</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-xl font-bold text-primary">{member.score || 0}</p>
+                            <p className="text-sm text-muted-foreground">pontos</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Nenhum membro com atividades neste período</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Informações Detalhadas */}
+              <div className="space-y-4">
+                {/* Top 3 */}
+                {topThree.length >= 3 && (
+                  <Card className="border-border">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Pódium - {periodLabels[period]}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-end justify-center gap-4">
+                        {/* 2º Lugar */}
+                        {topThree[1] && (
+                          <div className="text-center">
+                            <div className="w-16 h-20 bg-gradient-to-t from-gray-500 to-gray-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
+                              <span className="text-white font-bold text-lg">2º</span>
+                            </div>
+                            <Avatar className="h-12 w-12 mx-auto mb-2">
+                              <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600">
+                                {getInitials(topThree[1].username)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-sm font-medium">{topThree[1].username}</p>
+                            <p className="text-xs text-muted-foreground">{topThree[1].score || 0} pts</p>
+                          </div>
+                        )}
+
+                        {/* 1º Lugar */}
+                        {topThree[0] && (
+                          <div className="text-center">
+                            <div className="w-16 h-24 bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
+                              <span className="text-white font-bold text-lg">1º</span>
+                            </div>
+                            <Avatar className="h-14 w-14 mx-auto mb-2 ring-2 ring-yellow-400">
+                              <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-yellow-600">
+                                {getInitials(topThree[0].username)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-sm font-medium">{topThree[0].username}</p>
+                            <p className="text-xs text-muted-foreground">{topThree[0].score || 0} pts</p>
+                          </div>
+                        )}
+
+                        {/* 3º Lugar */}
+                        {topThree[2] && (
+                          <div className="text-center">
+                            <div className="w-16 h-16 bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-lg flex items-end justify-center pb-2 mb-2">
+                              <span className="text-white font-bold text-lg">3º</span>
+                            </div>
+                            <Avatar className="h-12 w-12 mx-auto mb-2">
+                              <AvatarFallback className="bg-gradient-to-br from-amber-700 to-amber-800">
+                                {getInitials(topThree[2].username)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-sm font-medium">{topThree[2].username}</p>
+                            <p className="text-xs text-muted-foreground">{topThree[2].score || 0} pts</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Estatísticas Gerais */}
+                <Card className="border-border">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Estatísticas do Período</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-5 w-5 text-primary" />
+                        <span className="text-sm text-muted-foreground">Total de Treinos</span>
+                      </div>
+                      <span className="font-bold text-foreground">{group.stats?.total_workouts || 0}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-5 w-5 text-primary" />
+                        <span className="text-sm text-muted-foreground">Total de Refeições</span>
+                      </div>
+                      <span className="font-bold text-foreground">{group.stats?.total_meals || 0}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Flame className="h-5 w-5 text-primary" />
+                        <span className="text-sm text-muted-foreground">Sequência Média de Treinos</span>
+                      </div>
+                      <span className="font-bold text-foreground">
+                        {group.stats?.mean_workout_streak ? group.stats.mean_workout_streak.toFixed(1) : "0"} dias
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Flame className="h-5 w-5 text-primary" />
+                        <span className="text-sm text-muted-foreground">Sequência Média de Refeições</span>
+                      </div>
+                      <span className="font-bold text-foreground">
+                        {group.stats?.mean_meal_streak ? group.stats.mean_meal_streak.toFixed(1) : "0"} dias
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-border">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium text-foreground">Pontos Totais</span>
+                      </div>
+                      <span className="font-bold text-lg text-primary">
+                        {group.stats?.total_points?.toLocaleString("pt-BR") || 0}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Informações do Grupo */}
+                <Card className="border-border">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Informações</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Criado em:
+                      </span>
+                      <span>{new Date(group.created_at).toLocaleDateString("pt-BR")}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        Criado por:
+                      </span>
+                      <span className="font-medium">{group.created_by}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* Aba de Gerenciamento de Membros */}
@@ -403,11 +446,11 @@ export function GroupDetails({ group }: GroupDetailsProps) {
             <GroupMembersManager
               groupId={group.id}
               members={group.members}
-              currentUserId={currentUserId}
+              currentUserId={Number(user?.id)}
               currentUserRole={currentUserRole}
-              onMemberUpdate={() => {
-                // Em uma aplicação real, isso faria refresh dos dados
-                console.log("Member updated, refreshing data...");
+              onMemberUpdate={async () => {
+                const updated = await fetchGroup(group.id, period);
+                if (updated) setGroup(updated);
               }}
             />
           </TabsContent>

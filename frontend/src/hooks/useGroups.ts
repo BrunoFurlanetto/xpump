@@ -9,8 +9,10 @@ interface UseGroupsReturn {
   currentGroup: Group | null;
   isLoading: boolean;
   isSubmitting: boolean;
+  period: "week" | "month" | "all";
+  setPeriod: (period: "week" | "month" | "all") => void;
   fetchGroups: () => Promise<void>;
-  fetchGroup: (groupId: number) => Promise<Group | null>;
+  fetchGroup: (groupId: number, period?: "week" | "month" | "all") => Promise<Group | null>;
   createGroup: (data: CreateGroupData) => Promise<Group | null>;
   updateGroup: (groupId: number, data: Partial<CreateGroupData>) => Promise<Group | null>;
   deleteGroup: (groupId: number) => Promise<boolean>;
@@ -26,6 +28,7 @@ export function useGroups(): UseGroupsReturn {
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -41,21 +44,25 @@ export function useGroups(): UseGroupsReturn {
     }
   }, []);
 
-  const fetchGroup = useCallback(async (groupId: number): Promise<Group | null> => {
-    try {
-      setIsLoading(true);
-      const data = await GroupsAPI.getGroup(groupId);
-      setCurrentGroup(data);
-      return data;
-    } catch (error) {
-      console.error("Erro ao buscar grupo:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro ao carregar grupo";
-      toast.error(errorMessage);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const fetchGroup = useCallback(
+    async (groupId: number, customPeriod?: "week" | "month" | "all"): Promise<Group | null> => {
+      try {
+        setIsLoading(true);
+        const periodToUse = customPeriod ?? period;
+        const data = await GroupsAPI.getGroup(groupId, periodToUse);
+        setCurrentGroup(data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao buscar grupo:", error);
+        const errorMessage = error instanceof Error ? error.message : "Erro ao carregar grupo";
+        toast.error(errorMessage);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [period]
+  );
 
   const createGroup = useCallback(async (data: CreateGroupData): Promise<Group | null> => {
     try {
@@ -256,6 +263,8 @@ export function useGroups(): UseGroupsReturn {
     currentGroup,
     isLoading,
     isSubmitting,
+    period,
+    setPeriod,
     fetchGroups,
     fetchGroup,
     createGroup,
