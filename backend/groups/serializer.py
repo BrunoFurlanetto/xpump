@@ -1,4 +1,4 @@
-from django.db.models import Window, F, Count, Case, When, Value, IntegerField
+from django.db.models import Window, F, Count
 from django.db.models.functions import Rank
 from rest_framework import serializers
 
@@ -57,8 +57,8 @@ class GroupSerializer(serializers.ModelSerializer):
                 "pending": member.pending,
                 "position": int(member.position) if not member.pending else None,
                 "score": member.score if not member.pending else None,
-                "workouts": len(member.member.workouts.all()),
-                "meals": len(member.member.meals.all()),
+                "workouts": member.member.workouts.count(),
+                "meals": member.member.meals.count(),
             }
             for member in members
         ]
@@ -183,15 +183,14 @@ class GroupMemberSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """
-        Custom validation to ensure read-only fields are not provided in requests.
-        Prevents clients from attempting to modify protected fields.
+        Validate that no read-only fields are provided in the input data.
+        Uses Meta.read_only_fields to avoid duplicating the list of protected fields.
         """
         errors = {}
-        if 'joined_at' in self.initial_data:
-            errors['joined_at'] = "This field is read-only and cannot be modified."
-
-        if 'pending' in self.initial_data:
-            errors['pending'] = "This field is read-only and cannot be modified."
+        read_only = getattr(self.Meta, 'read_only_fields', ())
+        for field in read_only:
+            if field in (self.initial_data or {}):
+                errors[field] = "This field is read-only and cannot be modified."
 
         if errors:
             raise serializers.ValidationError(errors)

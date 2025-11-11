@@ -31,7 +31,6 @@ class ProfilesAPIViewTestCase(APITestCase):
         Setup a user and authenticate the test client for the requests.
         The profile will be created with the user automatically.
         """
-        faker = Faker('pt_BR')
 
         self.user_data = {
             "username": "testuser",

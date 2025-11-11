@@ -5,7 +5,7 @@ from django.utils import timezone
 from faker import Faker
 from rest_framework.test import APIClient
 from rest_framework import status
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from groups.models import Group, GroupMembers
 from nutrition.models import MealStreak
@@ -378,7 +378,7 @@ class GroupViewsTest(TestCase):
         membership.save()
 
         # Create another admin
-        admin_member = GroupMembers.objects.create(
+        GroupMembers.objects.create(
             group=self.group,
             member=self.admin_user,
             pending=False,

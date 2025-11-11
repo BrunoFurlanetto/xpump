@@ -77,20 +77,21 @@ class Command(BaseCommand):
             name = fake.company()
             contact_email = fake.unique.company_email()
             address = fake.address()
-            group = Group.objects.create(name=name, owner=owner, created_by=owner, main=True)
 
-            client_data = {
-                'name': name,
-                'cnpj': cnpj,
-                'contact_email': contact_email,
-                'phone': phone,
-                'address': address,
-                'owners': owner,
-                'groups': group,
-            }
 
             try:
                 with transaction.atomic():
+                    group = Group.objects.create(name=name, owner=owner, created_by=owner, main=True)
+
+                    client_data = {
+                        'name': name,
+                        'cnpj': cnpj,
+                        'contact_email': contact_email,
+                        'phone': phone,
+                        'address': address,
+                        'owners': owner,
+                        'groups': group,
+                    }
                     client = Client.objects.create(**client_data)
                     self.stdout.write(self.style.NOTICE('Creating profile for owner user.'))
                     Profile.objects.create(user=owner, employer=client)
