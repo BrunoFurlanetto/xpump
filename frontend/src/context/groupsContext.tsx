@@ -9,8 +9,10 @@ interface GroupsContextType {
   currentGroup: Group | null;
   isLoading: boolean;
   isSubmitting: boolean;
+  period: "week" | "month" | "all";
+  setPeriod: (period: "week" | "month" | "all") => void;
   fetchGroups: () => Promise<void>;
-  fetchGroup: (groupId: number) => Promise<Group | null>;
+  fetchGroup: (groupId: number, period?: "week" | "month" | "all") => Promise<Group | null>;
   createGroup: (data: CreateGroupData) => Promise<Group | null>;
   updateGroup: (groupId: number, data: Partial<CreateGroupData>) => Promise<Group | null>;
   deleteGroup: (groupId: number) => Promise<boolean>;

@@ -75,7 +75,7 @@ export function useMeals(): UseMealsReturn {
   // Convert MealConfigs to MealTypes for UI
   const mealTypes: MealType[] = mealConfigs.map((config, index) => ({
     id: config.id.toString(),
-    name: config.meal_name,
+    name: config.display_name,
     icon: getMealTypeIcon(config.meal_name),
     timeRange: `${config.interval_start} - ${config.interval_end}`,
     order: index + 1,

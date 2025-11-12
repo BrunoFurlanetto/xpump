@@ -3,10 +3,12 @@ export interface Group {
   id: number;
   name: string;
   description: string;
-  created_by: number;
+  created_by: string; // Nome completo do criador
   owner: number;
   created_at: string;
   members: GroupMember[];
+  pending_members: PendingMember[];
+  stats: GroupStats;
   main: boolean;
   pending: boolean;
 }
@@ -18,6 +20,27 @@ export interface GroupMember {
   is_admin: boolean;
   joined_at: string;
   pending: boolean;
+  position?: number;
+  score?: number;
+  workouts?: number;
+  meals?: number;
+}
+
+export interface PendingMember {
+  id: number;
+  username: string;
+  email: string;
+  joined_at: string;
+}
+
+export interface GroupStats {
+  total_members: number;
+  total_points: number;
+  total_workouts: number;
+  total_meals: number;
+  mean_streak: number;
+  mean_workout_streak: number;
+  mean_meal_streak: number;
 }
 
 export interface CreateGroupData {
@@ -49,10 +72,11 @@ export class GroupsAPI {
   }
 
   /**
-   * Get a single group by ID
+   * Get a specific group by ID with optional period filter
    */
-  static async getGroup(groupId: number): Promise<Group> {
-    const response = await fetch(`/api/groups?endpoint=${groupId}/`);
+  static async getGroup(groupId: number, period: "week" | "month" | "all" = "all"): Promise<Group> {
+    const url = period !== "all" ? `/api/groups/${groupId}?period=${period}` : `/api/groups/${groupId}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: "Erro ao buscar grupo" }));

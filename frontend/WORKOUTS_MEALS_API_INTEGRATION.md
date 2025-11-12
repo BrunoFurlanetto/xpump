@@ -131,7 +131,7 @@ interface Meal {
 ```typescript
 interface MealConfig {
   id: number;
-  meal_name: string; // "breakfast", "lunch", etc
+  display_name: string; // "breakfast", "lunch", etc
   interval_start: string; // "HH:MM:SS"
   interval_end: string; // "HH:MM:SS"
   description?: string;

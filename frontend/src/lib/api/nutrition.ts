@@ -1,5 +1,6 @@
 export interface MealConfig {
   id: number;
+  display_name: string;
   meal_name: string;
   interval_start: string;
   interval_end: string;

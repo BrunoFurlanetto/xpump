@@ -50,11 +50,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get("period") || "all";
 
-    console.log("📥 GET Group by ID:", id);
+    console.log("📥 GET Group by ID:", id, "period:", period);
+
+    const url = period !== "all" ? `${BACKEND_URL}/groups/${id}/?period=${period}` : `${BACKEND_URL}/groups/${id}/`;
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/groups/${id}/`,
+      url,
       {
         headers: {
           Authorization: `Bearer ${session.access}`,

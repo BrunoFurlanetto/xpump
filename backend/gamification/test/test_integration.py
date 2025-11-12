@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
 
 from django.utils import timezone
+from faker.proxy import Faker
 
 from gamification.models import GamificationSettings, Season
 from gamification.services import Gamification, WorkoutGamification, MealGamification
@@ -76,7 +77,8 @@ class WorkoutGamificationIntegrationTest(TestCase):
 
             # Should be base_xp * duration_ratio * multiplier
             # With streak=10, multiplier should be 1.5 (based on default settings)
-            expected_multiplier = 1.5
+            # expected_multiplier = 1.5 TODO: Temporaly multiplier is defined as 1.0
+            expected_multiplier = 1.0
             expected_xp = 5 * (90 / 60) * expected_multiplier  # 5 * 1.5 * 1.5 = 11.25
 
             self.assertAlmostEqual(xp_earned, expected_xp, places=2)
@@ -104,13 +106,21 @@ class WorkoutGamificationIntegrationTest(TestCase):
             mock_season.return_value = MagicMock()
             mock_season.return_value.end_date = date.today() + timedelta(days=90)
 
-            # Test different streak levels
+            # Test different streak levels TODO: Temporaly multiplier is defined as 1.0
+            # test_cases = [
+            #     (3, 1.0),  # Low streak
+            #     (7, 1.25),  # Medium streak
+            #     (15, 1.5),  # High streak
+            #     (25, 1.75),  # Very high streak
+            #     (50, 2.0),  # Maximum streak
+            # ]
+
             test_cases = [
                 (3, 1.0),  # Low streak
-                (7, 1.25),  # Medium streak
-                (15, 1.5),  # High streak
-                (25, 1.75),  # Very high streak
-                (50, 2.0),  # Maximum streak
+                (7, 1.0),  # Medium streak
+                (15, 1.0),  # High streak
+                (25, 1.0),  # Very high streak
+                (50, 1.0),  # Maximum streak
             ]
 
             for streak, expected_multiplier in test_cases:
@@ -126,6 +136,7 @@ class MealGamificationIntegrationTest(TestCase):
     """Integration tests between nutrition app and gamification system"""
 
     def setUp(self):
+        faker = Faker('pt_BR')
         self.settings = GamificationSettings.load()
         self.settings.meal_xp = 3
         self.settings.save()
@@ -134,7 +145,7 @@ class MealGamificationIntegrationTest(TestCase):
 
         self.client_obj = Client.objects.create(
             name='Test Client',
-            cnpj='12.345.678/0001-90',
+            cnpj=faker.unique.cnpj(),
             owners=self.user,
             contact_email='contato@cliente.test',
             phone='(11)99999-9999',
@@ -184,7 +195,8 @@ class MealGamificationIntegrationTest(TestCase):
             xp_earned = self.meal_gamification.calculate(self.user)
 
             # With streak=5, multiplier should be 1.25 (based on default settings)
-            expected_multiplier = 1.25
+            # expected_multiplier = 1.25 TODO: Temporaly multiplier is defined as 1.0
+            expected_multiplier = 1.0
             expected_xp = 3 * expected_multiplier  # 3 * 1.25 = 3.75
 
             self.assertAlmostEqual(xp_earned, expected_xp, places=2)
@@ -196,12 +208,20 @@ class MealGamificationIntegrationTest(TestCase):
             mock_season.return_value.end_date = date.today() + timedelta(days=90)
 
             # Test different streak levels based on days
+            # test_cases = [ TODO: Temporaly multiplier is defined as 1.0
+            #     (1, 1.0),  # Low streak
+            #     (5, 1.25),  # Medium streak
+            #     (10, 1.5),  # High streak
+            #     (20, 1.75),  # Very high streak
+            #     (35, 2.0),  # Maximum streak
+            # ]
+
             test_cases = [
                 (1, 1.0),  # Low streak
-                (5, 1.25),  # Medium streak
-                (10, 1.5),  # High streak
-                (20, 1.75),  # Very high streak
-                (35, 2.0),  # Maximum streak
+                (5, 1.0),  # Medium streak
+                (10, 1.0),  # High streak
+                (20, 1.0),  # Very high streak
+                (35, 1.0),  # Maximum streak
             ]
 
             for streak, expected_multiplier in test_cases:
