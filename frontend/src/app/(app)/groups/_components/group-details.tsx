@@ -5,7 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, Crown, Users, Star, Flame, Target, ArrowLeft, UserCog, Loader2, Calendar } from "lucide-react";
+import {
+  Trophy,
+  Medal,
+  Crown,
+  Users,
+  Star,
+  Flame,
+  Target,
+  ArrowLeft,
+  UserCog,
+  Loader2,
+  Calendar,
+  Utensils,
+} from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group } from "@/lib/api/groups";
 import Link from "next/link";
@@ -108,7 +121,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
       </div>
 
       {/* Estatísticas do Grupo */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Card className="bg-card border-border">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
@@ -129,6 +142,18 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                 <p className="text-2xl font-bold text-foreground">{group.stats?.total_workouts || 0}</p>
               </div>
               <Target className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardContent className="p-4 sm:px-5 sm:py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground whitespace-nowrap">Refeições Saudáveis</p>
+                <p className="text-2xl font-bold text-foreground">{group.stats?.total_meals || 0}</p>
+              </div>
+              <Utensils className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -291,7 +316,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                       <div className="flex items-end justify-center gap-4">
                         {/* 2º Lugar */}
                         {topThree[1] && (
-                          <div className="text-center">
+                          <div className="text-center flex flex-col items-center justify-center">
                             <div className="w-16 h-20 bg-gradient-to-t from-gray-500 to-gray-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
                               <span className="text-white font-bold text-lg">2º</span>
                             </div>
@@ -307,7 +332,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
 
                         {/* 1º Lugar */}
                         {topThree[0] && (
-                          <div className="text-center">
+                          <div className="text-center flex flex-col items-center justify-center">
                             <div className="w-16 h-24 bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
                               <span className="text-white font-bold text-lg">1º</span>
                             </div>
@@ -323,7 +348,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
 
                         {/* 3º Lugar */}
                         {topThree[2] && (
-                          <div className="text-center">
+                          <div className="text-center flex flex-col items-center justify-center">
                             <div className="w-16 h-16 bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-lg flex items-end justify-center pb-2 mb-2">
                               <span className="text-white font-bold text-lg">3º</span>
                             </div>
@@ -340,60 +365,6 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                     </CardContent>
                   </Card>
                 )}
-
-                {/* Estatísticas Gerais */}
-                <Card className="border-border">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Estatísticas do Período</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-5 w-5 text-primary" />
-                        <span className="text-sm text-muted-foreground">Total de Treinos</span>
-                      </div>
-                      <span className="font-bold text-foreground">{group.stats?.total_workouts || 0}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Star className="h-5 w-5 text-primary" />
-                        <span className="text-sm text-muted-foreground">Total de Refeições</span>
-                      </div>
-                      <span className="font-bold text-foreground">{group.stats?.total_meals || 0}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Flame className="h-5 w-5 text-primary" />
-                        <span className="text-sm text-muted-foreground">Sequência Média de Treinos</span>
-                      </div>
-                      <span className="font-bold text-foreground">
-                        {group.stats?.mean_workout_streak ? group.stats.mean_workout_streak.toFixed(1) : "0"} dias
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Flame className="h-5 w-5 text-primary" />
-                        <span className="text-sm text-muted-foreground">Sequência Média de Refeições</span>
-                      </div>
-                      <span className="font-bold text-foreground">
-                        {group.stats?.mean_meal_streak ? group.stats.mean_meal_streak.toFixed(1) : "0"} dias
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-border">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-medium text-foreground">Pontos Totais</span>
-                      </div>
-                      <span className="font-bold text-lg text-primary">
-                        {group.stats?.total_points?.toLocaleString("pt-BR") || 0}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
 
                 {/* Informações do Grupo */}
                 <Card className="border-border">
