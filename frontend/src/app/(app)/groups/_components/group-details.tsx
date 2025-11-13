@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,9 +20,8 @@ import {
   Utensils,
 } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
-import { Group } from "@/lib/api/groups";
+import { Group, GroupsAPI } from "@/lib/api/groups";
 import Link from "next/link";
-import { useGroupsContext } from "@/context/groupsContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,26 +32,32 @@ interface GroupDetailsProps {
 export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
   const [activeTab, setActiveTab] = useState("ranking");
   const { user } = useAuth();
-  const { fetchGroup, period, setPeriod, isLoading } = useGroupsContext();
   const [group, setGroup] = useState(initialGroup);
-  const [isFirstMount, setIsFirstMount] = useState(true);
+  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch group data when period changes (skip first mount since we have initialGroup)
-  useEffect(() => {
-    if (isFirstMount) {
-      setIsFirstMount(false);
-      return;
-    }
-
-    const loadGroup = async () => {
-      const updatedGroup = await fetchGroup(initialGroup.id, period);
-      if (updatedGroup) {
+  // Fetch group data for specific period
+  const fetchGroupData = useCallback(
+    async (selectedPeriod: "week" | "month" | "all") => {
+      setIsLoading(true);
+      try {
+        console.log("🔄 Fetching group data for period:", selectedPeriod);
+        const updatedGroup = await GroupsAPI.getGroup(initialGroup.id, selectedPeriod);
+        console.log("✅ Group data updated:", updatedGroup);
         setGroup(updatedGroup);
+      } catch (error) {
+        console.error("Error fetching group:", error);
+      } finally {
+        setIsLoading(false);
       }
-    };
-    loadGroup();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period]);
+    },
+    [initialGroup.id]
+  );
+
+  // Fetch group data when period changes
+  useEffect(() => {
+    fetchGroupData(period);
+  }, [period, fetchGroupData]);
 
   const currentUserMember = group.members.find((m) => m.id === Number(user?.id));
   const currentUserRole = group.owner === Number(user?.id) ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
@@ -95,6 +100,8 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
   const rankedMembers = [...group.members]
     .filter((m) => m.position !== undefined && m.position !== null)
     .sort((a, b) => (a.position || 0) - (b.position || 0));
+
+  console.log("📊 Ranked members for period", period, ":", rankedMembers);
 
   const topThree = rankedMembers.slice(0, 3);
 
@@ -403,8 +410,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
               currentUserId={Number(user?.id)}
               currentUserRole={currentUserRole}
               onMemberUpdate={async () => {
-                const updated = await fetchGroup(group.id, period);
-                if (updated) setGroup(updated);
+                await fetchGroupData(period);
               }}
             />
           </TabsContent>

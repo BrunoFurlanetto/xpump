@@ -48,8 +48,10 @@ export function useGroups(): UseGroupsReturn {
     async (groupId: number, customPeriod?: "week" | "month" | "all"): Promise<Group | null> => {
       try {
         setIsLoading(true);
-        const periodToUse = customPeriod ?? period;
+        const periodToUse = customPeriod ?? "all";
+        console.log("🔍 Fetching group", groupId, "with period:", periodToUse);
         const data = await GroupsAPI.getGroup(groupId, periodToUse);
+        console.log("📦 Received group data:", data);
         setCurrentGroup(data);
         return data;
       } catch (error) {
@@ -61,7 +63,7 @@ export function useGroups(): UseGroupsReturn {
         setIsLoading(false);
       }
     },
-    [period]
+    []
   );
 
   const createGroup = useCallback(async (data: CreateGroupData): Promise<Group | null> => {
