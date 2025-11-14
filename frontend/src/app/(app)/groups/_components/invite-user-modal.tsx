@@ -64,14 +64,14 @@ export function InviteUserModal({ groupId, groupName, open, close }: InviteUserM
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
             <UserPlus className="h-5 w-5" />
             Convidar para {groupName}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-2 text-foreground">
             <Label htmlFor="username">Nome de Usuário</Label>
             <Input
               id="username"
