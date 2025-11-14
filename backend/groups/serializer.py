@@ -146,8 +146,7 @@ class GroupSerializer(serializers.ModelSerializer):
                 "mean_meal_streak": mean_meal_streak,
             }
 
-        workouts_subq = WorkoutCheckin.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values(
-            'cnt')
+        workouts_subq = WorkoutCheckin.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values('cnt')
         meals_subq = Meal.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values('cnt')
 
         members_annotated = obj.groupmembers_set.filter(pending=False).annotate(
@@ -160,8 +159,8 @@ class GroupSerializer(serializers.ModelSerializer):
             total_points=Sum('points'),
             total_workouts=Sum('workouts_count'),
             total_meals=Sum('meals_count'),
-            mean_workout_streak=Avg('member__workout_streak'),
-            mean_meal_streak=Avg('member__meal_streak'),
+            mean_workout_streak=Avg('member__workout_streak__current_streak'),
+            mean_meal_streak=Avg('member__meal_streak__current_streak'),
         )
 
         total_members = members_annotated.count()
