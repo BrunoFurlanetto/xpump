@@ -1,8 +1,10 @@
-from django.db.models import Window, F, Count
+from django.db.models import Window, F, Count, OuterRef, Subquery, IntegerField
 from django.db.models.functions import Rank
 from rest_framework import serializers
 
 from groups.models import Group, GroupMembers
+from nutrition.models import Meal
+from workouts.models import WorkoutCheckin
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -109,11 +111,14 @@ class GroupSerializer(serializers.ModelSerializer):
                 if score is None:
                     score = getattr(getattr(gm, 'member', None), 'profile', None)
                     score = getattr(score, 'score', 0) if score is not None else 0
+
                 total_points += score or 0
 
                 # contagens (usa .count() para evitar carregar objetos)
                 member_obj = getattr(gm, 'member', None)
+
                 if member_obj is not None:
+                    print(member_obj)
                     try:
                         total_workouts += member_obj.workouts.count()
                     except Exception:
@@ -141,32 +146,36 @@ class GroupSerializer(serializers.ModelSerializer):
                 "mean_meal_streak": mean_meal_streak,
             }
 
+        workouts_subq = WorkoutCheckin.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values(
+            'cnt')
+        meals_subq = Meal.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values('cnt')
+
         members_annotated = obj.groupmembers_set.filter(pending=False).annotate(
             points=F('member__profile__score'),
-            workouts_count=Count('member__workouts'),
-            meals_count=Count('member__meals'),
-            workout_streak=F('member__workout_streak'),
-            meal_streak=F('member__meal_streak'),
+            workouts_count=Subquery(workouts_subq, output_field=IntegerField()),
+            meals_count=Subquery(meals_subq, output_field=IntegerField()),
         )
 
         totals = members_annotated.aggregate(
             total_points=Sum('points'),
             total_workouts=Sum('workouts_count'),
             total_meals=Sum('meals_count'),
-            mean_workout_streak=Avg('workout_streak'),
-            mean_meal_streak=Avg('meal_streak'),
+            mean_workout_streak=Avg('member__workout_streak'),
+            mean_meal_streak=Avg('member__meal_streak'),
         )
 
         total_members = members_annotated.count()
+        mw = totals.get('mean_workout_streak') or 0
+        mm = totals.get('mean_meal_streak') or 0
 
         return {
             "total_members": total_members,
             "total_points": totals.get('total_points') or 0,
             "total_workouts": totals.get('total_workouts') or 0,
             "total_meals": totals.get('total_meals') or 0,
-            "mean_streak": ((totals.get('mean_workout_streak') or 0) + (totals.get('mean_meal_streak') or 0)) / 2,
-            "mean_workout_streak": totals.get('mean_workout_streak') or 0,
-            "mean_meal_streak": totals.get('mean_meal_streak') or 0,
+            "mean_streak": (mw + mm) / 2 if (mw or mm) else 0,
+            "mean_workout_streak": mw,
+            "mean_meal_streak": mm,
         }
 
 
