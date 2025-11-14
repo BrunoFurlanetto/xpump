@@ -2,7 +2,7 @@
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, FloatField
+from django.db.models import Sum, Count, Q, FloatField, FilteredRelation
 from django.db.models.functions import Coalesce
 
 
@@ -12,15 +12,17 @@ def compute_group_members_data(group, period):
     ordenados por pontos no período ('week' | 'month').
     """
     now = timezone.now()
+    local_now = timezone.localtime(now)
 
     if period == 'week':
-        days_to_subtract = (now.weekday() + 1) % 7
-        start_dt = (now - timedelta(days=days_to_subtract)).replace(hour=0, minute=0, second=0, microsecond=0)
+        days_to_subtract = (local_now.weekday() + 1) % 7
+        start_dt = (local_now - timedelta(days=days_to_subtract)).replace(hour=0, minute=0, second=0, microsecond=0)
         start = start_dt
     elif period == 'month':
-        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
         raise ValidationError('Period must be "week" or "month"')
+    print(start)
 
     base_qs = (
         group.groupmembers_set
@@ -28,21 +30,19 @@ def compute_group_members_data(group, period):
         .filter(pending=False)
     )
 
-    qs = base_qs.annotate(
-        workout_points=Coalesce(
-            Sum('member__workouts__base_points', filter=Q(member__workouts__workout_date__gte=start)),
-            0.0,
-            output_field=FloatField()
-        ),
-        meal_points=Coalesce(
-            Sum('member__meals__base_points', filter=Q(member__meals__meal_time__gte=start)),
-            0.0,
-            output_field=FloatField()
-        ),
-        workouts_count=Count('member__workouts', filter=Q(member__workouts__workout_date__gte=start)),
-        meals_count=Count('member__meals', filter=Q(member__meals__meal_time__gte=start)),
+    qs = (
+        base_qs
+        .annotate(
+            meals_rel=FilteredRelation('member__meals', condition=Q(member__meals__meal_time__gte=start)),
+            workouts_rel=FilteredRelation('member__workouts', condition=Q(member__workouts__workout_date__gte=start)),
+        )
+        .annotate(
+            meal_points=Coalesce(Sum('meals_rel__base_points'), 0.0, output_field=FloatField()),
+            workout_points=Coalesce(Sum('workouts_rel__base_points'), 0.0, output_field=FloatField()),
+            meals_count=Count('meals_rel'),
+            workouts_count=Count('workouts_rel'),
+        )
     )
-
     members = list(qs)
     members.sort(key=lambda m: (m.workout_points or 0) + (m.meal_points or 0), reverse=True)
 
