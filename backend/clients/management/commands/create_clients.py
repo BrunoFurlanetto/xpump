@@ -60,18 +60,19 @@ class Command(BaseCommand):
         fake = Faker('pt_BR')
 
         self.stdout.write(self.style.WARNING('Creating owner to client.'))
-        owner = User.objects.create_user(
-            username=fake.unique.user_name(),
-            email=fake.unique.email(),
-            password='password123',
-            first_name=fake.first_name(),
-            last_name=fake.last_name()
-        )
 
         created = 0
         errors = 0
 
         for i in range(qty):
+            owner = User.objects.create_user(
+                username=fake.unique.user_name(),
+                email=fake.unique.email(),
+                password='password123',
+                first_name=fake.first_name(),
+                last_name=fake.last_name()
+            )
+
             cnpj = fake.cnpj()
             phone = self._format_phone(fake.phone_number())
             name = fake.company()

@@ -1,10 +1,10 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
 import random
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 
 from profiles.models import Profile
 from nutrition.models import MealConfig
@@ -46,6 +46,7 @@ class Command(BaseCommand):
         meal_types = list(MealConfig.objects.all())
         if not meal_types:
             self.stdout.write(self.style.ERROR("No MealConfig found. Create meal types before running."))
+
             return
 
         qs = Profile.objects.select_related('user').all()
@@ -53,6 +54,7 @@ class Command(BaseCommand):
 
         if total == 0:
             self.stdout.write(self.style.WARNING("No profiles found."))
+
             return
 
         client = APIClient()
@@ -61,51 +63,122 @@ class Command(BaseCommand):
         created = 0
         failures = 0
 
+        self.stdout.write(self.style.SUCCESS(f"Starting meal creation for {total} profiles..."))
+        self.stdout.write(self.style.NOTICE(f"Creating {per_profile} meal(s) per profile"))
+
+        if dry_run:
+            self.stdout.write(self.style.WARNING("DRY RUN MODE - No data will be saved"))
+
+        profile_count = 0
+
         for profile in qs:
+            profile_count += 1
             user = profile.user
-            token = RefreshToken.for_user(user)
-            access = str(token.access_token)
-            client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+
+            self.stdout.write(
+                self.style.NOTICE(f"\n[{profile_count}/{total}] Processing user: {user.username} (ID: {user.id})")
+            )
+
+            # Authenticate once per profile to avoid token generation overhead
+            client.force_authenticate(user=user)
+
+            profile_created = 0
 
             for i in range(per_profile):
                 meal_conf = random.choice(meal_types)
-                # choose a time strictly inside the meal interval (avoid boundary equality)
                 start = meal_conf.interval_start
                 end = meal_conf.interval_end
 
-                # compute interval in seconds
+                # Sorteia uma data nos últimos 6 meses
+                days_back = random.randint(0, 180)
+
+                # Usa timezone de São Paulo explicitamente
+                tz = ZoneInfo('America/Sao_Paulo')
+                now_sao_paulo = timezone.now().astimezone(tz)
+                base_dt = now_sao_paulo - timedelta(days=days_back)
+
+                # Compute interval in seconds
                 start_seconds = start.hour * 3600 + start.minute * 60 + start.second
                 end_seconds = end.hour * 3600 + end.minute * 60 + end.second
-                total_seconds = end_seconds - start_seconds
 
-                # if interval is too small, pick a small offset (30s) after start
-                if total_seconds <= 2:
-                    sec_offset = 30
+                # Adiciona margem de segurança: 2 minutos após o início e 2 minutos antes do fim
+                # para garantir que o horário caia dentro do intervalo mesmo após conversões de timezone
+                start_seconds_safe = start_seconds + 120  # +2 minutos
+                end_seconds_safe = end_seconds - 120      # -2 minutos
+
+                total_seconds = end_seconds_safe - start_seconds_safe
+
+                # Se o intervalo for muito pequeno (menos de 5 minutos), usa o meio do intervalo
+                if total_seconds <= 300:
+                    sec_offset = start_seconds + ((end_seconds - start_seconds) // 2)
                 else:
-                    sec_offset = random.randint(1, total_seconds - 1)
+                    # Escolhe um horário aleatório dentro do intervalo seguro
+                    sec_offset = random.randint(start_seconds_safe, end_seconds_safe)
 
-                base_dt = timezone.now().replace(hour=start.hour, minute=start.minute, second=0, microsecond=0)
-                meal_time = base_dt + timedelta(seconds=sec_offset, days=-random.randint(0, 30))
+                # Cria o datetime com o horário sorteado no timezone de São Paulo
+                meal_time = base_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                meal_time = meal_time + timedelta(seconds=sec_offset)
+
+                # Validação: garante que o horário está dentro do intervalo
+                meal_time_only = meal_time.time()
+                if not (start <= meal_time_only <= end):
+                    self.stdout.write(self.style.ERROR(
+                        f"     ⚠ WARNING: Generated time {meal_time_only} is outside interval {start}-{end}, regenerating..."
+                    ))
+                    # Força um horário no meio do intervalo
+                    mid_seconds = start_seconds + ((end_seconds - start_seconds) // 2)
+                    meal_time = base_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                    meal_time = meal_time + timedelta(seconds=mid_seconds)
+
+                # Garante que meal_time está no timezone correto antes de enviar
+                if meal_time.tzinfo is None or meal_time.tzinfo != tz:
+                    # Remove timezone info if present and re-add with correct timezone
+                    meal_time = meal_time.replace(tzinfo=None)
+                    meal_time = meal_time.replace(tzinfo=tz)
 
                 data = {
                     'meal_type': meal_conf.id,
-                    'meal_time': meal_time.isoformat(),
+                    'meal_time': meal_time.isoformat(),  # Envia como ISO string com timezone
                     'comments': f'Auto meal #{i+1}'
                 }
 
+                self.stdout.write(
+                    f"  → Meal {i+1}/{per_profile}: {meal_conf.get_meal_name_display()} at {meal_time.strftime('%Y-%m-%d %H:%M')} "
+                    f"({days_back}d ago)"
+                )
+
                 if dry_run:
-                    self.stdout.write(f"[dry-run] would POST {url} for user {user.username}: {data}")
+                    self.stdout.write(f"     [DRY-RUN] Would POST to {url}")
                     created += 1
+                    profile_created += 1
+
                     continue
 
-                response = client.post(url, data)
+                response = client.post(url, data, format='json')
 
                 if response.status_code == 201:
                     created += 1
+                    profile_created += 1
+                    self.stdout.write(self.style.SUCCESS(f"     ✓ Created successfully"))
                 else:
                     failures += 1
                     self.stdout.write(self.style.ERROR(
-                        f"Failed for user={user.username}: status={response.status_code} resp={response.data}"
+                        f"     ✗ FAILED: status={response.status_code} | {response.data}"
                     ))
 
-        self.stdout.write(self.style.SUCCESS(f"Created: {created}. Failures: {failures}."))
+            # Remove authentication to be safe before next profile
+            client.force_authenticate(user=None)
+
+            self.stdout.write(
+                self.style.SUCCESS(f"  Profile summary: {profile_created}/{per_profile} meals created")
+            )
+
+        self.stdout.write(self.style.SQL_TABLE("\n" + "="*70))
+        self.stdout.write(self.style.SUCCESS(f"FINAL SUMMARY:"))
+        self.stdout.write(self.style.SUCCESS(f"  Profiles processed: {profile_count}/{total}"))
+        self.stdout.write(self.style.SUCCESS(f"  Meals created: {created}"))
+
+        if failures > 0:
+            self.stdout.write(self.style.ERROR(f"  Failures: {failures}"))
+
+        self.stdout.write(self.style.SQL_TABLE("="*70))

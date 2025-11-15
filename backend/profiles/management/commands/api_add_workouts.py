@@ -57,6 +57,11 @@ class Command(BaseCommand):
         created = 0
         failures = 0
 
+        self.stdout.write(self.style.SUCCESS(f"Starting workout creation for {total} profiles..."))
+        self.stdout.write(self.style.NOTICE(f"Creating {per_profile} workout(s) per profile"))
+        if dry_run:
+            self.stdout.write(self.style.WARNING("DRY RUN MODE - No data will be saved"))
+
         # prepare a small valid 1x1 PNG image (non-empty) for proof_files
         png_b64 = (
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAA"
@@ -68,18 +73,28 @@ class Command(BaseCommand):
             """Return a fresh SimpleUploadedFile instance with the 1x1 PNG bytes."""
             return SimpleUploadedFile("proof.png", image_bytes, content_type="image/png")
 
+        profile_count = 0
         for profile in qs:
+            profile_count += 1
             user = profile.user
+
+            self.stdout.write(
+                self.style.NOTICE(f"\n[{profile_count}/{total}] Processing user: {user.username} (ID: {user.id})")
+            )
+
             # create access token for user
             token = RefreshToken.for_user(user)
             access = str(token.access_token)
             client.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
 
+            profile_created = 0
             for i in range(per_profile):
                 # random duration between 20 and 90 minutes
                 minutes = random.randint(20, 90)
                 duration_str = str(timedelta(minutes=minutes))  # e.g. '1:00:00'
-                workout_date = (timezone.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23)))
+                days_back = random.randint(0, 180)
+                hours_back = random.randint(0, 23)
+                workout_date = timezone.now() - timedelta(days=days_back, hours=hours_back)
 
                 # create a fresh file instance per request (the test client can consume file objects)
                 dummy_file = make_dummy_file()
@@ -91,9 +106,15 @@ class Command(BaseCommand):
                     'proof_files': [dummy_file],
                 }
 
+                self.stdout.write(
+                    f"  → Workout {i+1}/{per_profile}: {workout_date.strftime('%Y-%m-%d %H:%M')} "
+                    f"({days_back}d ago) | Duration: {duration_str}"
+                )
+
                 if dry_run:
-                    self.stdout.write(f"[dry-run] would POST {url} for user {user.username}: {data}")
+                    self.stdout.write(f"     [DRY-RUN] Would POST to {url}")
                     created += 1
+                    profile_created += 1
                     continue
 
                 # ensure multipart so files are uploaded properly
@@ -101,10 +122,22 @@ class Command(BaseCommand):
 
                 if response.status_code == 201:
                     created += 1
+                    profile_created += 1
+                    self.stdout.write(self.style.SUCCESS(f"     ✓ Created successfully"))
                 else:
                     failures += 1
                     self.stdout.write(self.style.ERROR(
-                        f"Failed for user={user.username}: status={response.status_code} resp={response.data}"
+                        f"     ✗ FAILED: status={response.status_code} | {response.data}"
                     ))
 
-        self.stdout.write(self.style.SUCCESS(f"Created: {created}. Failures: {failures}."))
+            self.stdout.write(
+                self.style.SUCCESS(f"  Profile summary: {profile_created}/{per_profile} workouts created")
+            )
+
+        self.stdout.write(self.style.SQL_TABLE("\n" + "="*70))
+        self.stdout.write(self.style.SUCCESS(f"FINAL SUMMARY:"))
+        self.stdout.write(self.style.SUCCESS(f"  Profiles processed: {profile_count}/{total}"))
+        self.stdout.write(self.style.SUCCESS(f"  Workouts created: {created}"))
+        if failures > 0:
+            self.stdout.write(self.style.ERROR(f"  Failures: {failures}"))
+        self.stdout.write(self.style.SQL_TABLE("="*70))
