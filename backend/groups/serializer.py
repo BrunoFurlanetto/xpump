@@ -53,6 +53,7 @@ class GroupSerializer(serializers.ModelSerializer):
         return [{
                 "id": member.member.id,
                 "username": member.member.username,
+                "full_name": member.member.get_full_name(),
                 "email": member.member.email,
                 "is_admin": member.is_admin,
                 "joined_at": member.joined_at,

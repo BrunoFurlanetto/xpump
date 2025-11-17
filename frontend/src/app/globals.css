@@ -53,6 +53,8 @@
   
 }
 
+
+
 .dark {
   /* Modo escuro - tema original */
   --sidebarlink: oklch(92.8% .006 264.531);
@@ -171,4 +173,33 @@ input:-webkit-autofill:focus {
   /* -webkit-box-shadow: 0 0 0 30px #121212 inset !important; */
   -webkit-text-fill-color: white !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+
+
+/* Scrollbar discreto e preto (global) */
+* {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(107, 107, 107, 0.6) transparent;
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color:rgba(107, 107, 107, 0.6) transparent;
+  border-radius: 999px;
+  border: 2px solid transparent; /* cria espaço sem mudar visual */
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,0.8);
 }
