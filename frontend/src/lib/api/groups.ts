@@ -15,6 +15,7 @@ export interface Group {
 
 export interface GroupMember {
   id: number;
+  full_name: string;
   username: string;
   email: string;
   is_admin: boolean;
