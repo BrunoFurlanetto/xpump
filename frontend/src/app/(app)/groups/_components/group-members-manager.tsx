@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { GroupMember } from "@/lib/api/groups";
+import { useGroupsContext } from "@/context/groupsContext";
 
 interface GroupMembersManagerProps {
   groupId: number;
@@ -32,6 +33,7 @@ export function GroupMembersManager({
   onMemberUpdate,
 }: GroupMembersManagerProps) {
   console.log(groupId);
+  const { updateMember, removeMember } = useGroupsContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "owner" | "admin" | "member">("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -56,7 +58,7 @@ export function GroupMembersManager({
   const handlePromoteToAdmin = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      // await updateMember(groupId, memberId, true);
+      await updateMember(groupId, memberId, { is_admin: true });
       toast.success("Membro promovido a administrador");
       onMemberUpdate();
     } catch {
@@ -69,7 +71,7 @@ export function GroupMembersManager({
   const handleDemoteAdmin = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      // await updateMember(groupId, memberId, false);
+      await updateMember(groupId, memberId, { is_admin: false });
       toast.success("Administrador rebaixado a membro");
       onMemberUpdate();
     } catch {
@@ -82,7 +84,7 @@ export function GroupMembersManager({
   const handleRemoveMember = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      // await removeMember(groupId, memberId);
+      await removeMember(groupId, memberId);
       toast.success("Membro removido do grupo");
       onMemberUpdate();
     } catch {
@@ -166,33 +168,80 @@ export function GroupMembersManager({
             const isLoading = actionLoading === member.id;
 
             return (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-border bg-card"
-              >
-                <div className="flex items-center gap-3">
+              <div key={member.id} className="p-3 rounded-lg border border-border bg-card">
+                <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="font-semibold text-sm">{member.username.charAt(0).toUpperCase()}</span>
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{member.username}</span>
-                      {member.id === currentUserId && (
-                        <Badge variant="outline" className="text-xs">
-                          Você
-                        </Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-medium truncate max-w-[160px] sm:max-w-[220px]">{member.username}</span>
+                          {member.id === currentUserId && (
+                            <Badge variant="outline" className="text-xs">
+                              Você
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate max-w-[220px] sm:max-w-sm">
+                          {member.email}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Entrou em {new Date(member.joined_at).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+
+                      {canManage && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8">
+                              {isLoading ? (
+                                <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                              ) : (
+                                <MoreVertical className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {member.is_admin
+                              ? isOwner && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleDemoteAdmin(member.id)}
+                                    className="text-orange-600"
+                                  >
+                                    <UserX className="h-4 w-4 mr-2" />
+                                    Remover Admin
+                                  </DropdownMenuItem>
+                                )
+                              : isOwner && (
+                                  <DropdownMenuItem
+                                    onClick={() => handlePromoteToAdmin(member.id)}
+                                    className="text-blue-600"
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Promover a Admin
+                                  </DropdownMenuItem>
+                                )}
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              onClick={() => handleRemoveMember(member.id)}
+                              className="text-destructive"
+                            >
+                              <UserMinus className="h-4 w-4 mr-2" />
+                              Remover do Grupo
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{member.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Entrou em {new Date(member.joined_at).toLocaleDateString("pt-BR")}
-                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {/* Badge do papel */}
+                <div className="mt-3 flex items-center gap-2">
                   <Badge
                     variant={memberRole === "owner" ? "default" : memberRole === "admin" ? "secondary" : "outline"}
                     className="flex items-center gap-1"
@@ -202,49 +251,6 @@ export function GroupMembersManager({
                     {memberRole === "member" && <Users className="h-3 w-3" />}
                     {memberRole === "owner" ? "Dono" : memberRole === "admin" ? "Admin" : "Membro"}
                   </Badge>
-
-                  {/* Menu de ações */}
-                  {canManage && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8">
-                          {isLoading ? (
-                            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                          ) : (
-                            <MoreVertical className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {member.is_admin
-                          ? isOwner && (
-                              <DropdownMenuItem
-                                onClick={() => handleDemoteAdmin(member.id)}
-                                className="text-orange-600"
-                              >
-                                <UserX className="h-4 w-4 mr-2" />
-                                Remover Admin
-                              </DropdownMenuItem>
-                            )
-                          : isOwner && (
-                              <DropdownMenuItem
-                                onClick={() => handlePromoteToAdmin(member.id)}
-                                className="text-blue-600"
-                              >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Promover a Admin
-                              </DropdownMenuItem>
-                            )}
-
-                        <DropdownMenuSeparator />
-
-                        <DropdownMenuItem onClick={() => handleRemoveMember(member.id)} className="text-destructive">
-                          <UserMinus className="h-4 w-4 mr-2" />
-                          Remover do Grupo
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
                 </div>
               </div>
             );
