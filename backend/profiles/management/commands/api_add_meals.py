@@ -1,3 +1,6 @@
+import base64
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -39,6 +42,16 @@ class Command(BaseCommand):
         per_profile = max(1, options.get("per_profile", 1))
         seed = options.get("seed")
         dry_run = options.get("dry_run", False)
+        # prepare a small valid 1x1 PNG image (non-empty) for proof_files
+        png_b64 = (
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAA"
+            "SUVORK5CYII="
+        )
+        image_bytes = base64.b64decode(png_b64)
+
+        def make_dummy_file():
+            """Return a fresh SimpleUploadedFile instance with the 1x1 PNG bytes."""
+            return SimpleUploadedFile("proof.png", image_bytes, content_type="image/png")
 
         if seed is not None:
             random.seed(seed)
@@ -136,10 +149,13 @@ class Command(BaseCommand):
                     meal_time = meal_time.replace(tzinfo=None)
                     meal_time = meal_time.replace(tzinfo=tz)
 
+                dummy_file = make_dummy_file()
+
                 data = {
                     'meal_type': meal_conf.id,
                     'meal_time': meal_time.isoformat(),  # Envia como ISO string com timezone
-                    'comments': f'Auto meal #{i+1}'
+                    'comments': f'Auto meal #{i+1}',
+                    'proof_files': [dummy_file],
                 }
 
                 self.stdout.write(
@@ -154,7 +170,7 @@ class Command(BaseCommand):
 
                     continue
 
-                response = client.post(url, data, format='json')
+                response = client.post(url, data, format='multipart')
 
                 if response.status_code == 201:
                     created += 1
