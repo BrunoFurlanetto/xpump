@@ -1,0 +1,210 @@
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.exceptions import PermissionDenied
+from django.db.models import Q
+from .models import Post, Comment, Report, PostLike
+from .serializers import (
+    PostSerializer, PostListSerializer, PostCreateSerializer, CommentSerializer,
+    ReportSerializer, ReportCreateSerializer
+)
+
+
+@extend_schema(tags=['Social Feed'])
+class PostViewSet(ModelViewSet):
+    """ViewSet for managing posts in the social feed."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return PostListSerializer
+        if self.action == 'create':
+            return PostCreateSerializer
+
+        return PostSerializer
+
+    def get_queryset(self):
+        """Filter posts based on visibility and user permissions."""
+        user_profile = self.request.user.profile
+        queryset = Post.objects.select_related(
+            'user__user', 'workout_checkin', 'meal'
+        ).prefetch_related(
+            'comments__user__user', 'likes__user__user', 'content_files'
+        )
+
+        # Filter by visibility
+        visibility_filter = self.request.query_params.get('visibility', None)
+
+        if visibility_filter:
+            queryset = queryset.filter(visibility=visibility_filter)
+        else:
+            # Default: show global posts and user's own posts
+            queryset = queryset.filter(
+                Q(visibility='global') | Q(user=user_profile)
+            )
+
+        # Filter by content type
+        content_type = self.request.query_params.get('content_type', None)
+
+        if content_type:
+            queryset = queryset.filter(content_type=content_type)
+
+        # Filter by user
+        user_id = self.request.query_params.get('user_id', None)
+
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+
+        return queryset.order_by('-created_at')
+
+
+    @action(detail=True, methods=['post'])
+    def add_comment(self, request, pk=None):
+        """Add a comment to a post."""
+        post = self.get_object()
+        serializer = CommentSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(user=request.user.profile, post=post)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def comments(self, request, pk=None):
+        """Get all comments for a post."""
+        post = self.get_object()
+        comments = post.comments.select_related('user__user').order_by('created_at')
+        serializer = CommentSerializer(comments, many=True)
+
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def toggle_like(self, request, pk=None):
+        """Like or unlike a post."""
+        post = self.get_object()
+        user_profile = request.user.profile
+
+        # Check if the like already exists
+        like = PostLike.objects.filter(post=post, user=user_profile).first()
+
+        if like:
+            # Unlike the post
+            like.delete()
+            liked = False
+        else:
+            # Like the post
+            PostLike.objects.create(post=post, user=user_profile)
+            liked = True
+
+        return Response({'liked': liked, 'post_id': post.id})
+
+
+@extend_schema(tags=['Social Feed'])
+class CommentListCreateView(generics.ListCreateAPIView):
+    """List all comments or create a new comment."""
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter comments based on user permissions."""
+        return Comment.objects.select_related('user__user', 'post').order_by('-created_at')
+
+    def perform_create(self, serializer):
+        """Set the user when creating a comment."""
+        serializer.save(user=self.request.user.profile)
+
+
+@extend_schema(tags=['Social Feed'])
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a comment."""
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter comments based on user permissions."""
+        return Comment.objects.select_related('user__user', 'post').order_by('-created_at')
+
+    def perform_destroy(self, instance):
+        """Only allow users to delete their own comments."""
+        if instance.user != self.request.user.profile:
+            raise PermissionDenied("You can only delete your own comments.")
+
+        super().perform_destroy(instance)
+
+    def perform_update(self, serializer):
+        """Only allow users to update their own comments."""
+        if serializer.instance.user != self.request.user.profile:
+            raise PermissionDenied("You can only update your own comments.")
+
+        serializer.save()
+
+
+@extend_schema(tags=['Social Feed'])
+class ReportListCreateView(generics.ListCreateAPIView):
+    """List all reports or create a new report."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return ReportCreateSerializer
+
+        return ReportSerializer
+
+    def get_queryset(self):
+        """Users can only see their own reports."""
+        return Report.objects.filter(
+            reported_by=self.request.user.profile
+        ).select_related('post__user__user', 'reported_by__user')
+
+    def perform_create(self, serializer):
+        """Create a report with the current user as reporter."""
+        serializer.save(reported_by=self.request.user.profile)
+
+
+@extend_schema(tags=['Social Feed'])
+class ReportDetailView(generics.RetrieveAPIView):
+    """Retrieve a report detail."""
+    serializer_class = ReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Users can only see their own reports."""
+        return Report.objects.filter(
+            reported_by=self.request.user.profile
+        ).select_related('post__user__user', 'reported_by__user')
+
+
+@extend_schema(tags=['Social Feed'])
+class UserPostsView(generics.ListAPIView):
+    """Get all posts from a specific user."""
+    serializer_class = PostListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Get posts from a specific user."""
+        user_id = self.kwargs.get('user_id')
+        return Post.objects.filter(
+            user_id=user_id
+        ).select_related('user__user').order_by('-created_at')
+
+
+# class UserFeedView(generics.ListAPIView):
+#     """Get personalized feed for a user."""
+#     serializer_class = PostListSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#
+#     def get_queryset(self):
+#         """Get personalized feed based on user's groups and followed users."""
+#         user_profile = self.request.user.profile
+#
+#         # For now, return global posts and user's own posts
+#         # TODO: Implement group-based filtering when groups are integrated
+#         queryset = Post.objects.filter(
+#             Q(visibility='global') | Q(user=user_profile)
+#         ).select_related('user__user').order_by('-created_at')
+#
+#         return queryset[:50]  # Limit to 50 most recent posts

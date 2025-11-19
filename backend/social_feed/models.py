@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
+from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 
 from nutrition.models import Meal
 from profiles.models import Profile
@@ -47,12 +46,13 @@ class Post(models.Model):
     CONTENT_TYPE_CHOICES = [
         ('workout', 'Workout'),
         ('meal', 'Meal'),
-        ('social', 'Social')
+        ('social', 'Social'),
+        ('achievement', 'Achievement'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content_type = models.CharField(max_length=20, choices=CONTENT_TYPE_CHOICES)
-    content = models.TextField(blank=True, null=True)
+    content_text = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='global')
     comments_count = models.PositiveIntegerField(default=0)
@@ -91,6 +91,26 @@ class Post(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.content_type} post - {self.created_at}"
+
+
+class ContentFilePost(models.Model):
+    """
+    Model to handle multiple media files for a single post.
+    """
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='content_files')
+    file = models.FileField(
+        upload_to='post_media/',
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'mp4', 'mov'])]
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['post', 'uploaded_at']),
+        ]
+
+    def __str__(self):
+        return f"File for post {self.post.id} uploaded at {self.uploaded_at}"
 
 
 class PostLike(models.Model):

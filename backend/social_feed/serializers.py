@@ -1,12 +1,21 @@
 from rest_framework import serializers
-from .models import Post, Comment, Report, PostLike, CommentLike
-from profiles.serializers import ProfilesSerialializer
+
+from authentication.serializer import UserSimpleSerializer
+from .models import Post, Comment, Report, PostLike, CommentLike, ContentFilePost
 from workouts.serializer import WorkoutCheckinSerializer
 from nutrition.serializer import MealSerializer
 
 
+class ContentFilePostSerializer(serializers.ModelSerializer):
+    """Serializer for post media files"""
+    class Meta:
+        model = ContentFilePost
+        fields = ['id', 'file', 'uploaded_at']
+        read_only_fields = ['id', 'uploaded_at']
+
+
 class PostLikeSerializer(serializers.ModelSerializer):
-    user = ProfilesSerialializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
 
     class Meta:
         model = PostLike
@@ -15,7 +24,7 @@ class PostLikeSerializer(serializers.ModelSerializer):
 
 
 class CommentLikeSerializer(serializers.ModelSerializer):
-    user = ProfilesSerialializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
 
     class Meta:
         model = CommentLike
@@ -24,7 +33,7 @@ class CommentLikeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = ProfilesSerialializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
     likes = CommentLikeSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     is_liked_by_user = serializers.SerializerMethodField()
@@ -58,17 +67,18 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    user = ProfilesSerialializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     likes = PostLikeSerializer(many=True, read_only=True)
     workout_checkin = WorkoutCheckinSerializer(read_only=True)
     meal = MealSerializer(read_only=True)
+    content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = [
-            'id', 'user', 'content_type', 'content', 'workout_checkin', 'meal',
+            'id', 'user', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
             'comments_count', 'likes_count', 'created_at', 'visibility',
             'allow_comments', 'comments', 'likes', 'is_liked_by_user'
         ]
@@ -85,15 +95,16 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostListSerializer(serializers.ModelSerializer):
     """Lighter serializer for list views without comments"""
-    user = ProfilesSerialializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
     workout_checkin = WorkoutCheckinSerializer(read_only=True)
     meal = MealSerializer(read_only=True)
+    content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = [
-            'id', 'user', 'content_type', 'content', 'workout_checkin', 'meal',
+            'id', 'user', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
             'comments_count', 'likes_count', 'created_at', 'visibility',
             'allow_comments', 'is_liked_by_user'
         ]
@@ -110,10 +121,17 @@ class PostListSerializer(serializers.ModelSerializer):
 
 class PostCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating posts"""
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False,
+        allow_empty=True
+    )
+
     class Meta:
         model = Post
         fields = [
-            'content_type', 'content', 'workout_checkin', 'meal',
+            'content_type', 'content_text', 'files', 'workout_checkin', 'meal',
             'visibility', 'allow_comments'
         ]
 
@@ -121,35 +139,43 @@ class PostCreateSerializer(serializers.ModelSerializer):
         content_type = data.get('content_type')
         workout_checkin = data.get('workout_checkin')
         meal = data.get('meal')
-        content = data.get('content')
+        content_text = data.get('content_text')
+        files = data.get('files', [])
 
         if content_type == 'workout' and not workout_checkin:
             raise serializers.ValidationError("workout_checkin is required for workout posts")
         if content_type == 'meal' and not meal:
             raise serializers.ValidationError("meal is required for meal posts")
-        if content_type == 'social' and not content:
-            raise serializers.ValidationError("content is required for social posts")
+        if content_type == 'social' and not content_text and not files:
+            raise serializers.ValidationError("content_text or files is required for social posts")
 
         # Ensure only one content type is set
-        if content_type == 'workout' and (meal or content):
+        if content_type == 'workout' and (meal or content_text or files):
             raise serializers.ValidationError("Only workout_checkin should be set for workout posts")
-        if content_type == 'meal' and (workout_checkin or content):
+        if content_type == 'meal' and (workout_checkin or content_text or files):
             raise serializers.ValidationError("Only meal should be set for meal posts")
         if content_type == 'social' and (workout_checkin or meal):
-            raise serializers.ValidationError("Only content should be set for social posts")
+            raise serializers.ValidationError("workout_checkin and meal should not be set for social posts")
 
         return data
 
     def create(self, validated_data):
+        files = validated_data.pop('files', [])
         validated_data['user'] = self.context['request'].user
 
-        return super().create(validated_data)
+        post = super().create(validated_data)
+
+        # Create ContentFilePost instances for each uploaded file
+        for file in files:
+            ContentFilePost.objects.create(post=post, file=file)
+
+        return post
 
 
 class ReportSerializer(serializers.ModelSerializer):
-    reported_by = ProfilesSerialializer(read_only=True)
-    post = PostListSerializer(read_only=True)
-    comment = CommentSerializer(read_only=True)
+    # reported_by = ProfilesSerialializer(read_only=True)
+    # post = PostListSerializer(read_only=True)
+    # comment = CommentSerializer(read_only=True)
 
     class Meta:
         model = Report
