@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
-from .models import Post, Comment, Report, PostLike
+from .models import Post, Comment, Report, PostLike, CommentLike
 from .serializers import (
     PostSerializer, PostListSerializer, PostCreateSerializer, CommentSerializer,
     ReportSerializer, ReportCreateSerializer
@@ -27,11 +27,11 @@ class PostViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Filter posts based on visibility and user permissions."""
-        user_profile = self.request.user.profile
+        # user_profile = self.request.user.profile
         queryset = Post.objects.select_related(
-            'user__user', 'workout_checkin', 'meal'
+            'user', 'workout_checkin', 'meal'
         ).prefetch_related(
-            'comments__user__user', 'likes__user__user', 'content_files'
+            'comments__user', 'likes__user', 'content_files'
         )
 
         # Filter by visibility
@@ -42,7 +42,7 @@ class PostViewSet(ModelViewSet):
         else:
             # Default: show global posts and user's own posts
             queryset = queryset.filter(
-                Q(visibility='global') | Q(user=user_profile)
+                Q(visibility='global') | Q(user=self.request.user)
             )
 
         # Filter by content type
@@ -55,7 +55,7 @@ class PostViewSet(ModelViewSet):
         user_id = self.request.query_params.get('user_id', None)
 
         if user_id:
-            queryset = queryset.filter(user_id=user_id)
+            queryset = queryset.filter(user_id=self.request.user.id)
 
         return queryset.order_by('-created_at')
 
@@ -67,7 +67,7 @@ class PostViewSet(ModelViewSet):
         serializer = CommentSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save(user=request.user.profile, post=post)
+            serializer.save(user=request.user, post=post)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -77,7 +77,7 @@ class PostViewSet(ModelViewSet):
     def comments(self, request, pk=None):
         """Get all comments for a post."""
         post = self.get_object()
-        comments = post.comments.select_related('user__user').order_by('created_at')
+        comments = post.comments.select_related('user').order_by('created_at')
         serializer = CommentSerializer(comments, many=True)
 
         return Response(serializer.data)
@@ -86,10 +86,10 @@ class PostViewSet(ModelViewSet):
     def toggle_like(self, request, pk=None):
         """Like or unlike a post."""
         post = self.get_object()
-        user_profile = request.user.profile
+        # user_profile = request.user.profile
 
         # Check if the like already exists
-        like = PostLike.objects.filter(post=post, user=user_profile).first()
+        like = PostLike.objects.filter(post=post, user=self.request.user).first()
 
         if like:
             # Unlike the post
@@ -97,7 +97,7 @@ class PostViewSet(ModelViewSet):
             liked = False
         else:
             # Like the post
-            PostLike.objects.create(post=post, user=user_profile)
+            PostLike.objects.create(post=post, user=self.request.user)
             liked = True
 
         return Response({'liked': liked, 'post_id': post.id})
@@ -111,7 +111,9 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """Filter comments based on user permissions."""
-        return Comment.objects.select_related('user__user', 'post').order_by('-created_at')
+        return Comment.objects.select_related(
+            'user__user', 'post'
+        ).prefetch_related('likes__user__user').order_by('-created_at')
 
     def perform_create(self, serializer):
         """Set the user when creating a comment."""
@@ -126,7 +128,9 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         """Filter comments based on user permissions."""
-        return Comment.objects.select_related('user__user', 'post').order_by('-created_at')
+        return Comment.objects.select_related(
+            'user__user', 'post'
+        ).prefetch_related('likes__user__user').order_by('-created_at')
 
     def perform_destroy(self, instance):
         """Only allow users to delete their own comments."""
@@ -141,6 +145,42 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("You can only update your own comments.")
 
         serializer.save()
+
+
+@extend_schema(tags=['Social Feed'])
+class CommentToggleLikeView(generics.GenericAPIView):
+    """Toggle like on a comment."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk=None):
+        """Like or unlike a comment."""
+        try:
+            comment = Comment.objects.get(pk=pk)
+        except Comment.DoesNotExist:
+            return Response(
+                {'error': 'Comment not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_profile = request.user.profile
+
+        # Check if the like already exists
+        like = CommentLike.objects.filter(comment=comment, user=user_profile).first()
+
+        if like:
+            # Unlike the comment
+            like.delete()
+            liked = False
+        else:
+            # Like the comment
+            CommentLike.objects.create(comment=comment, user=user_profile)
+            liked = True
+
+        return Response({
+            'liked': liked,
+            'comment_id': comment.id,
+            'likes_count': comment.likes_count
+        })
 
 
 @extend_schema(tags=['Social Feed'])

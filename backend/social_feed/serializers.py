@@ -35,16 +35,12 @@ class CommentLikeSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSimpleSerializer(read_only=True)
     likes = CommentLikeSerializer(many=True, read_only=True)
-    likes_count = serializers.SerializerMethodField()
     is_liked_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = ['id', 'user', 'text', 'created_at', 'likes', 'likes_count', 'is_liked_by_user']
-        read_only_fields = ['id', 'created_at']
-
-    def get_likes_count(self, obj):
-        return obj.likes.count()
+        read_only_fields = ['id', 'created_at', 'likes_count']
 
     def get_is_liked_by_user(self, obj):
         request = self.context.get('request')
