@@ -10,12 +10,14 @@ from .serializers import (
     PostSerializer, PostListSerializer, PostCreateSerializer, CommentSerializer,
     ReportSerializer, ReportCreateSerializer
 )
+from .pagination import PostsPagination, CommentsPagination
 
 
 @extend_schema(tags=['Social Feed'])
 class PostViewSet(ModelViewSet):
     """ViewSet for managing posts in the social feed."""
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = PostsPagination
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -59,7 +61,6 @@ class PostViewSet(ModelViewSet):
 
         return queryset.order_by('-created_at')
 
-
     @action(detail=True, methods=['post'])
     def add_comment(self, request, pk=None):
         """Add a comment to a post."""
@@ -78,7 +79,17 @@ class PostViewSet(ModelViewSet):
         """Get all comments for a post."""
         post = self.get_object()
         comments = post.comments.select_related('user').order_by('created_at')
-        serializer = CommentSerializer(comments, many=True)
+
+        # Aplicar paginação
+        paginator = CommentsPagination()
+        page = paginator.paginate_queryset(comments, request)
+
+        if page is not None:
+            serializer = CommentSerializer(page, many=True, context={'request': request})
+
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = CommentSerializer(comments, many=True, context={'request': request})
 
         return Response(serializer.data)
 
@@ -108,6 +119,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
     """List all comments or create a new comment."""
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = CommentsPagination
 
     def get_queryset(self):
         """Filter comments based on user permissions."""
@@ -223,6 +235,7 @@ class UserPostsView(generics.ListAPIView):
     """Get all posts from a specific user."""
     serializer_class = PostListSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = PostsPagination
 
     def get_queryset(self):
         """Get posts from a specific user."""
