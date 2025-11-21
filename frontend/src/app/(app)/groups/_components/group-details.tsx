@@ -157,7 +157,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
           <CardContent className="p-4 sm:px-5 sm:py-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground whitespace-nowrap">Refeições Saudáveis</p>
+                <p className="text-sm font-medium text-muted-foreground">Refeições Saudáveis</p>
                 <p className="text-2xl font-bold text-foreground">{group.stats?.total_meals || 0}</p>
               </div>
               <Utensils className="h-8 w-8 text-primary" />
@@ -414,6 +414,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
           <TabsContent value="members">
             <GroupMembersManager
               groupId={group.id}
+              groupName={group.name}
               members={group.members}
               currentUserId={Number(user?.id)}
               currentUserRole={currentUserRole}
