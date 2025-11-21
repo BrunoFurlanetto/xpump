@@ -1,12 +1,10 @@
 "use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Plus, 
-} from 'lucide-react';
-import { DailyMeals, MealType } from '@/hooks/useMeals';
-import { MealCard } from './meal-card';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { DailyMeals, MealType } from "@/hooks/useMeals";
+import { MealCard } from "./meal-card";
 
 interface DailyMealCardProps {
   dayData: DailyMeals;
@@ -16,24 +14,18 @@ interface DailyMealCardProps {
   onDeleteMeal: (id: number) => Promise<void>;
 }
 
-export function DailyMealCard({ 
-  dayData, 
-  mealTypes, 
-  onAddMeal, 
-  onUpdateMeal, 
-  onDeleteMeal
-}: DailyMealCardProps) {
-  
+export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onDeleteMeal }: DailyMealCardProps) {
   const getMealTypeInfo = (mealTypeId: string) => {
-    return mealTypes.find(type => type.id === mealTypeId);
+    return mealTypes.find((type) => type.id === mealTypeId);
   };
 
   const renderMealSlot = (mealTypeId: string) => {
     const mealTypeInfo = getMealTypeInfo(mealTypeId);
-    const meal = dayData.meals[mealTypeId];
+    const meal = Object.values(dayData.meals).find((m) => m && m.meal_type.toString() === mealTypeInfo?.id);
 
     if (!mealTypeInfo) return null;
 
+    console.log(dayData, getMealTypeInfo(mealTypeId), mealTypeId);
     if (meal) {
       return (
         <MealCard
@@ -48,7 +40,7 @@ export function DailyMealCard({
 
     // Slot vazio para adicionar refeição
     return (
-      <div 
+      <div
         key={mealTypeId}
         className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
       >
@@ -62,7 +54,7 @@ export function DailyMealCard({
               <p className="text-xs text-muted-foreground">{mealTypeInfo.timeRange}</p>
             </div>
           </div>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -80,10 +72,7 @@ export function DailyMealCard({
     <Card className="bg-card border-border">
       <CardContent className="p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {mealTypes
-            .sort((a, b) => a.order - b.order)
-            .map(mealType => renderMealSlot(mealType.id))
-          }
+          {mealTypes.sort((a, b) => a.order - b.order).map((mealType) => renderMealSlot(mealType.id))}
         </div>
       </CardContent>
     </Card>
