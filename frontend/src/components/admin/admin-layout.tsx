@@ -3,19 +3,14 @@
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Dumbbell,
-  Utensils,
-  Users,
-  Settings,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, Dumbbell, Utensils, Users, Settings, Menu, X, LogOut, ArrowLeftFromLine } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { GroupSelector } from "@/components/admin/group-selector";
 import { Group, GroupsAPI } from "@/lib/api/groups";
+import Image from "next/image";
+import { useTheme } from "@/context/ThemeContext";
+import { logout } from "@/app/(auth)/login/actions";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -50,12 +45,15 @@ const menuItems = [
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
+  const { actualTheme } = useTheme();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-
+  async function handleLogout() {
+    await logout();
+  }
   useEffect(() => {
     loadGroups();
   }, []);
@@ -64,12 +62,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     try {
       const data = await GroupsAPI.listMyGroups();
       setGroups(data);
-      
+
       // Seleciona o primeiro grupo automaticamente se houver
       if (data.length > 0 && !selectedGroupId) {
         const savedGroupId = localStorage.getItem("adminSelectedGroupId");
         if (savedGroupId) {
-          const groupExists = data.find(g => g.id === parseInt(savedGroupId));
+          const groupExists = data.find((g) => g.id === parseInt(savedGroupId));
           setSelectedGroupId(groupExists ? parseInt(savedGroupId) : data[0].id);
         } else {
           setSelectedGroupId(data[0].id);
@@ -91,11 +89,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-background">
       {/* Mobile Menu Button */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
+        <Button variant="outline" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
@@ -103,19 +97,29 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card transition-transform duration-300",
+          "fixed left-0 top-0 z-40 h-screen w-64 border-r border-muted bg-card transition-transform duration-300",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="border-b p-6">
-            <h1 className="text-xl font-bold">Painel Admin</h1>
-            <p className="text-sm text-muted-foreground">XPump</p>
+          <div className="p-6 pb-1">
+            <div>
+              <Link href="/">
+                <Image
+                  src={actualTheme === "light" ? "/logo/dark_simple.png" : "/logo/simple.png"}
+                  alt="XPump Logo"
+                  width={120}
+                  height={40}
+                  className="h-8"
+                />
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground">Painel Administrativo</p>
           </div>
 
           {/* Group Selector */}
-          <div className="border-b p-4">
+          <div className="p-4">
             {loading ? (
               <div className="h-10 animate-pulse rounded-md bg-muted" />
             ) : (
@@ -133,29 +137,43 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link
+                <Button
                   key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
+                  variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    "w-full justify-start text-sidebarlink h-10",
+                    isActive && "bg-muted font-medium text-foreground"
                   )}
+                  asChild
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.title}
-                </Link>
+                  <Link href={item.href}>
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.title}
+                  </Link>
+                </Button>
               );
             })}
           </nav>
 
           {/* Footer */}
-          <div className="border-t p-4">
-            <p className="text-xs text-muted-foreground text-center">
-              © 2025 XPump Admin
-            </p>
+          <div className="border-t border-muted p-4">
+            {/* Logout */}
+
+            <Link
+              href="/"
+              className={buttonVariants({ variant: "outline", className: "w-full border-none justify-start mb-1" })}
+            >
+              <ArrowLeftFromLine className="mr-2 h-4 w-4" />
+              Voltar ao Site
+            </Link>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-red-600 border-none hover:bg-red-900 hover:text-red-300"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair da conta
+            </Button>
           </div>
         </div>
       </aside>
@@ -176,9 +194,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           ) : (
             <div className="flex h-[60vh] items-center justify-center">
               <div className="text-center">
-                <p className="text-lg text-muted-foreground">
-                  Selecione uma empresa para começar
-                </p>
+                <p className="text-lg text-muted-foreground">Selecione uma empresa para começar</p>
               </div>
             </div>
           )}

@@ -8,10 +8,8 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground">
-          Configure e personalize o painel administrativo
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
+        <p className="text-muted-foreground">Configure e personalize o painel administrativo</p>
       </div>
 
       {/* Settings Grid */}
@@ -22,14 +20,12 @@ export default function SettingsPage() {
               <Bell className="h-5 w-5" />
               Notificações
             </CardTitle>
-            <CardDescription>
-              Configure alertas e notificações do sistema
-            </CardDescription>
+            <CardDescription>Configure alertas e notificações do sistema</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Funcionalidade em desenvolvimento. Em breve você poderá configurar
-              notificações para novos check-ins, atividades pendentes e muito mais.
+              Funcionalidade em desenvolvimento. Em breve você poderá configurar notificações para novos check-ins,
+              atividades pendentes e muito mais.
             </p>
           </CardContent>
         </Card>
@@ -40,14 +36,11 @@ export default function SettingsPage() {
               <FileText className="h-5 w-5" />
               Relatórios
             </CardTitle>
-            <CardDescription>
-              Exporte relatórios e análises
-            </CardDescription>
+            <CardDescription>Exporte relatórios e análises</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Funcionalidade em desenvolvimento. Em breve você poderá exportar
-              relatórios detalhados em PDF e Excel.
+              Funcionalidade em desenvolvimento. Em breve você poderá exportar relatórios detalhados em PDF e Excel.
             </p>
           </CardContent>
         </Card>
@@ -58,14 +51,12 @@ export default function SettingsPage() {
               <Shield className="h-5 w-5" />
               Permissões
             </CardTitle>
-            <CardDescription>
-              Gerencie permissões de usuários
-            </CardDescription>
+            <CardDescription>Gerencie permissões de usuários</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Funcionalidade em desenvolvimento. Em breve você poderá gerenciar
-              permissões de administradores e moderadores.
+              Funcionalidade em desenvolvimento. Em breve você poderá gerenciar permissões de administradores e
+              moderadores.
             </p>
           </CardContent>
         </Card>
@@ -76,26 +67,21 @@ export default function SettingsPage() {
               <SettingsIcon className="h-5 w-5" />
               Geral
             </CardTitle>
-            <CardDescription>
-              Configurações gerais do painel
-            </CardDescription>
+            <CardDescription>Configurações gerais do painel</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Funcionalidade em desenvolvimento. Em breve você poderá personalizar
-              temas, idioma e outras preferências.
+              Funcionalidade em desenvolvimento. Em breve você poderá personalizar temas, idioma e outras preferências.
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Info Card */}
-      <Card className="border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+      <Card className="border-blue-500 bg-blue-50 dark:bg-blue-600">
         <CardHeader>
-          <CardTitle className="text-blue-900 dark:text-blue-100">
-            💡 Dica
-          </CardTitle>
-          <CardDescription className="text-blue-800 dark:text-blue-200">
+          <CardTitle className="text-blue-900 ">💡 Dica</CardTitle>
+          <CardDescription className="text-blue-800 ">
             Esta página está em construção. Novas funcionalidades serão adicionadas em breve!
           </CardDescription>
         </CardHeader>

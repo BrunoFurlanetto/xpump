@@ -3,19 +3,8 @@
 import { Check, ChevronsUpDown, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState } from "react";
 import { Group } from "@/lib/api/groups";
 
@@ -26,12 +15,7 @@ interface GroupSelectorProps {
   className?: string;
 }
 
-export function GroupSelector({
-  groups,
-  selectedGroupId,
-  onGroupChange,
-  className,
-}: GroupSelectorProps) {
+export function GroupSelector({ groups, selectedGroupId, onGroupChange, className }: GroupSelectorProps) {
   const [open, setOpen] = useState(false);
 
   const selectedGroup = groups.find((group) => group.id === selectedGroupId);
@@ -56,7 +40,7 @@ export function GroupSelector({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
+      <PopoverContent className="w-[300px] p-0 ml-2">
         <Command>
           <CommandInput placeholder="Buscar empresa..." />
           <CommandList>
@@ -71,18 +55,11 @@ export function GroupSelector({
                     setOpen(false);
                   }}
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedGroupId === group.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
+                  <Check className={cn("mr-2 h-4 w-4", selectedGroupId === group.id ? "opacity-100" : "opacity-0")} />
                   <div className="flex flex-col">
                     <span>{group.name}</span>
                     {group.description && (
-                      <span className="text-xs text-muted-foreground line-clamp-1">
-                        {group.description}
-                      </span>
+                      <span className="text-xs text-muted-foreground line-clamp-1">{group.description}</span>
                     )}
                   </div>
                 </CommandItem>
