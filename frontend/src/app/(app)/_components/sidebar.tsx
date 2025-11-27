@@ -7,7 +7,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Home, Dumbbell, Users, User, Settings, LogOut, MessageSquare, Utensils, Bell } from "lucide-react";
+import {
+  Home,
+  Dumbbell,
+  Users,
+  User,
+  Settings,
+  LogOut,
+  MessageSquare,
+  Utensils,
+  Bell,
+  LayoutDashboard,
+} from "lucide-react";
 import { logout } from "@/app/(auth)/login/actions";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -66,7 +77,6 @@ const navigationItems: NavItem[] = [
 ];
 
 const bottomItems: NavItem[] = [
-  
   {
     title: "Perfil",
     href: "/profile",
@@ -77,12 +87,18 @@ const bottomItems: NavItem[] = [
     href: "/notifications",
     icon: Bell,
   },
-  
+
   {
     title: "Configurações",
     href: "/settings",
     icon: Settings,
   },
+
+  // {
+  //   title: "Painel Administrativo",
+  //   href: "/panel",
+  //   icon: LayoutDashboard,
+  // },
 ];
 
 export function Sidebar({ className }: SidebarProps) {
@@ -151,7 +167,7 @@ export function Sidebar({ className }: SidebarProps) {
               {bottomItems.map((item) => {
                 const isActive = pathname === item.href;
                 const showNotificationBadge = item.href === "/notifications" && unreadCount > 0;
-                
+
                 return (
                   <Button
                     key={item.href}
@@ -184,14 +200,14 @@ export function Sidebar({ className }: SidebarProps) {
               </div>
 
               {/* Logout */}
-                 <Button
-            variant="outline"
-            className="w-full justify-start text-red-600 border-none hover:bg-red-900 hover:text-red-300"
-            onClick={handleLogout}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair da conta
-          </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-red-600 border-none hover:bg-red-900 hover:text-red-300"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair da conta
+              </Button>
             </div>
           </div>
         </div>
