@@ -29,7 +29,7 @@ import { InviteUserModal } from "./invite-user-modal";
 import { Group } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useGroupsContext } from "@/context/groupsContext";
+import { useLeaveGroup, useDeleteGroup } from "@/hooks/useGroupsQuery";
 
 interface GroupCardProps {
   group: Group;
@@ -38,7 +38,8 @@ interface GroupCardProps {
 export function GroupCard({ group }: GroupCardProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const { leaveGroup, deleteGroup } = useGroupsContext();
+  const leaveGroupMutation = useLeaveGroup();
+  const deleteGroupMutation = useDeleteGroup();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [openInviteModal, setOpenInviteModal] = useState(false);
@@ -55,8 +56,7 @@ export function GroupCard({ group }: GroupCardProps) {
   const handleLeaveGroup = async () => {
     setIsLeaving(true);
     try {
-      await leaveGroup(group.id);
-      toast.success("Você saiu do grupo");
+      await leaveGroupMutation.mutateAsync(group.id);
 
       // Show global loading overlay during refresh
       startRefresh();
@@ -64,7 +64,7 @@ export function GroupCard({ group }: GroupCardProps) {
         router.refresh();
       });
     } catch {
-      toast.error("Erro ao sair do grupo");
+      // Erro já tratado no hook
     } finally {
       setIsLeaving(false);
       setShowLeaveDialog(false);
@@ -74,8 +74,7 @@ export function GroupCard({ group }: GroupCardProps) {
   const handleDeleteGroup = async () => {
     setIsDeleting(true);
     try {
-      await deleteGroup(group.id);
-      toast.success("Grupo deletado com sucesso");
+      await deleteGroupMutation.mutateAsync(group.id);
 
       // Show global loading overlay during refresh
       startRefresh();
@@ -83,7 +82,7 @@ export function GroupCard({ group }: GroupCardProps) {
         router.refresh();
       });
     } catch {
-      toast.error("Erro ao deletar grupo");
+      // Erro já tratado no hook
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);

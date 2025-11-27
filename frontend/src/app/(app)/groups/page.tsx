@@ -6,13 +6,13 @@ import GroupTips from "./_components/group-tips";
 import GroupList from "./_components/group-list";
 import { GroupListSkeleton } from "./_components/group-list-skeleton";
 import { GroupsLoadingProvider } from "./_components/groups-loading-context";
-import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useGroupsQuery } from "@/hooks/useGroupsQuery";
 
-function GroupsPageContent() {
-  const { groups, isLoading } = useGroupsContext();
+export default function GroupsPage() {
+  const { data: groups = [], isLoading } = useGroupsQuery();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredGroups = useMemo(() => {
@@ -69,13 +69,5 @@ function GroupsPageContent() {
         </div>
       </div>
     </GroupsLoadingProvider>
-  );
-}
-
-export default function GroupsPage() {
-  return (
-    <GroupsProvider>
-      <GroupsPageContent />
-    </GroupsProvider>
   );
 }

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { GroupMember } from "@/lib/api/groups";
-import { useGroupsContext } from "@/context/groupsContext";
+import { useUpdateMember, useRemoveMember } from "@/hooks/useGroupsQuery";
 
 interface GroupMembersManagerProps {
   groupId: number;
@@ -50,7 +50,8 @@ export function GroupMembersManager({
   const [roleFilter, setRoleFilter] = useState<"all" | "owner" | "admin" | "member">("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const { updateMember, removeMember, isSubmitting } = useGroupsContext();
+  const updateMember = useUpdateMember();
+  const removeMember = useRemoveMember();
 
   //   const canManageMembers = currentUserRole === 'owner' || currentUserRole === 'admin';
   const isOwner = currentUserRole === "owner";
@@ -72,11 +73,10 @@ export function GroupMembersManager({
   const handlePromoteToAdmin = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      await updateMember(groupId, memberId, { is_admin: true });
-      toast.success("Membro promovido a administrador");
+      await updateMember.mutateAsync({ groupId, memberId, data: { is_admin: true } });
       onMemberUpdate();
     } catch (error) {
-      toast.error("Erro ao promover membro");
+      // Erro já tratado no hook
     } finally {
       setActionLoading(null);
     }
@@ -85,11 +85,10 @@ export function GroupMembersManager({
   const handleDemoteAdmin = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      await updateMember(groupId, memberId, { is_admin: false });
-      toast.success("Administrador rebaixado a membro");
+      await updateMember.mutateAsync({ groupId, memberId, data: { is_admin: false } });
       onMemberUpdate();
     } catch (error) {
-      toast.error("Erro ao rebaixar administrador");
+      // Erro já tratado no hook
     } finally {
       setActionLoading(null);
     }
@@ -98,11 +97,10 @@ export function GroupMembersManager({
   const handleRemoveMember = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      await removeMember(groupId, memberId);
-      toast.success("Membro removido do grupo");
+      await removeMember.mutateAsync({ groupId, memberId });
       onMemberUpdate();
     } catch (error) {
-      toast.error("Erro ao remover membro");
+      // Erro já tratado no hook
     } finally {
       setActionLoading(null);
     }
