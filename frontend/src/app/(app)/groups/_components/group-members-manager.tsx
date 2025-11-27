@@ -26,7 +26,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
 import { GroupMember } from "@/lib/api/groups";
 import { useUpdateMember, useRemoveMember } from "@/hooks/useGroupsQuery";
 
@@ -47,6 +46,7 @@ export function GroupMembersManager({
   currentUserRole,
   onMemberUpdate,
 }: GroupMembersManagerProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "owner" | "admin" | "member">("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
