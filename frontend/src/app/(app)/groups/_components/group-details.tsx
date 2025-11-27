@@ -27,14 +27,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface GroupDetailsProps {
   group: Group;
+  period?: "week" | "month" | "all";
+  onPeriodChange?: (period: "week" | "month" | "all") => void;
 }
 
-export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
+export function GroupDetails({ group: initialGroup, period: externalPeriod, onPeriodChange }: GroupDetailsProps) {
   const [activeTab, setActiveTab] = useState("ranking");
   const { user } = useAuth();
   const [group, setGroup] = useState(initialGroup);
-  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
+  const [period, setPeriod] = useState<"week" | "month" | "all">(externalPeriod || "week");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sincronizar período externo se fornecido
+  useEffect(() => {
+    if (externalPeriod && externalPeriod !== period) {
+      setPeriod(externalPeriod);
+    }
+  }, [externalPeriod]);
+
+  // Atualizar grupo quando período externo mudar
+  useEffect(() => {
+    if (externalPeriod) {
+      setGroup(initialGroup);
+    }
+  }, [initialGroup, externalPeriod]);
 
   // Fetch group data for specific period
   const fetchGroupData = useCallback(
@@ -45,6 +61,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
         const updatedGroup = await GroupsAPI.getGroup(initialGroup.id, selectedPeriod);
         console.log("✅ Group data updated:", updatedGroup);
         setGroup(updatedGroup);
+        onPeriodChange?.(selectedPeriod);
       } catch (error) {
         console.error("Error fetching group:", error);
       } finally {

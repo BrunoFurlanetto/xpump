@@ -184,7 +184,7 @@ export function GroupMembersManager({
             {filteredMembers.map((member) => {
               const memberRole = getMemberRole(member);
               const canManage = canManageMember(member);
-              const isLoading = actionLoading === member.id || isSubmitting;
+              const isLoading = actionLoading === member.id;
 
               return (
                 <div key={member.id} className="p-3 rounded-lg border border-border bg-card">
