@@ -7,9 +7,23 @@ import GroupList from "./_components/group-list";
 import { GroupListSkeleton } from "./_components/group-list-skeleton";
 import { GroupsLoadingProvider } from "./_components/groups-loading-context";
 import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { useState, useMemo } from "react";
 
 function GroupsPageContent() {
   const { groups, isLoading } = useGroupsContext();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredGroups = useMemo(() => {
+    if (!searchTerm.trim()) return groups;
+
+    const searchLower = searchTerm.toLowerCase();
+    return groups.filter(
+      (group) =>
+        group.name.toLowerCase().includes(searchLower) || group.description?.toLowerCase().includes(searchLower)
+    );
+  }, [groups, searchTerm]);
 
   return (
     <GroupsLoadingProvider>
@@ -26,9 +40,31 @@ function GroupsPageContent() {
         </div>
         <PendingInvites groups={groups} />
 
+        {/* Barra de Pesquisa */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar grupos por nome ou descrição..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
         {/* Grupos */}
         <div className="space-y-6">
-          {isLoading ? <GroupListSkeleton /> : <GroupList groups={groups} />}
+          {isLoading ? (
+            <GroupListSkeleton />
+          ) : (
+            <>
+              <GroupList groups={filteredGroups} />
+              {searchTerm && filteredGroups.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhum grupo encontrado com "{searchTerm}"</p>
+                </div>
+              )}
+            </>
+          )}
           <GroupTips />
         </div>
       </div>
