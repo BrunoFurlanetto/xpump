@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,9 +26,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
 import { GroupMember } from "@/lib/api/groups";
-import { useGroupsContext } from "@/context/groupsContext";
+import { useUpdateMember, useRemoveMember } from "@/hooks/useGroupsQuery";
 
 interface GroupMembersManagerProps {
   groupId: number;
@@ -46,11 +46,13 @@ export function GroupMembersManager({
   currentUserRole,
   onMemberUpdate,
 }: GroupMembersManagerProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "owner" | "admin" | "member">("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const { updateMember, removeMember, isSubmitting } = useGroupsContext();
+  const updateMember = useUpdateMember();
+  const removeMember = useRemoveMember();
 
   //   const canManageMembers = currentUserRole === 'owner' || currentUserRole === 'admin';
   const isOwner = currentUserRole === "owner";
@@ -72,11 +74,10 @@ export function GroupMembersManager({
   const handlePromoteToAdmin = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      await updateMember(groupId, memberId, { is_admin: true });
-      toast.success("Membro promovido a administrador");
+      await updateMember.mutateAsync({ groupId, memberId, data: { is_admin: true } });
       onMemberUpdate();
     } catch (error) {
-      toast.error("Erro ao promover membro");
+      // Erro já tratado no hook
     } finally {
       setActionLoading(null);
     }
@@ -85,11 +86,10 @@ export function GroupMembersManager({
   const handleDemoteAdmin = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      await updateMember(groupId, memberId, { is_admin: false });
-      toast.success("Administrador rebaixado a membro");
+      await updateMember.mutateAsync({ groupId, memberId, data: { is_admin: false } });
       onMemberUpdate();
     } catch (error) {
-      toast.error("Erro ao rebaixar administrador");
+      // Erro já tratado no hook
     } finally {
       setActionLoading(null);
     }
@@ -98,11 +98,10 @@ export function GroupMembersManager({
   const handleRemoveMember = async (memberId: number) => {
     setActionLoading(memberId);
     try {
-      await removeMember(groupId, memberId);
-      toast.success("Membro removido do grupo");
+      await removeMember.mutateAsync({ groupId, memberId });
       onMemberUpdate();
     } catch (error) {
-      toast.error("Erro ao remover membro");
+      // Erro já tratado no hook
     } finally {
       setActionLoading(null);
     }
@@ -186,10 +185,14 @@ export function GroupMembersManager({
             {filteredMembers.map((member) => {
               const memberRole = getMemberRole(member);
               const canManage = canManageMember(member);
-              const isLoading = actionLoading === member.id || isSubmitting;
+              const isLoading = actionLoading === member.id;
 
               return (
-                <div key={member.id} className="p-3 rounded-lg border border-border bg-card">
+                <div
+                  key={member.id}
+                  className="p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/profile/${member.profile_id}`)}
+                >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="font-semibold text-sm">{member.username.charAt(0).toUpperCase()}</span>
@@ -219,7 +222,13 @@ export function GroupMembersManager({
                         {canManage && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={isLoading}
+                                className="h-8 w-8"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 {isLoading ? (
                                   <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
                                 ) : (

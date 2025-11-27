@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -27,14 +28,31 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface GroupDetailsProps {
   group: Group;
+  period?: "week" | "month" | "all";
+  onPeriodChange?: (period: "week" | "month" | "all") => void;
 }
 
-export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
+export function GroupDetails({ group: initialGroup, period: externalPeriod, onPeriodChange }: GroupDetailsProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("ranking");
   const { user } = useAuth();
   const [group, setGroup] = useState(initialGroup);
-  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
+  const [period, setPeriod] = useState<"week" | "month" | "all">(externalPeriod || "week");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sincronizar período externo se fornecido
+  useEffect(() => {
+    if (externalPeriod && externalPeriod !== period) {
+      setPeriod(externalPeriod);
+    }
+  }, [externalPeriod]);
+
+  // Atualizar grupo quando período externo mudar
+  useEffect(() => {
+    if (externalPeriod) {
+      setGroup(initialGroup);
+    }
+  }, [initialGroup, externalPeriod]);
 
   // Fetch group data for specific period
   const fetchGroupData = useCallback(
@@ -45,6 +63,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
         const updatedGroup = await GroupsAPI.getGroup(initialGroup.id, selectedPeriod);
         console.log("✅ Group data updated:", updatedGroup);
         setGroup(updatedGroup);
+        onPeriodChange?.(selectedPeriod);
       } catch (error) {
         console.error("Error fetching group:", error);
       } finally {
@@ -273,9 +292,10 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                       rankedMembers.map((member, index) => (
                         <div
                           key={member.id}
-                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${
                             index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
                           }`}
+                          onClick={() => router.push(`/profile/${member.profile_id}`)}
                         >
                           <div className="flex items-center gap-3">
                             {getPositionIcon(member.position || 0)}
@@ -400,7 +420,12 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                         <Users className="h-3 w-3" />
                         Criado por:
                       </span>
-                      <span className="font-medium">{group.created_by}</span>
+                      <span
+                        className="font-medium cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => router.push(`/profile/${group.owner_profile_id}`)}
+                      >
+                        {group.created_by}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
