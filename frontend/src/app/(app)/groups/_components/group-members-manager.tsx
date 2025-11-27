@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -187,7 +188,11 @@ export function GroupMembersManager({
               const isLoading = actionLoading === member.id;
 
               return (
-                <div key={member.id} className="p-3 rounded-lg border border-border bg-card">
+                <div
+                  key={member.id}
+                  className="p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/profile/${member.profile_id}`)}
+                >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="font-semibold text-sm">{member.username.charAt(0).toUpperCase()}</span>
@@ -217,7 +222,13 @@ export function GroupMembersManager({
                         {canManage && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={isLoading}
+                                className="h-8 w-8"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 {isLoading ? (
                                   <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
                                 ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -32,6 +33,7 @@ interface GroupDetailsProps {
 }
 
 export function GroupDetails({ group: initialGroup, period: externalPeriod, onPeriodChange }: GroupDetailsProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("ranking");
   const { user } = useAuth();
   const [group, setGroup] = useState(initialGroup);
@@ -290,9 +292,10 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                       rankedMembers.map((member, index) => (
                         <div
                           key={member.id}
-                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${
                             index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
                           }`}
+                          onClick={() => router.push(`/profile/${member.profile_id}`)}
                         >
                           <div className="flex items-center gap-3">
                             {getPositionIcon(member.position || 0)}
@@ -417,7 +420,12 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                         <Users className="h-3 w-3" />
                         Criado por:
                       </span>
-                      <span className="font-medium">{group.created_by}</span>
+                      <span
+                        className="font-medium cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => router.push(`/profile/${group.owner_profile_id}`)}
+                      >
+                        {group.created_by}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
