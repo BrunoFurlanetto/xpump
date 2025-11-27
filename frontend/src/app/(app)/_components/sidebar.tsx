@@ -94,11 +94,11 @@ const bottomItems: NavItem[] = [
     icon: Settings,
   },
 
-  {
-    title: "Painel Administrativo",
-    href: "/panel",
-    icon: LayoutDashboard,
-  },
+  // {
+  //   title: "Painel Administrativo",
+  //   href: "/panel",
+  //   icon: LayoutDashboard,
+  // },
 ];
 
 export function Sidebar({ className }: SidebarProps) {
