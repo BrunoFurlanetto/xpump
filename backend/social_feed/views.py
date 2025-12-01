@@ -29,9 +29,18 @@ class PostViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Filter posts based on visibility and user permissions."""
-        # user_profile = self.request.user.profile
+        user = self.request.user
+
+        if user.is_authenticated:
+            return Response({'detail': 'User not logged!'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        employer = getattr(getattr(user, 'profile', None), 'employer', None)
+
+        if employer is None:
+            return Response({'detail': 'User has no employer assigned!'}, status=status.HTTP_400_BAD_REQUEST)
+
         queryset = Post.objects.select_related(
-            'user', 'workout_checkin', 'meal'
+            'user__profile', 'workout_checkin', 'meal'
         ).prefetch_related(
             'comments__user', 'likes__user', 'content_files'
         )
@@ -40,11 +49,11 @@ class PostViewSet(ModelViewSet):
         visibility_filter = self.request.query_params.get('visibility', None)
 
         if visibility_filter:
-            queryset = queryset.filter(visibility=visibility_filter)
+            queryset = queryset.filter(visibility=visibility_filter, user__profile__employer=employer)
         else:
             # Default: show global posts and user's own posts
             queryset = queryset.filter(
-                Q(visibility='global') | Q(user=self.request.user)
+                Q(visibility='global') | Q(user__profile__employer=employer)
             )
 
         # Filter by content type
@@ -83,14 +92,11 @@ class PostViewSet(ModelViewSet):
         # Aplicar paginação
         paginator = CommentsPagination()
         page = paginator.paginate_queryset(comments, request)
-
         if page is not None:
             serializer = CommentSerializer(page, many=True, context={'request': request})
-
             return paginator.get_paginated_response(serializer.data)
 
         serializer = CommentSerializer(comments, many=True, context={'request': request})
-
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
@@ -124,12 +130,12 @@ class CommentListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         """Filter comments based on user permissions."""
         return Comment.objects.select_related(
-            'user__user', 'post'
-        ).prefetch_related('likes__user__user').order_by('-created_at')
+            'user', 'post'
+        ).prefetch_related('likes__user').order_by('-created_at')
 
     def perform_create(self, serializer):
         """Set the user when creating a comment."""
-        serializer.save(user=self.request.user.profile)
+        serializer.save(user=self.request.user)
 
 
 @extend_schema(tags=['Social Feed'])
@@ -141,19 +147,19 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         """Filter comments based on user permissions."""
         return Comment.objects.select_related(
-            'user__user', 'post'
-        ).prefetch_related('likes__user__user').order_by('-created_at')
+            'user', 'post'
+        ).prefetch_related('likes__user').order_by('-created_at')
 
     def perform_destroy(self, instance):
         """Only allow users to delete their own comments."""
-        if instance.user != self.request.user.profile:
+        if instance.user != self.request.user:
             raise PermissionDenied("You can only delete your own comments.")
 
         super().perform_destroy(instance)
 
     def perform_update(self, serializer):
         """Only allow users to update their own comments."""
-        if serializer.instance.user != self.request.user.profile:
+        if serializer.instance.user != self.request.user:
             raise PermissionDenied("You can only update your own comments.")
 
         serializer.save()
@@ -174,10 +180,8 @@ class CommentToggleLikeView(generics.GenericAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        user_profile = request.user.profile
-
         # Check if the like already exists
-        like = CommentLike.objects.filter(comment=comment, user=user_profile).first()
+        like = CommentLike.objects.filter(comment=comment, user=self.request.user).first()
 
         if like:
             # Unlike the comment
@@ -185,7 +189,7 @@ class CommentToggleLikeView(generics.GenericAPIView):
             liked = False
         else:
             # Like the comment
-            CommentLike.objects.create(comment=comment, user=user_profile)
+            CommentLike.objects.create(comment=comment, user=self.request.user)
             liked = True
 
         return Response({
@@ -209,12 +213,12 @@ class ReportListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         """Users can only see their own reports."""
         return Report.objects.filter(
-            reported_by=self.request.user.profile
-        ).select_related('post__user__user', 'reported_by__user')
+            reported_by=self.request.user
+        ).select_related('post__user', 'reported_by__user')
 
     def perform_create(self, serializer):
         """Create a report with the current user as reporter."""
-        serializer.save(reported_by=self.request.user.profile)
+        serializer.save(reported_by=self.request.user)
 
 
 @extend_schema(tags=['Social Feed'])
@@ -226,8 +230,8 @@ class ReportDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         """Users can only see their own reports."""
         return Report.objects.filter(
-            reported_by=self.request.user.profile
-        ).select_related('post__user__user', 'reported_by__user')
+            reported_by=self.request.user
+        ).select_related('post__user', 'reported_by__user')
 
 
 @extend_schema(tags=['Social Feed'])
@@ -240,9 +244,10 @@ class UserPostsView(generics.ListAPIView):
     def get_queryset(self):
         """Get posts from a specific user."""
         user_id = self.kwargs.get('user_id')
+
         return Post.objects.filter(
             user_id=user_id
-        ).select_related('user__user').order_by('-created_at')
+        ).select_related('user').order_by('-created_at')
 
 
 # class UserFeedView(generics.ListAPIView):
