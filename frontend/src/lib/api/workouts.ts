@@ -22,6 +22,7 @@ export interface CreateWorkoutData {
   workout_date: string;
   duration: string; // formato HH:MM:SS
   proof_files?: File[];
+  share_to_feed?: boolean;
 }
 
 export interface WorkoutStats {

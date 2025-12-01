@@ -102,7 +102,7 @@ export function useCreateMeal() {
   const { user } = useUserAuth();
 
   return useMutation({
-    mutationFn: async (data: CreateMealData & { share_to_feed?: boolean }) => {
+    mutationFn: async (data: CreateMealData) => {
       const apiData: CreateMealData = {
         meal_type: data.meal_type,
         meal_time: data.meal_time,

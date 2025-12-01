@@ -82,7 +82,7 @@ export function WorkoutCheckinModal({ isOpen, onClose, onSubmit, isLoading = fal
         comments: formData.comments,
         workout_date: formData.workout_date,
         duration,
-        proof_image: proofImage || undefined,
+        proof_files: proofImage ? [proofImage] : undefined,
         share_to_feed: shareToFeed,
       };
 

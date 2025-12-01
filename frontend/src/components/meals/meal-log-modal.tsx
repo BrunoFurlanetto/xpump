@@ -64,7 +64,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
         meal_type: parseInt(formData.meal_type), // Convert to number
         meal_time: formData.meal_date,
         comments: formData.comments,
-        photo: mealPhoto || undefined,
+        proof_files: mealPhoto ? [mealPhoto] : undefined,
         share_to_feed: shareToFeed,
       };
 
