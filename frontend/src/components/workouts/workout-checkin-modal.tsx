@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Dumbbell, MapPin, MessageSquare, Camera, Upload, X, Share2 } from "lucide-react";
-import { CreateWorkoutData } from "@/hooks/useWorkouts";
+import { CreateWorkoutData } from "@/lib/api/workouts";
 
 interface WorkoutCheckinModalProps {
   isOpen: boolean;

@@ -1,14 +1,10 @@
 "use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Trophy, 
-  Flame, 
-  Clock,
-  Dumbbell
-} from 'lucide-react';
-import { WorkoutStats as WorkoutStatsType, WorkoutStreak } from '@/hooks/useWorkouts';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Trophy, Flame, Clock, Dumbbell } from "lucide-react";
+import { WorkoutStreak } from "@/hooks/useWorkoutsQuery";
+import { WorkoutStats as WorkoutStatsType } from "@/lib/api/workouts";
 
 interface WorkoutStatsProps {
   stats: WorkoutStatsType;
@@ -17,10 +13,10 @@ interface WorkoutStatsProps {
 
 export function WorkoutStats({ stats }: WorkoutStatsProps) {
   const getStreakBadgeColor = (currentStreak: number) => {
-    if (currentStreak >= 10) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-    if (currentStreak >= 5) return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-    if (currentStreak >= 3) return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-    return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    if (currentStreak >= 10) return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+    if (currentStreak >= 5) return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+    if (currentStreak >= 3) return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    return "bg-gray-500/20 text-gray-400 border-gray-500/30";
   };
 
   return (
@@ -48,9 +44,13 @@ export function WorkoutStats({ stats }: WorkoutStatsProps) {
                 <p className="text-2xl font-bold text-foreground">{stats.current_streak}</p>
                 <Badge variant="outline" className={getStreakBadgeColor(stats.current_streak)}>
                   <Flame className="h-3 w-3 mr-1" />
-                  {stats.current_streak >= 10 ? 'Lenda!' : 
-                   stats.current_streak >= 5 ? 'Ótimo!' :
-                   stats.current_streak >= 3 ? 'Bom!' : 'Início'}
+                  {stats.current_streak >= 10
+                    ? "Lenda!"
+                    : stats.current_streak >= 5
+                    ? "Ótimo!"
+                    : stats.current_streak >= 3
+                    ? "Bom!"
+                    : "Início"}
                 </Badge>
               </div>
             </div>
