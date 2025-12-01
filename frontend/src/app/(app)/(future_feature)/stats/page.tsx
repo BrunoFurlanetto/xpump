@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkoutsQuery } from "@/hooks/useWorkoutsQuery";
-import { useMeals } from "@/hooks/useMeals";
+import { useMealsQuery } from "@/hooks/useMealsQuery";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useUserAuth } from "@/context/userAuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,7 @@ export default function StatsPage() {
   const userId = user?.id ? parseInt(user.id) : null;
 
   const { data: workoutData } = useWorkoutsQuery(userId);
-  const { stats: mealStats } = useMeals();
+  const { stats: mealStats } = useMealsQuery(userId!);
   const { achievements } = useNotifications();
 
   const workoutStats = workoutData?.stats || null;

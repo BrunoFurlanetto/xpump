@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useWorkoutsQuery, useCreateWorkout } from "@/hooks/useWorkoutsQuery";
 import { CreateWorkoutData } from "@/lib/api/workouts";
-import { CreateMealData, useMeals } from "@/hooks/useMeals";
+import { CreateMealData } from "@/lib/api/nutrition";
+import { useMealsQuery, useCreateMeal } from "@/hooks/useMealsQuery";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useUserAuth } from "@/context/userAuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,7 +72,8 @@ export default function DashboardPage() {
 
   const { data: workoutData } = useWorkoutsQuery(userId);
   const createWorkoutMutation = useCreateWorkout(userId!);
-  const { stats: mealStats, createMeal, mealTypes } = useMeals();
+  const { stats: mealStats, mealTypes } = useMealsQuery(userId!);
+  const createMealMutation = useCreateMeal();
   const { unreadCount, achievements } = useNotifications();
 
   const workoutStats = workoutData?.stats || null;
@@ -81,17 +83,37 @@ export default function DashboardPage() {
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
 
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
-    totalPoints: 0,
-    weeklyPoints: 0,
-    currentStreak: 0,
-    weeklyGoal: 500,
-    weeklyProgress: 0,
-    rank: 0,
-    totalUsers: 1247,
-  });
+  // Calcular estatísticas com useMemo para evitar rerenders infinitos
+  const dashboardStats = useMemo<DashboardStats>(() => {
+    const totalWorkoutPoints = workoutStats?.total_points || 0;
+    const totalMealPoints = mealStats?.total_points || 0;
+    const weeklyWorkoutPoints = (workoutStats?.this_week_workouts || 0) * 50;
+    const weeklyMealPoints = (mealStats?.this_week_meals || 0) * 25;
 
-  const [weeklyActivity, setWeeklyActivity] = useState<WeeklyActivity[]>([]);
+    const weeklyPoints = weeklyWorkoutPoints + weeklyMealPoints;
+    const weeklyGoal = 500;
+
+    return {
+      totalPoints: totalWorkoutPoints + totalMealPoints,
+      weeklyPoints,
+      currentStreak: Math.max(workoutStreak?.current_streak || 0, mealStats?.streak_days || 0),
+      weeklyGoal,
+      weeklyProgress: Math.min((weeklyPoints / weeklyGoal) * 100, 100),
+      rank: 12, // Mock ranking fixo
+      totalUsers: 1247,
+    };
+  }, [workoutStats, mealStats, workoutStreak]);
+
+  // Gerar atividade semanal mock - usando useMemo
+  const weeklyActivity = useMemo<WeeklyActivity[]>(() => {
+    const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+    return days.map((day, index) => ({
+      day,
+      workouts: index % 2 === 0 ? 1 : 0, // Mock fixo baseado no índice
+      meals: 2 + (index % 3), // Mock fixo baseado no índice
+      points: 50 + index * 10, // Mock fixo baseado no índice
+    }));
+  }, []); // Array vazio porque é mock estático
 
   // Ações rápidas do dashboard
   const quickActions: QuickAction[] = [
@@ -132,39 +154,6 @@ export default function DashboardPage() {
     },
   ];
 
-  useEffect(() => {
-    // Calcular estatísticas combinadas
-    const totalWorkoutPoints = workoutStats?.total_points || 0;
-    const totalMealPoints = mealStats?.total_points || 0;
-    const weeklyWorkoutPoints = (workoutStats?.this_week_workouts || 0) * 50;
-    const weeklyMealPoints = (mealStats?.this_week_meals || 0) * 25;
-
-    const newStats: DashboardStats = {
-      totalPoints: totalWorkoutPoints + totalMealPoints,
-      weeklyPoints: weeklyWorkoutPoints + weeklyMealPoints,
-      currentStreak: Math.max(workoutStreak?.current_streak || 0, mealStats?.streak_days || 0),
-      weeklyGoal: 500,
-      weeklyProgress: 0,
-      rank: Math.floor(Math.random() * 50) + 1, // Mock ranking
-      totalUsers: 1247,
-    };
-
-    newStats.weeklyProgress = Math.min((newStats.weeklyPoints / newStats.weeklyGoal) * 100, 100);
-
-    setDashboardStats(newStats);
-
-    // Gerar atividade semanal mock
-    const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-    const mockActivity: WeeklyActivity[] = days.map((day) => ({
-      day,
-      workouts: Math.floor(Math.random() * 2),
-      meals: Math.floor(Math.random() * 4) + 1,
-      points: Math.floor(Math.random() * 100) + 20,
-    }));
-
-    setWeeklyActivity(mockActivity);
-  }, [workoutStats, mealStats, workoutStreak]);
-
   const unlockedAchievements = achievements.filter((a) => a.isUnlocked);
   const recentAchievements = unlockedAchievements.slice(0, 3);
 
@@ -175,12 +164,8 @@ export default function DashboardPage() {
   };
 
   const handleMealSubmit = async (data: CreateMealData) => {
-    try {
-      await createMeal(data);
-      setIsMealModalOpen(false);
-    } catch (error) {
-      console.error("Erro ao criar refeição:", error);
-    }
+    await createMealMutation.mutateAsync(data);
+    setIsMealModalOpen(false);
   };
 
   return (

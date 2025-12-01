@@ -1,15 +1,9 @@
 "use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Trophy, 
-  Utensils, 
-  TrendingUp,
-  Flame,
-  Target
-} from 'lucide-react';
-import { MealStats as MealStatsType } from '@/hooks/useMeals';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Trophy, Utensils, TrendingUp, Flame, Target } from "lucide-react";
+import { MealStats as MealStatsType } from "@/hooks/useMealsQuery";
 
 interface MealStatsProps {
   stats: MealStatsType;
@@ -17,17 +11,17 @@ interface MealStatsProps {
 
 export function MealStats({ stats }: MealStatsProps) {
   const getCompletionColor = (rate: number) => {
-    if (rate >= 80) return 'text-green-400';
-    if (rate >= 60) return 'text-yellow-400';
-    if (rate >= 40) return 'text-orange-400';
-    return 'text-red-400';
+    if (rate >= 80) return "text-green-400";
+    if (rate >= 60) return "text-yellow-400";
+    if (rate >= 40) return "text-orange-400";
+    return "text-red-400";
   };
 
   const getStreakBadgeColor = (streak: number) => {
-    if (streak >= 7) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-    if (streak >= 3) return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-    if (streak >= 1) return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-    return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    if (streak >= 7) return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+    if (streak >= 3) return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+    if (streak >= 1) return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    return "bg-gray-500/20 text-gray-400 border-gray-500/30";
   };
 
   // const getFavoriteMealType = () => {
@@ -60,9 +54,13 @@ export function MealStats({ stats }: MealStatsProps) {
                 <p className="text-2xl font-bold text-foreground">{stats.streak_days}</p>
                 <Badge variant="outline" className={getStreakBadgeColor(stats.streak_days)}>
                   <Flame className="h-3 w-3 mr-1" />
-                  {stats.streak_days >= 7 ? 'Incrível!' : 
-                   stats.streak_days >= 3 ? 'Ótimo!' :
-                   stats.streak_days >= 1 ? 'Bom!' : 'Início'}
+                  {stats.streak_days >= 7
+                    ? "Incrível!"
+                    : stats.streak_days >= 3
+                    ? "Ótimo!"
+                    : stats.streak_days >= 1
+                    ? "Bom!"
+                    : "Início"}
                 </Badge>
               </div>
             </div>
