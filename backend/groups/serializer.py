@@ -55,7 +55,7 @@ class GroupSerializer(serializers.ModelSerializer):
                 "username": member.member.username,
                 "full_name": member.member.get_full_name(),
                 "email": member.member.email,
-                "profile_id": member.member.profile.id,
+                "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
                 "is_admin": member.is_admin,
                 "joined_at": member.joined_at,
                 "pending": member.pending,
@@ -78,7 +78,7 @@ class GroupSerializer(serializers.ModelSerializer):
                 "id": member.member.id,
                 "username": member.member.username,
                 "email": member.member.email,
-                "profile_id": member.member.profile.id,
+                "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
                 "joined_at": member.joined_at,
             }
             for member in pending_members
