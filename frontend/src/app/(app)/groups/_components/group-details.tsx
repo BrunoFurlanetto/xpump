@@ -6,25 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Trophy,
-  Medal,
-  Crown,
-  Users,
-  Star,
-  Flame,
-  Target,
-  ArrowLeft,
-  UserCog,
-  Loader2,
-  Calendar,
-  Utensils,
-} from "lucide-react";
+import { Trophy, Medal, Crown, Users, ArrowLeft, UserCog, Loader2, Calendar, Users2 } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group, GroupsAPI } from "@/lib/api/groups";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import GroupCardHeader from "./group-card-header";
+import { cn } from "@/lib/utils";
 
 interface GroupDetailsProps {
   group: Group;
@@ -35,7 +24,7 @@ interface GroupDetailsProps {
 export function GroupDetails({ group: initialGroup, period: externalPeriod, onPeriodChange }: GroupDetailsProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("ranking");
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [group, setGroup] = useState(initialGroup);
   const [period, setPeriod] = useState<"week" | "month" | "all">(externalPeriod || "week");
   const [isLoading, setIsLoading] = useState(false);
@@ -120,14 +109,18 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
     .filter((m) => m.position !== undefined && m.position !== null)
     .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-  console.log("📊 Ranked members for period", period, ":", rankedMembers);
-
   const topThree = rankedMembers.slice(0, 3);
+
+  const canSeeGroupsTab = group.main && hasRole("Admin");
+
+  let tabs = 1;
+  if (canManageMembers) tabs += 1;
+  if (canSeeGroupsTab) tabs += 1;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start gap-4">
+      {/* Back Button */}
+      <div className="flex items-start">
         <Link
           href="/groups"
           className={buttonVariants({
@@ -139,96 +132,42 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Link>
-
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words">{group.name}</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">{group.description}</p>
-        </div>
       </div>
 
-      {/* Estatísticas do Grupo */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Membros</p>
-                <p className="text-2xl font-bold text-foreground">{group.stats?.total_members || 0}</p>
-              </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Treinos</p>
-                <p className="text-2xl font-bold text-foreground">{group.stats?.total_workouts || 0}</p>
-              </div>
-              <Target className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:px-5 sm:py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Refeições Saudáveis</p>
-                <p className="text-2xl font-bold text-foreground">{group.stats?.total_meals || 0}</p>
-              </div>
-              <Utensils className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Sequência Média</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {group.stats?.mean_streak ? group.stats.mean_streak.toFixed(1) : "0"}
-                </p>
-              </div>
-              <Flame className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pontos Totais</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {group.stats?.total_points?.toLocaleString("pt-BR", {
-                    maximumFractionDigits: 2,
-                  }) || 0}
-                </p>
-              </div>
-              <Star className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Group Header */}
+      <GroupCardHeader
+        name={group.name}
+        description={group.description}
+        avatar={null}
+        stats={group.stats}
+        currentUserRole={currentUserRole}
+        showManageButton={canManageMembers}
+        onManageClick={() => setActiveTab("members")}
+      />
 
       {/* Conteúdo Principal com Abas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ranking" className="flex items-center gap-2">
-            <Trophy className="h-4 w-4" />
-            Ranking
-          </TabsTrigger>
-          {canManageMembers && (
-            <TabsTrigger value="members" className="flex items-center gap-2">
-              <UserCog className="h-4 w-4" />
-              Gerenciar Membros
+        {tabs > 1 && (
+          <TabsList className={cn("grid w-full grid-cols-3", tabs === 2 && "grid-cols-2", tabs === 1 && "grid-cols-1")}>
+            <TabsTrigger value="ranking" className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Ranking
             </TabsTrigger>
-          )}
-        </TabsList>
+            {canManageMembers && (
+              <TabsTrigger value="members" className="flex items-center gap-2">
+                <UserCog className="h-4 w-4" />
+                Membros
+              </TabsTrigger>
+            )}
+
+            {canSeeGroupsTab && (
+              <TabsTrigger value="groups" className="flex items-center gap-2">
+                <Users2 className="h-4 w-4" />
+                Grupos
+              </TabsTrigger>
+            )}
+          </TabsList>
+        )}
 
         <TabsContent value="ranking" className="space-y-4">
           {/* Controles de Período */}
