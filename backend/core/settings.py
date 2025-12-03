@@ -128,10 +128,6 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'templates/static')
-]
-STATIC_ROOT = os.path.join('static')
 
 AUTH_PASSWORD_VALIDATORS = [
     {
