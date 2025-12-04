@@ -15,7 +15,7 @@ import ProfileStatistics from "../profile/_components/profile-statistics";
 import CardProgressLevel from "../profile/_components/card-progress-level";
 import { useProfileQuery } from "@/hooks/useProfilesQuery";
 import { Skeleton } from "@/components/ui/skeleton";
-import AdminDashboardView from "@/components/admin/admin-dashboard-view";
+import AdminDashboardView from "@/app/(app)/dashboard/admin-dashboard-view";
 
 interface QuickAction {
   title: string;
