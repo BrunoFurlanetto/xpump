@@ -169,11 +169,6 @@ WSGI_APPLICATION = 'core.wsgi.application'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build')
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
