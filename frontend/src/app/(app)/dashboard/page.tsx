@@ -15,6 +15,7 @@ import ProfileStatistics from "../profile/_components/profile-statistics";
 import CardProgressLevel from "../profile/_components/card-progress-level";
 import { useProfileQuery } from "@/hooks/useProfilesQuery";
 import { Skeleton } from "@/components/ui/skeleton";
+import AdminDashboardView from "@/components/admin/admin-dashboard-view";
 
 interface QuickAction {
   title: string;
@@ -35,9 +36,18 @@ interface NavigationAction {
 }
 
 export default function DashboardPage() {
-  const { user } = useUserAuth();
+  const { user, roles } = useUserAuth();
   const userId = user?.id ? parseInt(user.id) : null;
 
+  // Verifica se o usuário é administrador (Personal Trainer)
+  const isAdmin = roles.includes("admin") || roles.includes("Admin");
+
+  // Se for admin, mostra o dashboard administrativo
+  if (!isAdmin) {
+    return <AdminDashboardView />;
+  }
+
+  // Dashboard normal do cliente
   const createWorkoutMutation = useCreateWorkout(userId!);
   const createMealMutation = useCreateMeal();
   const { mealTypes } = useMealsQuery(userId!);
