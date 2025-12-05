@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
-from django.core.management import execute_from_command_line
-
 try:
     from .local_settings import *
 except ImportError:
@@ -27,6 +25,24 @@ except ImportError:
             'PORT': os.getenv('DB_PORT'),
         }
     }
+
+    # Cloudflare R2 configuration for production
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')
+    AWS_S3_REGION_NAME = 'auto'
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = True
+    AWS_QUERYSTRING_EXPIRE = 3600
+    AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN', None)
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    AWS_S3_URL_PROTOCOL = 'https:'
+    AWS_S3_ADDRESSING_STYLE = 'path'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,7 +58,7 @@ if 'SECRET_KEY' in os.environ:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'xpump.up.railway.app', 'xpump.onrender.com', 'testserver']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'xpump.up.railway.app', 'xpump.onrender.com', 'testserver', '.vercel.app']
 CORS_ORIGIN_ALLOW_ALL = True  # TODO: Change to False in production
 
 # Application definition
@@ -58,6 +74,7 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     'corsheaders',
+    'storages',
     'django_extensions',
     'gamification.apps.GamificationConfig',
     'clients.apps.ClientsConfig',
@@ -72,6 +89,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -117,7 +135,28 @@ TEMPLATES = [
 ]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = 'media/'
+
+# Cloudflare R2 Storage Configuration (Django 4.2+)
+STORAGES = {
+    "default": {
+        "BACKEND": "core.storage_backends.CloudflareR2Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# Compatibilidade com Django antigo
+DEFAULT_FILE_STORAGE = 'core.storage_backends.CloudflareR2Storage'
+
+# Media URL - use custom domain if available, otherwise use R2 endpoint
+try:
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    else:
+        MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+except (NameError, AttributeError):
+    MEDIA_URL = 'media/'
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
@@ -126,6 +165,9 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build')
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -156,7 +198,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
