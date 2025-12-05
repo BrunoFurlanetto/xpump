@@ -14,6 +14,7 @@ interface UserAuthContext {
     avatar: string | null;
     profile_id: string;
   };
+  roles: string[];
   isFetching: boolean;
 }
 
@@ -21,6 +22,7 @@ export const UserAuthContext = createContext<UserAuthContext | undefined>(undefi
 
 export function UserAuthProvider({ children }: { readonly children: React.ReactNode }) {
   const [user, setUser] = useState<UserAuthContext["user"] | undefined>(undefined);
+  const [roles, setRoles] = useState<string[]>([]);
   const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
@@ -30,8 +32,25 @@ export function UserAuthProvider({ children }: { readonly children: React.ReactN
         const sessionUser = await verifySession();
         if (!sessionUser) {
           setUser(undefined);
+          setRoles([]);
           return;
         }
+
+        // Decodificar o access token para extrair as roles
+        const accessToken = sessionUser.access;
+        if (accessToken) {
+          try {
+            const tokenParts = accessToken.split(".");
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              setRoles(payload.role || []);
+            }
+          } catch (error) {
+            console.error("Failed to decode access token:", error);
+            setRoles([]);
+          }
+        }
+
         const aUser = await getUserById(sessionUser.user_id || "");
         if (aUser) {
           setUser({
@@ -41,6 +60,7 @@ export function UserAuthProvider({ children }: { readonly children: React.ReactN
       } catch (error) {
         console.error("Failed to verify session:", error);
         setUser(undefined);
+        setRoles([]);
       } finally {
         setIsFetching(false);
       }
@@ -49,7 +69,7 @@ export function UserAuthProvider({ children }: { readonly children: React.ReactN
     getUser();
   }, []);
 
-  return <UserAuthContext value={{ user, isFetching }}>{children}</UserAuthContext>;
+  return <UserAuthContext value={{ user, roles, isFetching }}>{children}</UserAuthContext>;
 }
 
 export function useUserAuth() {

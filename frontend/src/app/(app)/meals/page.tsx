@@ -7,13 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Utensils, Plus, Trophy, Calendar, Target } from "lucide-react";
-import { useMeals } from "@/hooks/useMeals";
+import { useMealsQuery, useCreateMeal, useUpdateMeal, useDeleteMeal } from "@/hooks/useMealsQuery";
 import { MealLogModal } from "@/components/meals/meal-log-modal";
 import { MealStats } from "@/components/meals/meal-stats";
 import { DailyMealCard } from "@/components/meals/daily-meal-card";
 
 export default function MealsPage() {
-  const { dailyMeals, stats, mealTypes, isLoading, isSubmitting, createMeal, updateMeal, deleteMeal } = useMeals();
+  const { dailyMeals, stats, mealTypes, isLoading } = useMealsQuery();
+  const createMealMutation = useCreateMeal();
+  const updateMealMutation = useUpdateMeal();
+  const deleteMealMutation = useDeleteMeal();
 
   const [showLogModal, setShowLogModal] = useState(false);
 
@@ -187,8 +190,12 @@ export default function MealsPage() {
                     dayData={dayData}
                     mealTypes={mealTypes}
                     onAddMeal={() => setShowLogModal(true)}
-                    onUpdateMeal={updateMeal}
-                    onDeleteMeal={deleteMeal}
+                    onUpdateMeal={async (id, comments) => {
+                      await updateMealMutation.mutateAsync({ id, comments });
+                    }}
+                    onDeleteMeal={async (id) => {
+                      await deleteMealMutation.mutateAsync(id);
+                    }}
                   />
                 </div>
               ))}
@@ -201,9 +208,12 @@ export default function MealsPage() {
       <MealLogModal
         isOpen={showLogModal}
         onClose={() => setShowLogModal(false)}
-        onSubmit={createMeal}
+        onSubmit={async (data) => {
+          await createMealMutation.mutateAsync(data);
+          setShowLogModal(false);
+        }}
         mealTypes={mealTypes}
-        isLoading={isSubmitting}
+        isLoading={createMealMutation.isPending}
       />
     </div>
   );

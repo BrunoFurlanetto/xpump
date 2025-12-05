@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { InstallPWA } from "@/components/install-pwa";
 import { PWAUpdatePrompt } from "@/components/pwa-update-prompt";
+import { ReactQueryProvider } from "@/lib/react-query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -81,11 +82,13 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ReactQueryProvider>
+          <ThemeProvider>{children}</ThemeProvider>
 
-        <InstallPWA />
-        <PWAUpdatePrompt />
-        <Toaster richColors />
+          <InstallPWA />
+          <PWAUpdatePrompt />
+          <Toaster richColors />
+        </ReactQueryProvider>
       </body>
     </html>
   );

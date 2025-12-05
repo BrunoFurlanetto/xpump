@@ -1,4 +1,13 @@
 // Types
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  profile_id: number;
+}
+
 export interface Profile {
   id: number;
   user: number;
@@ -13,6 +22,10 @@ export interface Profile {
   pending_groups: ProfileGroup[];
   workout_streak: StreakInfo;
   meal_streak: StreakInfo;
+}
+
+export interface ProfileWithUser extends Profile {
+  userData: User;
 }
 
 export interface ProfileGroup {
@@ -41,6 +54,19 @@ export interface UpdateProfileData {
 // Profiles API Class
 export class ProfilesAPI {
   /**
+   * Get user by ID
+   */
+  static async getUserById(userId: number | string): Promise<User> {
+    const response = await fetch(`/api/auth?endpoint=users/${userId}/`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar usuário");
+    }
+
+    return response.json();
+  }
+
+  /**
    * Get a profile by ID
    */
   static async getProfile(profileId: number | string): Promise<Profile> {
@@ -51,6 +77,19 @@ export class ProfilesAPI {
     }
 
     return response.json();
+  }
+
+  /**
+   * Get profile with user data
+   */
+  static async getProfileWithUser(profileId: number | string): Promise<ProfileWithUser> {
+    const profile = await this.getProfile(profileId);
+    const userData = await this.getUserById(profile.user);
+
+    return {
+      ...profile,
+      userData,
+    };
   }
 
   /**

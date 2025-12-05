@@ -2,14 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { GroupDetails } from "@/app/(app)/groups/_components/group-details";
-import { GroupsProvider, useGroupsContext } from "@/context/groupsContext";
-import { Group } from "@/lib/api/groups";
+import { useGroupQuery } from "@/hooks/useGroupsQuery";
 import { GroupDetailsSkeleton } from "@/app/(app)/groups/_components/group-details-skeleton";
 
-function SingleGroupPageContent({ params }: { params: Promise<{ id: string }> }) {
+export default function SingleGroupPage({ params }: { params: Promise<{ id: string }> }) {
   const [groupId, setGroupId] = useState<number | null>(null);
-  const [group, setGroup] = useState<Group | null>(null);
-  const { fetchGroup, isLoading } = useGroupsContext();
+  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -19,27 +17,11 @@ function SingleGroupPageContent({ params }: { params: Promise<{ id: string }> })
     });
   }, [params]);
 
-  useEffect(() => {
-    if (groupId) {
-      fetchGroup(groupId).then((data) => {
-        if (data) setGroup(data);
-      });
-    }
-  }, [groupId, fetchGroup]);
+  const { data: group, isLoading } = useGroupQuery(groupId!, period);
 
   if (!groupId) return <div className="text-center text-muted-foreground py-8">ID do grupo não fornecido</div>;
   if (isLoading) return <GroupDetailsSkeleton />;
   if (!group) return <div className="text-center text-muted-foreground py-8">Grupo não encontrado</div>;
 
-  return <GroupDetails group={group} />;
+  return <GroupDetails group={group} period={period} onPeriodChange={setPeriod} />;
 }
-
-const SingleGroupPage = ({ params }: { params: Promise<{ id: string }> }) => {
-  return (
-    <GroupsProvider>
-      <SingleGroupPageContent params={params} />
-    </GroupsProvider>
-  );
-};
-
-export default SingleGroupPage;

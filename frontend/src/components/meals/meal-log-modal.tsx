@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Utensils, Camera, Upload, X, Clock, Share2 } from "lucide-react";
-import { CreateMealData, MealType } from "@/hooks/useMeals";
+import { CreateMealData, MealType } from "@/hooks/useMealsQuery";
 
 interface MealLogModalProps {
   isOpen: boolean;
@@ -64,7 +64,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
         meal_type: parseInt(formData.meal_type), // Convert to number
         meal_time: formData.meal_date,
         comments: formData.comments,
-        photo: mealPhoto || undefined,
+        proof_files: mealPhoto ? [mealPhoto] : undefined,
         share_to_feed: shareToFeed,
       };
 

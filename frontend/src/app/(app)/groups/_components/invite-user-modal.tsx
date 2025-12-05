@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useGroupsContext } from "@/context/groupsContext";
+import { useInviteUser } from "@/hooks/useGroupsQuery";
 
 interface InviteUserModalProps {
   open?: boolean;
@@ -18,7 +18,7 @@ interface InviteUserModalProps {
 
 export function InviteUserModal({ groupId, groupName, open, close }: InviteUserModalProps) {
   const [username, setUsername] = useState("");
-  const { inviteUser, isSubmitting } = useGroupsContext();
+  const inviteUser = useInviteUser();
 
   const handleSendInvite = async () => {
     if (!username.trim()) {
@@ -27,23 +27,23 @@ export function InviteUserModal({ groupId, groupName, open, close }: InviteUserM
     }
 
     try {
-      await inviteUser(groupId, username.trim());
+      await inviteUser.mutateAsync({ groupId, username: username.trim() });
       setUsername("");
       close?.();
     } catch (error) {
-      toast.error("Erro ao enviar convite");
+      // Erro já tratado no hook
     }
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
+    if (!inviteUser.isPending) {
       close?.();
       setUsername("");
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !isSubmitting) {
+    if (e.key === "Enter" && !inviteUser.isPending) {
       handleSendInvite();
     }
   };
@@ -67,17 +67,17 @@ export function InviteUserModal({ groupId, groupName, open, close }: InviteUserM
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onKeyPress={handleKeyPress}
-              disabled={isSubmitting}
+              disabled={inviteUser.isPending}
             />
             <p className="text-xs text-muted-foreground">Digite o username exato do usuário que você deseja convidar</p>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={inviteUser.isPending}>
               Cancelar
             </Button>
-            <Button onClick={handleSendInvite} disabled={isSubmitting || !username.trim()}>
-              {isSubmitting ? (
+            <Button onClick={handleSendInvite} disabled={inviteUser.isPending || !username.trim()}>
+              {inviteUser.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Enviando...
