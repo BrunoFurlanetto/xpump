@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 
 from django.utils import timezone
 from faker import Faker
@@ -55,10 +55,9 @@ class SignalTest(SocialFeedBaseTestCase):
     def test_meal_creates_post(self):
         """Teste que signal cria post quando Meal é salvo."""
         meal_config = MealConfig.objects.create(
-            user=self.user1,
-            meal_name='Almoço',
-            start_time='12:00',
-            end_time='14:00'
+            meal_name='lunch',
+            interval_start=time(hour=12, minute=0),
+            interval_end=time(hour=14, minute=0)
         )
 
         initial_count = Post.objects.count()
@@ -66,7 +65,7 @@ class SignalTest(SocialFeedBaseTestCase):
         self.meal_data = {
             'user': self.user1,
             'meal_type': meal_config,
-            'meal_time': datetime(2025, 8, 27, 8, 30),
+            'meal_time': datetime(2025, 8, 27, 13, 30),
             'comments': 'Refeição saudável'
         }
 
@@ -80,15 +79,14 @@ class SignalTest(SocialFeedBaseTestCase):
     def test_meal_delete_removes_post(self):
         """Teste que signal remove post quando Meal é deletado."""
         meal_config = MealConfig.objects.create(
-            user=self.user1,
-            meal_name='Jantar',
-            start_time='19:00',
-            end_time='21:00'
+            meal_name='dinner',
+            interval_start=time(hour=19, minute=0),
+            interval_end=time(hour=21, minute=0)
         )
         self.meal_data = {
             'user': self.user1,
             'meal_type': meal_config,
-            'meal_time': datetime(2025, 8, 27, 8, 30),
+            'meal_time': datetime(2025, 8, 27, 20, 30),
             'comments': 'Refeição saudável'
         }
         meal = Meal.objects.create(**self.meal_data)

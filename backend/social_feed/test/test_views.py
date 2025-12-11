@@ -121,7 +121,6 @@ class PostViewSetTest(SocialFeedAPITestCase):
 
         url = reverse('social_feed:posts-detail', kwargs={'pk': post.pk})
         response = self.client.put(url, data)
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         post.refresh_from_db()
         self.assertEqual(post.content_text, 'Texto atualizado')

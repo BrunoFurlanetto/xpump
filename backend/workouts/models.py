@@ -73,6 +73,17 @@ class WorkoutCheckin(models.Model):
         # Update the user's profile with the new points
         Gamification().add_xp(self.user, self.base_points)
 
+    def delete(self, *args, **kwargs):
+        workout_points = self.base_points
+        user = self.user
+
+        try:
+            super().delete(*args, **kwargs)
+        except Exception as e:
+            raise e
+
+        Gamification().remove_xp(user, workout_points)
+
     def clean(self):
         """
         Validate workout check-in data to ensure logical consistency.

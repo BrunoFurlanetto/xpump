@@ -3,12 +3,12 @@ from rest_framework import generics, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from .models import Post, Comment, Report, PostLike, CommentLike
 from .serializers import (
     PostSerializer, PostListSerializer, PostCreateSerializer, CommentSerializer,
-    ReportSerializer, ReportCreateSerializer
+    ReportSerializer, ReportCreateSerializer, CommentCreateSerializer
 )
 from .pagination import PostsPagination, CommentsPagination
 
@@ -31,13 +31,13 @@ class PostViewSet(ModelViewSet):
         """Filter posts based on visibility and user permissions."""
         user = self.request.user
 
-        if user.is_authenticated:
-            return Response({'detail': 'User not logged!'}, status=status.HTTP_401_UNAUTHORIZED)
+        if not user.is_authenticated:
+            return PermissionDenied('User not authenticated!')
 
         employer = getattr(getattr(user, 'profile', None), 'employer', None)
 
         if employer is None:
-            return Response({'detail': 'User has no employer assigned!'}, status=status.HTTP_400_BAD_REQUEST)
+            return ValidationError('User has no associated employer!')
 
         queryset = Post.objects.select_related(
             'user__profile', 'workout_checkin', 'meal'
@@ -92,11 +92,14 @@ class PostViewSet(ModelViewSet):
         # Aplicar paginação
         paginator = CommentsPagination()
         page = paginator.paginate_queryset(comments, request)
+
         if page is not None:
             serializer = CommentSerializer(page, many=True, context={'request': request})
+
             return paginator.get_paginated_response(serializer.data)
 
         serializer = CommentSerializer(comments, many=True, context={'request': request})
+
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
@@ -123,7 +126,7 @@ class PostViewSet(ModelViewSet):
 @extend_schema(tags=['Social Feed'])
 class CommentListCreateView(generics.ListCreateAPIView):
     """List all comments or create a new comment."""
-    serializer_class = CommentSerializer
+    serializer_class = CommentCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = CommentsPagination
 

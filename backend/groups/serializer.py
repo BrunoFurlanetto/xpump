@@ -118,7 +118,7 @@ class GroupSerializer(serializers.ModelSerializer):
                 member_obj = getattr(gm, 'member', None)
 
                 if member_obj is not None:
-                    print(member_obj)
+
                     try:
                         total_workouts += member_obj.workouts.count()
                     except Exception:

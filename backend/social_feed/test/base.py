@@ -109,6 +109,23 @@ class SocialFeedAPITestCase(APITestCase):
             email='user2@test.com',
             password='testpass123'
         )
+        self.employer = Client.objects.create(
+            name='Test Client',
+            cnpj=fake.unique.cnpj(),
+            owners=self.user1,
+            contact_email='contato@cliente.test',
+            phone='(11)99999-9999',
+            address='Rua Exemplo, 123, Bairro, Cidade - SP',
+        )
+
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.employer
+        )
+        self.profile_1 = Profile.objects.create(user=self.user1, employer=self.employer)
+        self.profile_2 = Profile.objects.create(user=self.user2, employer=self.employer)
 
         # Criar Status necessários
         Status.objects.get_or_create(

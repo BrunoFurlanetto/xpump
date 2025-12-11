@@ -68,14 +68,14 @@ class Post(models.Model):
 
     workout_checkin = models.ForeignKey(
         WorkoutCheckin,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name='posts'
     )
     meal = models.ForeignKey(
         Meal,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name='posts'

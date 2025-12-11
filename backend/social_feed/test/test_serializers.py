@@ -251,7 +251,7 @@ class SerializerTest(TestCase):
         from unittest.mock import Mock
         mock_request = Mock()
         mock_request.user = self.user
-        mock_request.user.is_authenticated = True
+        # mock_request.user.is_authenticated = True
 
         context = {'request': mock_request}
         serializer = PostSerializer(post, context=context)

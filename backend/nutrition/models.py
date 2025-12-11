@@ -84,6 +84,18 @@ class Meal(models.Model):
         # Update the user's profile with the new points
         Gamification().add_xp(self.user, self.base_points)
 
+    def delete(self, *args, **kwargs):
+        # Before deleting the meal, deduct the points from the user's profile
+        meal_points = self.base_points
+        user = self.user
+
+        try:
+            super().delete(*args, **kwargs)
+        except Exception as e:
+            raise e
+
+        Gamification().remove_xp(user, meal_points)
+
     def clean(self):
         if not MealConfig.objects.filter(
             interval_start__lte=self.meal_time.astimezone().time(),

@@ -23,14 +23,6 @@ def create_post_from_workout_checkin(sender, instance, created, **kwargs):
         )
 
 
-@receiver(post_delete, sender=WorkoutCheckin)
-def delete_post_from_workout_checkin(sender, instance, **kwargs):
-    """
-    Delete the associated post when a WorkoutCheckin is deleted.
-    """
-    Post.objects.filter(workout_checkin=instance).delete()
-
-
 # ---------------------------------- Meal Signals ---------------------------------- #
 @receiver(post_save, sender=Meal)
 def create_post_from_meal(sender, instance, created, **kwargs):
@@ -45,15 +37,6 @@ def create_post_from_meal(sender, instance, created, **kwargs):
             visibility='global',
             allow_comments=True
         )
-
-
-@receiver(post_delete, sender=Meal)
-def delete_post_from_meal(sender, instance, **kwargs):
-    """
-    Delete the associated post when a Meal is deleted.
-    """
-    Post.objects.filter(meal=instance).delete()
-
 
 # ---------------------------------- PostLike Signals ---------------------------------- #
 @receiver(post_save, sender=PostLike)

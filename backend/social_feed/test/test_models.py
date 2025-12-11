@@ -1,5 +1,5 @@
 import tempfile
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 
 from django.test import override_settings
 from django.utils import timezone
@@ -54,10 +54,9 @@ class PostModelTest(SocialFeedBaseTestCase):
     def test_create_meal_post(self):
         """Teste criação de post de refeição."""
         meal_config = MealConfig.objects.create(
-            user=self.user1,
-            meal_name='Café da manhã',
-            start_time='08:00',
-            end_time='10:00'
+            meal_name='breakfast',
+            interval_start=time(8, 0),
+            interval_end=time(10, 0)
         )
         self.meal_data = {
             'user': self.user1,
