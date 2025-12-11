@@ -160,7 +160,6 @@ class URLTest(TestCase):
             resolver = resolve(url)
             self.assertEqual(int(resolver.kwargs['user_id']), test_id)
 
-    # python
     def test_invalid_urls(self):
         """Teste que URLs inválidas não resolvem ou possuem parâmetros inválidos."""
         invalid_urls = [

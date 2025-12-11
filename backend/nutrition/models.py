@@ -20,7 +20,7 @@ meal_choices = [
 
 def get_published_status_id():
     obj, _ = Status.objects.get_or_create(
-        app_name='MEAL',
+        app_name='NUTRITION',
         action='PUBLISHED',
         is_active=True,
         defaults={'name': 'Publicado'}

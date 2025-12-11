@@ -32,12 +32,12 @@ class PostViewSet(ModelViewSet):
         user = self.request.user
 
         if not user.is_authenticated:
-            return PermissionDenied('User not authenticated!')
+            raise PermissionDenied('User not authenticated!')
 
         employer = getattr(getattr(user, 'profile', None), 'employer', None)
 
         if employer is None:
-            return ValidationError('User has no associated employer!')
+            raise ValidationError('User has no associated employer!')
 
         queryset = Post.objects.select_related(
             'user__profile', 'workout_checkin', 'meal'
@@ -66,7 +66,7 @@ class PostViewSet(ModelViewSet):
         user_id = self.request.query_params.get('user_id', None)
 
         if user_id:
-            queryset = queryset.filter(user_id=self.request.user.id)
+            queryset = queryset.filter(user_id=user_id)
 
         return queryset.order_by('-created_at')
 
