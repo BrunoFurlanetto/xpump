@@ -13,6 +13,17 @@ from status.models import Status
 from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist
 
 
+def get_published_status_id():
+    obj, _ = Status.objects.get_or_create(
+        app_name='WORKOUT',
+        action='PUBLISHED',
+        is_active=True,
+        defaults={'name': 'Publicado'}
+    )
+
+    return obj.id
+
+
 class WorkoutCheckin(models.Model):
     """
     Model representing a workout check-in by a user.
@@ -25,7 +36,7 @@ class WorkoutCheckin(models.Model):
     comments = models.TextField(blank=True)
     workout_date = models.DateTimeField()
     duration = models.DurationField()
-    validation_status = models.ForeignKey(Status, on_delete=models.PROTECT)
+    validation_status = models.ForeignKey(Status, on_delete=models.PROTECT, default=get_published_status_id)
     base_points = models.FloatField(null=True, blank=True, editable=False)
     multiplier = models.FloatField(default=1.0)
 
@@ -61,6 +72,17 @@ class WorkoutCheckin(models.Model):
 
         # Update the user's profile with the new points
         Gamification().add_xp(self.user, self.base_points)
+
+    def delete(self, *args, **kwargs):
+        workout_points = self.base_points
+        user = self.user
+
+        try:
+            super().delete(*args, **kwargs)
+        except Exception as e:
+            raise e
+
+        Gamification().remove_xp(user, workout_points)
 
     def clean(self):
         """

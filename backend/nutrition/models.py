@@ -18,6 +18,17 @@ meal_choices = [
 ]
 
 
+def get_published_status_id():
+    obj, _ = Status.objects.get_or_create(
+        app_name='NUTRITION',
+        action='PUBLISHED',
+        is_active=True,
+        defaults={'name': 'Publicado'}
+    )
+
+    return obj.id
+
+
 class MealConfig(models.Model):
     meal_name = models.CharField(max_length=20, choices=meal_choices, unique=True)
     interval_start = models.TimeField()
@@ -37,7 +48,7 @@ class Meal(models.Model):
     meal_type = models.ForeignKey(MealConfig, on_delete=models.PROTECT)
     meal_time = models.DateTimeField()
     comments = models.TextField(blank=True, null=True)
-    validation_status = models.ForeignKey(Status, on_delete=models.PROTECT)
+    validation_status = models.ForeignKey(Status, on_delete=models.PROTECT, default=get_published_status_id)
     base_points = models.FloatField(null=True, blank=True, editable=False)
     multiplier = models.FloatField(default=1.0)
 
@@ -72,6 +83,18 @@ class Meal(models.Model):
 
         # Update the user's profile with the new points
         Gamification().add_xp(self.user, self.base_points)
+
+    def delete(self, *args, **kwargs):
+        # Before deleting the meal, deduct the points from the user's profile
+        meal_points = self.base_points
+        user = self.user
+
+        try:
+            super().delete(*args, **kwargs)
+        except Exception as e:
+            raise e
+
+        Gamification().remove_xp(user, meal_points)
 
     def clean(self):
         if not MealConfig.objects.filter(
