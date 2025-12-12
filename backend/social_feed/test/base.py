@@ -1,4 +1,3 @@
-import tempfile
 from datetime import timedelta
 from io import BytesIO
 from PIL import Image

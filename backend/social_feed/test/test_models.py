@@ -6,7 +6,7 @@ from django.utils import timezone
 from faker import Faker
 
 from nutrition.models import Meal, MealConfig
-from workouts.models import WorkoutCheckin, WorkoutPlan
+from workouts.models import WorkoutCheckin
 from social_feed.models import (
     Post, Comment, PostLike, CommentLike, ContentFilePost, Report
 )

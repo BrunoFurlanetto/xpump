@@ -3,7 +3,6 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from nutrition.models import Meal
-from profiles.models import Profile
 from status.models import Status
 from workouts.models import WorkoutCheckin
 
