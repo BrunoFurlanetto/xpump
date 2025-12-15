@@ -22,7 +22,6 @@ def compute_group_members_data(group, period):
         start = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
         raise ValidationError('Period must be "week" or "month"')
-    print(start)
 
     base_qs = (
         group.groupmembers_set
@@ -57,6 +56,7 @@ def compute_group_members_data(group, period):
         result.append({
             "id": m.member.id,
             "username": m.member.username,
+            "full_name": m.member.get_full_name(),
             "email": m.member.email,
             "is_admin": m.is_admin,
             "joined_at": m.joined_at,
@@ -65,6 +65,7 @@ def compute_group_members_data(group, period):
             "score": score,
             "workouts": workouts,
             "meals": meals,
+            "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
         })
         pos += 1
 

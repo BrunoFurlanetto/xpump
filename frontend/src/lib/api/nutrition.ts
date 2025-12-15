@@ -29,6 +29,7 @@ export interface CreateMealData {
   meal_time: string;
   comments?: string;
   proof_files?: File[];
+  share_to_feed?: boolean;
 }
 
 export interface MealChoice {

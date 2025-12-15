@@ -1,40 +1,47 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Trophy,
-  Medal,
-  Crown,
-  Users,
-  Star,
-  Flame,
-  Target,
-  ArrowLeft,
-  UserCog,
-  Loader2,
-  Calendar,
-  Utensils,
-} from "lucide-react";
+import { Trophy, Medal, Crown, Users, ArrowLeft, UserCog, Loader2, Calendar, Users2 } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group, GroupsAPI } from "@/lib/api/groups";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import GroupCardHeader from "./group-card-header";
+import { cn } from "@/lib/utils";
 
 interface GroupDetailsProps {
   group: Group;
+  period?: "week" | "month" | "all";
+  onPeriodChange?: (period: "week" | "month" | "all") => void;
 }
 
-export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
+export function GroupDetails({ group: initialGroup, period: externalPeriod, onPeriodChange }: GroupDetailsProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("ranking");
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [group, setGroup] = useState(initialGroup);
-  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
+  const [period, setPeriod] = useState<"week" | "month" | "all">(externalPeriod || "week");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sincronizar período externo se fornecido
+  useEffect(() => {
+    if (externalPeriod && externalPeriod !== period) {
+      setPeriod(externalPeriod);
+    }
+  }, [externalPeriod]);
+
+  // Atualizar grupo quando período externo mudar
+  useEffect(() => {
+    if (externalPeriod) {
+      setGroup(initialGroup);
+    }
+  }, [initialGroup, externalPeriod]);
 
   // Fetch group data for specific period
   const fetchGroupData = useCallback(
@@ -45,6 +52,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
         const updatedGroup = await GroupsAPI.getGroup(initialGroup.id, selectedPeriod);
         console.log("✅ Group data updated:", updatedGroup);
         setGroup(updatedGroup);
+        onPeriodChange?.(selectedPeriod);
       } catch (error) {
         console.error("Error fetching group:", error);
       } finally {
@@ -101,14 +109,18 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
     .filter((m) => m.position !== undefined && m.position !== null)
     .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-  console.log("📊 Ranked members for period", period, ":", rankedMembers);
-
   const topThree = rankedMembers.slice(0, 3);
+
+  const canSeeGroupsTab = group.main && hasRole("Admin");
+
+  let tabs = 1;
+  if (canManageMembers) tabs += 1;
+  if (canSeeGroupsTab) tabs += 1;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start gap-4">
+      {/* Back Button */}
+      <div className="flex items-start">
         <Link
           href="/groups"
           className={buttonVariants({
@@ -120,94 +132,42 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Link>
-
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words">{group.name}</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">{group.description}</p>
-        </div>
       </div>
 
-      {/* Estatísticas do Grupo */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Membros</p>
-                <p className="text-2xl font-bold text-foreground">{group.stats?.total_members || 0}</p>
-              </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Treinos</p>
-                <p className="text-2xl font-bold text-foreground">{group.stats?.total_workouts || 0}</p>
-              </div>
-              <Target className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:px-5 sm:py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground whitespace-nowrap">Refeições Saudáveis</p>
-                <p className="text-2xl font-bold text-foreground">{group.stats?.total_meals || 0}</p>
-              </div>
-              <Utensils className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Sequência Média</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {group.stats?.mean_streak ? group.stats.mean_streak.toFixed(1) : "0"}
-                </p>
-              </div>
-              <Flame className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pontos Totais</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {group.stats?.total_points?.toLocaleString("pt-BR") || 0}
-                </p>
-              </div>
-              <Star className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Group Header */}
+      <GroupCardHeader
+        name={group.name}
+        description={group.description}
+        avatar={null}
+        stats={group.stats}
+        currentUserRole={currentUserRole}
+        showManageButton={canManageMembers}
+        onManageClick={() => setActiveTab("members")}
+      />
 
       {/* Conteúdo Principal com Abas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ranking" className="flex items-center gap-2">
-            <Trophy className="h-4 w-4" />
-            Ranking
-          </TabsTrigger>
-          {canManageMembers && (
-            <TabsTrigger value="members" className="flex items-center gap-2">
-              <UserCog className="h-4 w-4" />
-              Gerenciar Membros
+        {tabs > 1 && (
+          <TabsList className={cn("grid w-full grid-cols-3", tabs === 2 && "grid-cols-2", tabs === 1 && "grid-cols-1")}>
+            <TabsTrigger value="ranking" className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Ranking
             </TabsTrigger>
-          )}
-        </TabsList>
+            {canManageMembers && (
+              <TabsTrigger value="members" className="flex items-center gap-2">
+                <UserCog className="h-4 w-4" />
+                Membros
+              </TabsTrigger>
+            )}
+
+            {canSeeGroupsTab && (
+              <TabsTrigger value="groups" className="flex items-center gap-2">
+                <Users2 className="h-4 w-4" />
+                Grupos
+              </TabsTrigger>
+            )}
+          </TabsList>
+        )}
 
         <TabsContent value="ranking" className="space-y-4">
           {/* Controles de Período */}
@@ -266,27 +226,28 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                   <CardTitle className="text-lg text-foreground">Classificação - {periodLabels[period]}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-h-[calc(100vh-15rem)] overflow-y-auto">
                     {rankedMembers.length > 0 ? (
                       rankedMembers.map((member, index) => (
                         <div
                           key={member.id}
-                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${
                             index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
                           }`}
+                          onClick={() => router.push(`/profile/${member.profile_id}`)}
                         >
                           <div className="flex items-center gap-3">
                             {getPositionIcon(member.position || 0)}
                             <Avatar className="h-10 w-10">
                               <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-                                {getInitials(member.username)}
+                                {getInitials(member.full_name)}
                               </AvatarFallback>
                             </Avatar>
                           </div>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-foreground truncate">{member.username}</h4>
+                              <h4 className="font-semibold text-foreground truncate">{member.full_name}</h4>
                               {member.is_admin && <Crown className="h-4 w-4 text-yellow-400" />}
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -296,7 +257,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                           </div>
 
                           <div className="text-right">
-                            <p className="text-xl font-bold text-primary">{member.score || 0}</p>
+                            <p className="text-xl font-bold text-primary">{member.score?.toFixed(2) || 0}</p>
                             <p className="text-sm text-muted-foreground">pontos</p>
                           </div>
                         </div>
@@ -320,52 +281,58 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                       <CardTitle className="text-lg">Pódium - {periodLabels[period]}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-end justify-center gap-4">
+                      <div className="grid grid-cols-3 items-end justify-items-center justify-center  gap-1">
                         {/* 2º Lugar */}
                         {topThree[1] && (
                           <div className="text-center flex flex-col items-center justify-center">
-                            <div className="w-16 h-20 bg-gradient-to-t from-gray-500 to-gray-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
+                            <div className="w-16 h-24 bg-gradient-to-t from-gray-500 to-gray-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
                               <span className="text-white font-bold text-lg">2º</span>
                             </div>
                             <Avatar className="h-12 w-12 mx-auto mb-2">
                               <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600">
-                                {getInitials(topThree[1].username)}
+                                {getInitials(topThree[1].full_name)}
                               </AvatarFallback>
                             </Avatar>
-                            <p className="text-sm font-medium">{topThree[1].username}</p>
-                            <p className="text-xs text-muted-foreground">{topThree[1].score || 0} pts</p>
+                            <p className="text-sm font-medium text-nowrap overflow-hidden max-w-[90px]">
+                              {topThree[1].full_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{topThree[1].score?.toFixed(2) || 0} pts</p>
                           </div>
                         )}
 
                         {/* 1º Lugar */}
                         {topThree[0] && (
                           <div className="text-center flex flex-col items-center justify-center">
-                            <div className="w-16 h-24 bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
+                            <div className="w-16 h-28 bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-lg flex items-end justify-center pb-2 mb-2">
                               <span className="text-white font-bold text-lg">1º</span>
                             </div>
                             <Avatar className="h-14 w-14 mx-auto mb-2 ring-2 ring-yellow-400">
                               <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-yellow-600">
-                                {getInitials(topThree[0].username)}
+                                {getInitials(topThree[0].full_name)}
                               </AvatarFallback>
                             </Avatar>
-                            <p className="text-sm font-medium">{topThree[0].username}</p>
-                            <p className="text-xs text-muted-foreground">{topThree[0].score || 0} pts</p>
+                            <p className="text-sm font-medium text-nowrap overflow-hidden max-w-[90px]">
+                              {topThree[0].full_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{topThree[0].score?.toFixed(2) || 0} pts</p>
                           </div>
                         )}
 
                         {/* 3º Lugar */}
                         {topThree[2] && (
                           <div className="text-center flex flex-col items-center justify-center">
-                            <div className="w-16 h-16 bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-lg flex items-end justify-center pb-2 mb-2">
+                            <div className="w-16 h-20 bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-lg flex items-end justify-center pb-2 mb-2">
                               <span className="text-white font-bold text-lg">3º</span>
                             </div>
                             <Avatar className="h-12 w-12 mx-auto mb-2">
                               <AvatarFallback className="bg-gradient-to-br from-amber-700 to-amber-800">
-                                {getInitials(topThree[2].username)}
+                                {getInitials(topThree[2].full_name)}
                               </AvatarFallback>
                             </Avatar>
-                            <p className="text-sm font-medium">{topThree[2].username}</p>
-                            <p className="text-xs text-muted-foreground">{topThree[2].score || 0} pts</p>
+                            <p className="text-sm font-medium text-nowrap overflow-hidden max-w-[90px]">
+                              {topThree[2].full_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{topThree[2].score?.toFixed(2) || 0} pts</p>
                           </div>
                         )}
                       </div>
@@ -392,7 +359,12 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
                         <Users className="h-3 w-3" />
                         Criado por:
                       </span>
-                      <span className="font-medium">{group.created_by}</span>
+                      <span
+                        className="font-medium cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => router.push(`/profile/${group.owner_profile_id}`)}
+                      >
+                        {group.created_by}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -406,6 +378,7 @@ export function GroupDetails({ group: initialGroup }: GroupDetailsProps) {
           <TabsContent value="members">
             <GroupMembersManager
               groupId={group.id}
+              groupName={group.name}
               members={group.members}
               currentUserId={Number(user?.id)}
               currentUserRole={currentUserRole}

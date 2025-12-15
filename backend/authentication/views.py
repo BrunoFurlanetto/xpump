@@ -1,8 +1,7 @@
 from django.contrib.auth.models import User
-from django.shortcuts import render
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.views import (
@@ -11,9 +10,7 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView as SimpleJWTTokenVerifyView,
 )
 
-from authentication.serializer import UserSerializer
-from clients.models import Client
-from profiles.models import Profile
+from authentication.serializer import UserSerializer, CustomTokenObtainPairSerializer, CustomTokenRefreshSerializer
 
 
 @extend_schema(tags=['User'])
@@ -83,19 +80,19 @@ class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
 @extend_schema(tags=["JWT Auth"])
 class TokenObtainPairView(SimpleJWTTokenObtainPairView):
     """
-    JWT token obtain view for user authentication.
-    Returns access and refresh tokens for valid credentials.
+    JWT token obtain view com grupos de permissão incluídos.
+    Retorna access e refresh tokens com user_permission_groups no payload.
     """
-    pass
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 @extend_schema(tags=["JWT Auth"])
 class TokenRefreshView(SimpleJWTTokenRefreshView):
     """
-    JWT token refresh view for obtaining new access tokens.
-    Uses refresh token to generate new access token.
+    JWT token refresh view com grupos de permissão atualizados.
+    Retorna novo access token com user_permission_groups atualizados do banco.
     """
-    pass
+    serializer_class = CustomTokenRefreshSerializer
 
 
 @extend_schema(tags=["JWT Auth"])

@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from clients.models import Client
 from groups.models import GroupMembers
@@ -91,3 +93,41 @@ class UserSerializer(serializers.ModelSerializer):
         GroupMembers.objects.create(member=user, group=employer.groups, pending=False)
 
         return user
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Customiza o token JWT para incluir grupos de permissão do usuário.
+    Adiciona user_permission_groups ao payload do access token.
+    """
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Adiciona grupos de permissão ao payload do token
+        token['role'] = list(user.groups.values_list('name', flat=True))
+
+        return token
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    """
+    Customiza o refresh token para incluir grupos de permissão do usuário no novo access token.
+    Busca os grupos atualizados do banco de dados ao gerar novo access token.
+    """
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Obtém o refresh token e o usuário associado
+        refresh = RefreshToken(attrs['refresh'])
+        user_id = refresh.get('user_id')
+
+        # Busca o usuário e adiciona grupos ao novo access token
+        try:
+            user = User.objects.get(id=user_id)
+            # Adiciona grupos de permissão atualizados à resposta
+            data['role'] = list(user.groups.values_list('name', flat=True))
+        except User.DoesNotExist:
+            pass
+
+        return data

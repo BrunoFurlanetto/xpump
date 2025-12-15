@@ -5,6 +5,7 @@ export interface Group {
   description: string;
   created_by: string; // Nome completo do criador
   owner: number;
+  owner_profile_id: number;
   created_at: string;
   members: GroupMember[];
   pending_members: PendingMember[];
@@ -15,6 +16,8 @@ export interface Group {
 
 export interface GroupMember {
   id: number;
+  profile_id: number;
+  full_name: string;
   username: string;
   email: string;
   is_admin: boolean;

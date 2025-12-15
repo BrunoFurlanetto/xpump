@@ -85,6 +85,7 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
 
         base = self.get_serializer(group).data
         base['members'] = group_data.get('members', [])
+
         return Response(base, status=status.HTTP_200_OK)
 
 # @extend_schema(tags=['Groups'])

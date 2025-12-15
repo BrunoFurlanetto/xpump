@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,25 +14,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { 
-  MapPin, 
-  MessageSquare, 
-  Trophy, 
-  MoreVertical,
-  Edit3,
-  Trash2,
-  Save,
-  X
-} from 'lucide-react';
-import { WorkoutCheckin } from '@/hooks/useWorkouts';
+} from "@/components/ui/dropdown-menu";
+import { MapPin, MessageSquare, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
+import { WorkoutCheckin } from "@/lib/api/workouts";
 
 interface WorkoutCardProps {
   workout: WorkoutCheckin;
@@ -42,13 +33,7 @@ interface WorkoutCardProps {
   formatDuration: (duration: string) => string;
 }
 
-export function WorkoutCard({ 
-  workout, 
-  onUpdateComments, 
-  onDelete, 
-  formatDate, 
-  formatDuration 
-}: WorkoutCardProps) {
+export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, formatDuration }: WorkoutCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedComments, setEditedComments] = useState(workout.comments);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -83,19 +68,19 @@ export function WorkoutCard({
   };
 
   const getMultiplierColor = (multiplier: number) => {
-    if (multiplier >= 2.0) return 'text-yellow-400';
-    if (multiplier >= 1.75) return 'text-orange-400';
-    if (multiplier >= 1.5) return 'text-blue-400';
-    if (multiplier >= 1.25) return 'text-green-400';
-    return 'text-gray-400';
+    if (multiplier >= 2.0) return "text-yellow-400";
+    if (multiplier >= 1.75) return "text-orange-400";
+    if (multiplier >= 1.5) return "text-blue-400";
+    if (multiplier >= 1.25) return "text-green-400";
+    return "text-gray-400";
   };
 
   const getMultiplierBadge = (multiplier: number) => {
-    if (multiplier >= 2.0) return 'Lendário';
-    if (multiplier >= 1.75) return 'Excepcional';
-    if (multiplier >= 1.5) return 'Excelente';
-    if (multiplier >= 1.25) return 'Ótimo';
-    return 'Bom';
+    if (multiplier >= 2.0) return "Lendário";
+    if (multiplier >= 1.75) return "Excepcional";
+    if (multiplier >= 1.5) return "Excelente";
+    if (multiplier >= 1.25) return "Ótimo";
+    return "Bom";
   };
 
   return (
@@ -105,22 +90,17 @@ export function WorkoutCard({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-semibold text-foreground">
-                  {formatDate(workout.workout_date)}
-                </h3>
+                <h3 className="font-semibold text-foreground">{formatDate(workout.workout_date)}</h3>
                 <Badge variant="outline" className="text-xs">
                   {formatDuration(workout.duration)}
                 </Badge>
                 {workout.multiplier > 1 && (
-                  <Badge 
-                    variant="secondary" 
-                    className={`text-xs ${getMultiplierColor(workout.multiplier)}`}
-                  >
+                  <Badge variant="secondary" className={`text-xs ${getMultiplierColor(workout.multiplier)}`}>
                     {getMultiplierBadge(workout.multiplier)} ({workout.multiplier}x)
                   </Badge>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 {workout.location && (
                   <div className="flex items-center gap-1">
@@ -142,18 +122,12 @@ export function WorkoutCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover border-border">
-                <DropdownMenuItem 
-                  onClick={() => setIsEditing(true)}
-                  className="text-popover-foreground"
-                >
+                <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-popover-foreground">
                   <Edit3 className="mr-2 h-4 w-4" />
                   Editar Comentário
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="text-red-400 focus:text-red-400"
-                >
+                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-400 focus:text-red-400">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Excluir Treino
                 </DropdownMenuItem>
@@ -161,7 +135,7 @@ export function WorkoutCard({
             </DropdownMenu>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           {isEditing ? (
             <div className="space-y-3">
@@ -180,7 +154,7 @@ export function WorkoutCard({
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Save className="h-3 w-3 mr-1" />
-                  {isUpdating ? 'Salvando...' : 'Salvar'}
+                  {isUpdating ? "Salvando..." : "Salvar"}
                 </Button>
                 <Button
                   size="sm"
@@ -210,20 +184,14 @@ export function WorkoutCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir treino?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O treino será removido permanentemente 
-              e os pontos associados serão subtraídos do seu total.
+              Esta ação não pode ser desfeita. O treino será removido permanentemente e os pontos associados serão
+              subtraídos do seu total.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

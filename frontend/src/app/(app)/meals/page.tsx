@@ -1,52 +1,48 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Utensils, 
-  Plus, 
-  Trophy, 
-  Calendar,
-  Target,
-} from 'lucide-react';
-import { useMeals } from '@/hooks/useMeals';
-import { MealLogModal } from '@/components/meals/meal-log-modal';
-import { MealStats } from '@/components/meals/meal-stats';
-import { DailyMealCard } from '@/components/meals/daily-meal-card';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Utensils, Plus, Trophy, Calendar, Target } from "lucide-react";
+import { useMealsQuery, useCreateMeal, useUpdateMeal, useDeleteMeal } from "@/hooks/useMealsQuery";
+import { MealLogModal } from "@/components/meals/meal-log-modal";
+import { MealStats } from "@/components/meals/meal-stats";
+import { DailyMealCard } from "@/components/meals/daily-meal-card";
 
 export default function MealsPage() {
-  const { 
-    dailyMeals,
-    stats, 
-    mealTypes,
-    isLoading, 
-    isSubmitting,
-    createMeal,
-    updateMeal,
-    deleteMeal 
-  } = useMeals();
-  
+  const { dailyMeals, stats, mealTypes, isLoading } = useMealsQuery();
+  const createMealMutation = useCreateMeal();
+  const updateMealMutation = useUpdateMeal();
+  const deleteMealMutation = useDeleteMeal();
+
   const [showLogModal, setShowLogModal] = useState(false);
 
   const formatDateTitle = (dateString: string) => {
-    const date = new Date(dateString);
+    // Parse the date string as local date to avoid timezone issues
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) {
-      return 'Hoje';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Ontem';
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+
+    if (compareDate.getTime() === today.getTime()) {
+      return "Hoje";
+    } else if (compareDate.getTime() === yesterday.getTime()) {
+      return "Ontem";
     } else {
-      return date.toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        day: '2-digit',
-        month: '2-digit'
+      return date.toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
       });
     }
   };
@@ -61,7 +57,7 @@ export default function MealsPage() {
           </div>
           <Skeleton className="h-10 w-32" />
         </div>
-        
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} className="bg-card border-border">
@@ -71,7 +67,7 @@ export default function MealsPage() {
             </Card>
           ))}
         </div>
-        
+
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} className="bg-card border-border">
@@ -93,8 +89,8 @@ export default function MealsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Minhas Refeições</h1>
           <p className="text-muted-foreground">Registre suas refeições e mantenha uma alimentação equilibrada</p>
         </div>
-        
-        <Button 
+
+        <Button
           onClick={() => setShowLogModal(true)}
           className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
@@ -120,19 +116,18 @@ export default function MealsPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Refeições registradas hoje</span>
                 <span className="text-foreground font-medium">
-                  {dailyMeals[0]?.meals ? Object.values(dailyMeals[0].meals).filter(m => m !== null).length : 0}/4
+                  {dailyMeals[0]?.meals ? Object.values(dailyMeals[0].meals).filter((m) => m !== null).length : 0}/4
                 </span>
               </div>
-              <Progress 
-                value={dailyMeals[0]?.completion_percentage || 0} 
-                className="h-2"
-              />
+              <Progress value={dailyMeals[0]?.completion_percentage || 0} className="h-2" />
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">
-                  {dailyMeals[0]?.completion_percentage === 100 
-                    ? "🎉 Parabéns! Todas as refeições do dia registradas!" 
-                    : `Complete suas ${4 - (dailyMeals[0]?.meals ? Object.values(dailyMeals[0].meals).filter(m => m !== null).length : 0)} refeições restantes`
-                  }
+                  {dailyMeals[0]?.completion_percentage === 100
+                    ? "🎉 Parabéns! Todas as refeições do dia registradas!"
+                    : `Complete suas ${
+                        4 -
+                        (dailyMeals[0]?.meals ? Object.values(dailyMeals[0].meals).filter((m) => m !== null).length : 0)
+                      } refeições restantes`}
                 </span>
                 {dailyMeals[0]?.total_points && (
                   <Badge variant="secondary" className="text-xs">
@@ -158,10 +153,8 @@ export default function MealsPage() {
             <div className="text-center py-8">
               <Utensils className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-medium text-foreground mb-2">Nenhuma refeição registrada</h3>
-              <p className="text-muted-foreground mb-4">
-                Comece registrando sua primeira refeição!
-              </p>
-              <Button 
+              <p className="text-muted-foreground mb-4">Comece registrando sua primeira refeição!</p>
+              <Button
                 onClick={() => setShowLogModal(true)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
@@ -178,7 +171,7 @@ export default function MealsPage() {
                       {formatDateTitle(dayData.date)}
                     </h3>
                     <div className="flex items-center gap-2">
-                      <Badge 
+                      <Badge
                         variant={dayData.completion_percentage === 100 ? "default" : "outline"}
                         className="text-xs"
                       >
@@ -192,13 +185,17 @@ export default function MealsPage() {
                       )}
                     </div>
                   </div>
-                  
-                  <DailyMealCard 
+
+                  <DailyMealCard
                     dayData={dayData}
                     mealTypes={mealTypes}
                     onAddMeal={() => setShowLogModal(true)}
-                    onUpdateMeal={updateMeal}
-                    onDeleteMeal={deleteMeal}
+                    onUpdateMeal={async (id, comments) => {
+                      await updateMealMutation.mutateAsync({ id, comments });
+                    }}
+                    onDeleteMeal={async (id) => {
+                      await deleteMealMutation.mutateAsync(id);
+                    }}
                   />
                 </div>
               ))}
@@ -211,9 +208,12 @@ export default function MealsPage() {
       <MealLogModal
         isOpen={showLogModal}
         onClose={() => setShowLogModal(false)}
-        onSubmit={createMeal}
+        onSubmit={async (data) => {
+          await createMealMutation.mutateAsync(data);
+          setShowLogModal(false);
+        }}
         mealTypes={mealTypes}
-        isLoading={isSubmitting}
+        isLoading={createMealMutation.isPending}
       />
     </div>
   );
