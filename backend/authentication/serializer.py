@@ -8,6 +8,21 @@ from groups.models import GroupMembers
 from profiles.models import Profile
 
 
+class UserSimpleSerializer(serializers.ModelSerializer):
+    """Simplified user serializer for posts and comments"""
+    username = serializers.CharField(read_only=True)
+    full_name = serializers.SerializerMethodField()
+    score = serializers.FloatField(source='profile.score', read_only=True)
+    level = serializers.IntegerField(source='profile.level', read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'full_name', 'score', 'level']
+
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model with password confirmation and profile integration.
