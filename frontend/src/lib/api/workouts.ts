@@ -22,6 +22,7 @@ export interface CreateWorkoutData {
   workout_date: string;
   duration: string; // formato HH:MM:SS
   proof_files?: File[];
+  share_to_feed?: boolean;
 }
 
 export interface WorkoutStats {
@@ -41,7 +42,6 @@ export class WorkoutsAPI {
     if (!response.ok) {
       throw new Error("Erro ao buscar treinos");
     }
-
     return response.json();
   }
 
@@ -135,7 +135,7 @@ export class WorkoutsAPI {
 
     return {
       total_workouts: workouts.length,
-      total_points: Math.round(totalPoints),
+      total_points: totalPoints,
       current_streak: workouts[0]?.current_streak || 0,
       longest_streak: workouts[0]?.longest_streak || 0,
       this_week_workouts: thisWeekWorkouts.length,

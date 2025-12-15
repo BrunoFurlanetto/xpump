@@ -1,53 +1,63 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Dumbbell, 
-  Plus, 
-  Calendar,
-  Target,
-} from 'lucide-react';
-import { useWorkouts } from '@/hooks/useWorkouts';
-import { WorkoutCheckinModal } from '@/components/workouts/workout-checkin-modal';
-import { WorkoutCard } from '@/components/workouts/workout-card';
-import { WorkoutStats } from '@/components/workouts/workout-stats';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Dumbbell, Plus, Calendar, Target } from "lucide-react";
+import { useWorkoutsQuery, useCreateWorkout, useUpdateWorkout, useDeleteWorkout } from "@/hooks/useWorkoutsQuery";
+import { WorkoutCheckinModal } from "@/components/workouts/workout-checkin-modal";
+import { WorkoutCard } from "@/components/workouts/workout-card";
+import { WorkoutStats } from "@/components/workouts/workout-stats";
+import { useUserAuth } from "@/context/userAuthContext";
 
 export default function WorkoutsPage() {
-  const { 
-    workouts, 
-    streak, 
-    stats, 
-    isLoading, 
-    isSubmitting,
-    createWorkout,
-    updateWorkout,
-    deleteWorkout 
-  } = useWorkouts();
-  
+  const { user } = useUserAuth();
+  const userId = user?.id ? parseInt(user.id) : null;
+
+  const { data, isLoading } = useWorkoutsQuery(userId);
+  const createWorkout = useCreateWorkout(userId!);
+  const updateWorkout = useUpdateWorkout(userId!);
+  const deleteWorkout = useDeleteWorkout(userId!);
+
   const [showCheckinModal, setShowCheckinModal] = useState(false);
 
+  const workouts = data?.workouts || [];
+  const stats = data?.stats || null;
+  const streak = data?.streak || null;
+
+  const handleCreateWorkout = async (workoutData: any) => {
+    await createWorkout.mutateAsync(workoutData);
+    setShowCheckinModal(false);
+  };
+
+  const handleUpdateWorkout = async (id: number, comments: string) => {
+    await updateWorkout.mutateAsync({ workoutId: id, comments });
+  };
+
+  const handleDeleteWorkout = async (id: number) => {
+    await deleteWorkout.mutateAsync(id);
+  };
+
   const formatDuration = (duration: string) => {
-    const [hours, minutes] = duration.split(':');
+    const [hours, minutes] = duration.split(":");
     const h = parseInt(hours);
     const m = parseInt(minutes);
-    
+
     if (h > 0) {
-      return `${h}h${m > 0 ? ` ${m}min` : ''}`;
+      return `${h}h${m > 0 ? ` ${m}min` : ""}`;
     }
     return `${m}min`;
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -61,7 +71,7 @@ export default function WorkoutsPage() {
           </div>
           <Skeleton className="h-10 w-32" />
         </div>
-        
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} className="bg-card border-border">
@@ -71,7 +81,7 @@ export default function WorkoutsPage() {
             </Card>
           ))}
         </div>
-        
+
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} className="bg-card border-border">
@@ -93,8 +103,8 @@ export default function WorkoutsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Meus Treinos</h1>
           <p className="text-muted-foreground">Registre seus treinos e acompanhe seu progresso</p>
         </div>
-        
-        <Button 
+
+        <Button
           onClick={() => setShowCheckinModal(true)}
           className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
@@ -121,15 +131,11 @@ export default function WorkoutsPage() {
                 <span className="text-muted-foreground">Treinos realizados esta semana</span>
                 <span className="text-foreground font-medium">{stats.this_week_workouts}/3</span>
               </div>
-              <Progress 
-                value={(stats.this_week_workouts / 3) * 100} 
-                className="h-2"
-              />
+              <Progress value={(stats.this_week_workouts / 3) * 100} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                {stats.this_week_workouts >= 3 
-                  ? "🎉 Parabéns! Meta semanal atingida!" 
-                  : `Faltam ${3 - stats.this_week_workouts} treinos para completar sua meta`
-                }
+                {stats.this_week_workouts >= 3
+                  ? "🎉 Parabéns! Meta semanal atingida!"
+                  : `Faltam ${3 - stats.this_week_workouts} treinos para completar sua meta`}
               </p>
             </div>
           </CardContent>
@@ -149,10 +155,8 @@ export default function WorkoutsPage() {
             <div className="text-center py-8">
               <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-medium text-foreground mb-2">Nenhum treino registrado</h3>
-              <p className="text-muted-foreground mb-4">
-                Comece registrando seu primeiro treino!
-              </p>
-              <Button 
+              <p className="text-muted-foreground mb-4">Comece registrando seu primeiro treino!</p>
+              <Button
                 onClick={() => setShowCheckinModal(true)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
@@ -166,8 +170,8 @@ export default function WorkoutsPage() {
                 <WorkoutCard
                   key={workout.id}
                   workout={workout}
-                  onUpdateComments={updateWorkout}
-                  onDelete={deleteWorkout}
+                  onUpdateComments={handleUpdateWorkout}
+                  onDelete={handleDeleteWorkout}
                   formatDate={formatDate}
                   formatDuration={formatDuration}
                 />
@@ -181,8 +185,8 @@ export default function WorkoutsPage() {
       <WorkoutCheckinModal
         isOpen={showCheckinModal}
         onClose={() => setShowCheckinModal(false)}
-        onSubmit={createWorkout}
-        isLoading={isSubmitting}
+        onSubmit={handleCreateWorkout}
+        isLoading={createWorkout.isPending}
       />
     </div>
   );
