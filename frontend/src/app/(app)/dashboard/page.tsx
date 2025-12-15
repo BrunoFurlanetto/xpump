@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const isAdmin = roles.includes("admin") || roles.includes("Admin");
 
   // Se for admin, mostra o dashboard administrativo
-  if (!isAdmin) {
+  if (isAdmin) {
     return <AdminDashboardView />;
   }
 
