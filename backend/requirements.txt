@@ -22,7 +22,7 @@ jsonschema==4.24.0
 jsonschema-specifications==2025.4.1
 packaging==25.0
 pillow==11.3.0
-psycopg2-binary==2.9.11
+psycopg2-binary==2.9.9
 PyJWT==2.9.0
 python-dateutil==2.9.0.post0
 PyYAML==6.0.2
@@ -35,6 +35,7 @@ tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 whitenoise==6.11.0
+
 
 
 
