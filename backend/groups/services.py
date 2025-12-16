@@ -67,6 +67,7 @@ def compute_group_members_data(group, period):
             "score": score,
             "workouts": workouts,
             "meals": meals,
+            "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
         })
         pos += 1
 

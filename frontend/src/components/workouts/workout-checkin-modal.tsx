@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Dumbbell, MapPin, MessageSquare, Camera, Upload, X, Share2 } from "lucide-react";
-import { CreateWorkoutData } from "@/hooks/useWorkouts";
+import { CreateWorkoutData } from "@/lib/api/workouts";
 
 interface WorkoutCheckinModalProps {
   isOpen: boolean;
@@ -82,7 +82,7 @@ export function WorkoutCheckinModal({ isOpen, onClose, onSubmit, isLoading = fal
         comments: formData.comments,
         workout_date: formData.workout_date,
         duration,
-        proof_image: proofImage || undefined,
+        proof_files: proofImage ? [proofImage] : undefined,
         share_to_feed: shareToFeed,
       };
 

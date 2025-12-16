@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
 import { Meal } from "@/lib/api/nutrition";
-import { MealType } from "@/hooks/useMeals";
+import { MealType } from "@/hooks/useMealsQuery";
 
 interface MealCardProps {
   meal: Meal;

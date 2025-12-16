@@ -97,6 +97,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
                 "username": member.member.username,
                 "full_name": member.member.get_full_name(),
                 "email": member.member.email,
+                "profile_id": getattr(getattr(member.member, 'profile', None), 'id', None),
                 "is_admin": member.is_admin,
                 "joined_at": member.joined_at,
                 "pending": member.pending,
@@ -119,6 +120,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
                 "id": member.member.id,
                 "username": member.member.username,
                 "email": member.member.email,
+                "profile_id": getattr(getattr(member.member, 'profile', None), 'id', None),
                 "joined_at": member.joined_at,
             }
             for member in pending_members
@@ -161,7 +163,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
                 member_obj = getattr(gm, 'member', None)
 
                 if member_obj is not None:
-                    print(member_obj)
+
                     try:
                         total_workouts += member_obj.workouts.count()
                     except Exception:

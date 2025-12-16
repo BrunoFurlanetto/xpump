@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { DailyMeals, MealType } from "@/hooks/useMeals";
+import { DailyMeals, MealType } from "@/hooks/useMealsQuery";
 import { MealCard } from "./meal-card";
 
 interface DailyMealCardProps {
@@ -27,23 +27,12 @@ export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onD
 
     console.log(dayData, getMealTypeInfo(mealTypeId), mealTypeId);
     if (meal) {
-      return (
-        <MealCard
-          key={meal.id}
-          meal={meal}
-          mealType={mealTypeInfo}
-          onUpdateComments={onUpdateMeal}
-          onDelete={onDeleteMeal}
-        />
-      );
+      return <MealCard meal={meal} mealType={mealTypeInfo} onUpdateComments={onUpdateMeal} onDelete={onDeleteMeal} />;
     }
 
     // Slot vazio para adicionar refeição
     return (
-      <div
-        key={mealTypeId}
-        className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
-      >
+      <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -72,7 +61,11 @@ export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onD
     <Card className="bg-card border-border">
       <CardContent className="p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {mealTypes.sort((a, b) => a.order - b.order).map((mealType) => renderMealSlot(mealType.id))}
+          {mealTypes
+            .sort((a, b) => a.order - b.order)
+            .map((mealType) => (
+              <div key={mealType.id}>{renderMealSlot(mealType.id)}</div>
+            ))}
         </div>
       </CardContent>
     </Card>

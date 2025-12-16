@@ -12,12 +12,11 @@ import { CreateGroupData } from "@/lib/api/groups";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useGroupsContext } from "@/context/groupsContext";
+import { useCreateGroup } from "@/hooks/useGroupsQuery";
 
 export function CreateGroupModal() {
   const router = useRouter();
-  const { createGroup } = useGroupsContext();
-  const [isLoading, setIsLoading] = useState(false);
+  const createGroup = useCreateGroup();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<CreateGroupData>({
     name: "",
@@ -50,11 +49,8 @@ export function CreateGroupModal() {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-
     try {
-      await createGroup(formData);
-      toast.success("Grupo criado com sucesso!");
+      await createGroup.mutateAsync(formData);
       handleClose();
 
       // Show global loading overlay during refresh
@@ -64,14 +60,12 @@ export function CreateGroupModal() {
       });
     } catch (error) {
       console.error("Erro ao criar grupo:", error);
-      toast.error("Erro ao criar grupo");
-    } finally {
-      setIsLoading(false);
+      // Erro já tratado no hook
     }
   };
 
   const handleClose = () => {
-    if (!isLoading) {
+    if (!createGroup.isPending) {
       setFormData({ name: "", description: "" });
       setErrors({});
       setIsOpen(false);
@@ -119,7 +113,7 @@ export function CreateGroupModal() {
               className={`bg-background border-border text-foreground placeholder:text-muted-foreground ${
                 errors.name ? "border-red-500" : ""
               }`}
-              disabled={isLoading}
+              disabled={createGroup.isPending}
               maxLength={50}
             />
             {errors.name && <p className="text-sm text-red-400">{errors.name}</p>}
@@ -138,7 +132,7 @@ export function CreateGroupModal() {
               className={`bg-background border-border text-foreground placeholder:text-muted-foreground ${
                 errors.description ? "border-red-500" : ""
               }`}
-              disabled={isLoading}
+              disabled={createGroup.isPending}
               maxLength={200}
               rows={3}
             />
@@ -151,17 +145,17 @@ export function CreateGroupModal() {
               type="button"
               variant="outline"
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={createGroup.isPending}
               className="flex-1 border-border text-foreground hover:bg-muted"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !formData.name.trim()}
+              disabled={createGroup.isPending || !formData.name.trim()}
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {createGroup.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Grupo
             </Button>
           </div>

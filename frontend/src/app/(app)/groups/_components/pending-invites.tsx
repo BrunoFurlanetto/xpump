@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Group } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useGroupsContext } from "@/context/groupsContext";
+import { useRespondToInvite } from "@/hooks/useGroupsQuery";
 
 interface PendingInvitesProps {
   groups: Group[];
@@ -17,7 +17,7 @@ interface PendingInvitesProps {
 
 export function PendingInvites({ groups }: PendingInvitesProps) {
   const router = useRouter();
-  const { respondToInvite } = useGroupsContext();
+  const respondToInvite = useRespondToInvite();
   const pendingGroups = groups.filter((group) => group.pending);
 
   const [respondingTo, setRespondingTo] = useState<number | null>(null);
@@ -27,7 +27,7 @@ export function PendingInvites({ groups }: PendingInvitesProps) {
     setRespondingTo(groupId);
 
     try {
-      await respondToInvite(groupId, action);
+      await respondToInvite.mutateAsync({ groupId, action });
 
       const group = pendingGroups.find((g) => g.id === groupId);
       if (action === "accept") {
@@ -42,7 +42,7 @@ export function PendingInvites({ groups }: PendingInvitesProps) {
         router.refresh();
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao responder convite");
+      // Erro já tratado no hook
     } finally {
       setRespondingTo(null);
     }

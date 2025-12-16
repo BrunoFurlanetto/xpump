@@ -1,5 +1,62 @@
 // Admin API - Endpoints para painel administrativo
 
+// ===== DASHBOARD GERAL DO SISTEMA (Personal Trainer) =====
+export interface SystemDashboardStats {
+  total_clients: number;
+  active_clients: number;
+  inactive_clients: number;
+  total_groups: number;
+  total_workouts: number;
+  total_meals: number;
+  workouts_today: number;
+  workouts_this_week: number;
+  workouts_this_month: number;
+  meals_today: number;
+  meals_this_week: number;
+  meals_this_month: number;
+  new_clients_this_month: number;
+  pending_validations: number;
+}
+
+export interface ClientOverview {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  workout_count: number;
+  meal_count: number;
+  current_workout_streak: number;
+  current_meal_streak: number;
+  last_activity?: string;
+  profile_score: number;
+  profile_level: number;
+  is_active: boolean;
+  date_joined: string;
+}
+
+export interface GroupOverview {
+  id: number;
+  name: string;
+  description: string;
+  member_count: number;
+  total_workouts: number;
+  total_meals: number;
+  created_at: string;
+  active_members_today: number;
+}
+
+export interface SystemActivity {
+  id: number;
+  type: "workout" | "meal" | "client_join" | "group_created";
+  user_id: number;
+  user_name: string;
+  description: string;
+  timestamp: string;
+  related_id?: number;
+}
+
+// ===== DASHBOARD DE GRUPO (Admin específico de grupo) =====
 export interface AdminGroupStats {
   group_id: number;
   group_name: string;
@@ -74,6 +131,99 @@ export interface UpdateValidationData {
 }
 
 export class AdminAPI {
+  // ===== ENDPOINTS PARA DASHBOARD GERAL DO SISTEMA =====
+
+  /**
+   * Busca estatísticas gerais do sistema (visão do Personal Trainer)
+   */
+  static async getSystemDashboardStats(): Promise<SystemDashboardStats> {
+    const response = await fetch("/api/admin/system/stats");
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar estatísticas do sistema");
+    }
+    return response.json();
+  }
+
+  /**
+   * Busca lista de todos os clientes com suas estatísticas
+   */
+  static async getAllClients(
+    page: number = 1,
+    pageSize: number = 10,
+    orderBy: string = "-last_activity",
+    filters?: {
+      is_active?: boolean;
+      search?: string;
+    }
+  ): Promise<{ results: ClientOverview[]; count: number }> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+      ordering: orderBy,
+      ...(filters?.is_active !== undefined && { is_active: filters.is_active.toString() }),
+      ...(filters?.search && { search: filters.search }),
+    });
+
+    const response = await fetch(`/api/admin/system/clients?${params}`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar clientes");
+    }
+    return response.json();
+  }
+
+  /**
+   * Busca lista de todos os grupos com estatísticas
+   */
+  static async getAllGroups(
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<{ results: GroupOverview[]; count: number }> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    });
+
+    const response = await fetch(`/api/admin/system/groups?${params}`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar grupos");
+    }
+    return response.json();
+  }
+
+  /**
+   * Busca atividades recentes no sistema
+   */
+  static async getSystemActivities(limit: number = 20, type?: string): Promise<SystemActivity[]> {
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      ...(type && { type }),
+    });
+
+    const response = await fetch(`/api/admin/system/activities?${params}`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar atividades do sistema");
+    }
+    return response.json();
+  }
+
+  /**
+   * Busca estatísticas detalhadas de um cliente específico
+   */
+  static async getClientDetail(clientId: number): Promise<ClientOverview> {
+    const response = await fetch(`/api/admin/system/clients/${clientId}`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar detalhes do cliente");
+    }
+    return response.json();
+  }
+
+  // ===== ENDPOINTS PARA DASHBOARD DE GRUPO =====
+
   /**
    * Get dashboard data for a specific group
    */
@@ -161,10 +311,7 @@ export class AdminAPI {
   /**
    * Update validation status of a workout
    */
-  static async updateWorkoutValidation(
-    workoutId: number,
-    data: UpdateValidationData
-  ): Promise<AdminWorkoutDetail> {
+  static async updateWorkoutValidation(workoutId: number, data: UpdateValidationData): Promise<AdminWorkoutDetail> {
     const response = await fetch(`/api/admin/workouts/${workoutId}/validate`, {
       method: "PATCH",
       headers: {
@@ -184,10 +331,7 @@ export class AdminAPI {
   /**
    * Update validation status of a meal
    */
-  static async updateMealValidation(
-    mealId: number,
-    data: UpdateValidationData
-  ): Promise<AdminMealDetail> {
+  static async updateMealValidation(mealId: number, data: UpdateValidationData): Promise<AdminMealDetail> {
     const response = await fetch(`/api/admin/meals/${mealId}/validate`, {
       method: "PATCH",
       headers: {
@@ -207,11 +351,7 @@ export class AdminAPI {
   /**
    * Get group statistics for a date range
    */
-  static async getGroupStats(
-    groupId: number,
-    startDate: string,
-    endDate: string
-  ): Promise<AdminGroupStats> {
+  static async getGroupStats(groupId: number, startDate: string, endDate: string): Promise<AdminGroupStats> {
     const params = new URLSearchParams({
       groupId: groupId.toString(),
       startDate,

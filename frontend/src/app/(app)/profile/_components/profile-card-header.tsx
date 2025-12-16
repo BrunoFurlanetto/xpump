@@ -1,4 +1,3 @@
-import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Flame, Settings, User, Crown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,12 +10,14 @@ const ProfileCardHeader = ({
   avatar,
   current_streak,
   level,
+  showEditButton = false,
 }: {
   name: string;
   email: string;
   avatar: string | null;
   current_streak: number;
   level: number;
+  showEditButton?: boolean;
 }) => {
   return (
     <Card className="border-border overflow-hidden">
@@ -26,16 +27,18 @@ const ProfileCardHeader = ({
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 
         {/* Action Button - Only visible on desktop in the banner */}
-        <div className="hidden sm:block absolute top-4 right-4">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="gap-2 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
-          >
-            <Settings className="h-4 w-4" />
-            <span>Editar Perfil</span>
-          </Button>
-        </div>
+        {showEditButton && (
+          <div className="hidden sm:block absolute top-4 right-4">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Editar Perfil</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       <CardContent className="p-6 space-y-6">
@@ -91,12 +94,14 @@ const ProfileCardHeader = ({
         </div>
 
         {/* Mobile Action Button */}
-        <div className="sm:hidden flex justify-center">
-          <Button variant="outline" size="sm" className="gap-2 w-full max-w-xs">
-            <Settings className="h-4 w-4" />
-            Editar Perfil
-          </Button>
-        </div>
+        {showEditButton && (
+          <div className="sm:hidden flex justify-center">
+            <Button variant="outline" size="sm" className="gap-2 w-full max-w-xs">
+              <Settings className="h-4 w-4" />
+              Editar Perfil
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
