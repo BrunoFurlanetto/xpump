@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from groups.models import Group, GroupMembers
 from groups.permissions import IsMember, IsAdminMember, IsGroupMember
 from groups.serializer import GroupMemberSerializer, GroupListSerializer, GroupDetailSerializer
-from groups.services import compute_group_members_data, compute_another_groups
+from groups.services import compute_group_members_data
 
 
 @extend_schema(tags=['Groups'])
@@ -48,12 +48,6 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Group.objects.all()
     serializer_class = GroupDetailSerializer
     permission_classes = [IsAuthenticated, IsGroupMember]
-
-    def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx['detail'] = getattr(self, 'action', None) == 'retrieve'
-
-        return ctx
 
     def destroy(self, request, *args, **kwargs):
         """

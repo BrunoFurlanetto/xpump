@@ -109,7 +109,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             'other_groups',
             'main',
         ]  # Include all model fields in serialization
-        read_only_fields = ['created_by', 'created_at', 'members', 'pending_members', 'other_groups', 'main']  # Prevent modification of read-only fields
+        read_only_fields = ['created_by', 'created_at', 'members', 'other_groups', 'main']  # Prevent modification of read-only fields
 
     def get_members(self, obj):
         """
@@ -262,7 +262,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         """
         from groups.services import compute_another_groups
 
-        if obj.owner == self.context['request'].user:
+        if obj.owner == self.context['request'].user or self.context['request'].user.is_superuser:
             if obj.main:
                 return compute_another_groups(obj)
 

@@ -90,11 +90,24 @@ def compute_another_groups(main_group):
             to_attr='other_groups_memberships'
         )
     )
+    other_groups = []
+    seen = set()
 
     for gm in group_members:
-        other_groups = [
-            {'id': o.group.id, 'name': o.group.name, 'owner': o.group.created_by.get_full_name()}
-            for o in getattr(gm.member, 'other_groups_memberships', [])
-        ]
+        for member in getattr(gm.member, 'other_groups_memberships', []):
+            if member.group == main_group:
+                continue
+
+            gid = member.group.id
+
+            if gid in seen:
+                continue
+
+            seen.add(gid)
+            other_groups.append({
+                'id': gid,
+                'name': member.group.name,
+                'owner': member.group.created_by.get_full_name()
+            })
 
     return other_groups

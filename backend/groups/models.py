@@ -28,7 +28,7 @@ class Group(models.Model):
         upload_to='group_photos',
         null=True,
         blank=True,
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'mp4'])]
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])]
     )
     main = models.BooleanField(default=False)
 
