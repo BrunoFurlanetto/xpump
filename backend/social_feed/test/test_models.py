@@ -26,6 +26,7 @@ class PostModelTest(SocialFeedBaseTestCase):
             content_text=fake.text(max_nb_chars=200),
             visibility='global'
         )
+
         self.assertEqual(post.content_type, 'social')
         self.assertTrue(post.allow_comments)
         self.assertEqual(post.comments_count, 0)
