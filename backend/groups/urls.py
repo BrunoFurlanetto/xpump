@@ -1,9 +1,10 @@
 from django.urls import path
 from .views import GroupsAPIView, GroupAPIView, InviteGroupAPIView, GroupMemberAPIView, InviteGroupAccept, \
-    QuitingGroupAPIView, GroupMeAPIView
+    QuitingGroupAPIView, GroupMeAPIView, GroupsAdminAPIView
 
 urlpatterns = [
     path('', GroupsAPIView.as_view(), name='groups-list'),
+    path('admin/', GroupsAdminAPIView.as_view(), name='groups-list-admin'),
     path('<int:pk>/', GroupAPIView.as_view(), name='groups-detail'),
     # path('<int:pk>/stats/', GroupStatsAPIView.as_view(), name='groups-stats'),
     path('me/', GroupMeAPIView.as_view(), name='groups-me'),

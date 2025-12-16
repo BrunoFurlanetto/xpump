@@ -46,9 +46,6 @@ class GroupListSerializer(serializers.ModelSerializer):
             )
         ).order_by('position')
 
-        self._members_cache = members
-        self._members_count_cache = len(members)
-
         return [{
                 "id": member.member.id,
                 "username": member.member.username,
@@ -79,6 +76,60 @@ class GroupListSerializer(serializers.ModelSerializer):
                 "joined_at": member.joined_at,
             }
             for member in pending_members
+        ]
+
+
+class GroupAdminListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Group model.
+    Handles serialization/deserialization of group data for API endpoints.
+    """
+
+    members = serializers.SerializerMethodField()
+    created_by = serializers.CharField(source='created_by.get_full_name', read_only=True)
+
+    class Meta:
+        model = Group
+        fields = [
+            'id',
+            'name',
+            'photo',
+            'description',
+            'created_by',
+            'owner',
+            'created_at',
+            'members',
+            'main',
+        ]  # Include all model fields in serialization
+        read_only_fields = ['photo', 'created_by', 'created_at', 'members', 'main']  # Prevent modification of read-only fields
+
+    def get_members(self, obj):
+        """
+        Retrieve and serialize the members of the group.
+        Uses GroupMemberSerializer to represent each member.
+        """
+        members = obj.groupmembers_set.select_related('member', 'member__profile').filter(pending=False).annotate(
+            score=F('member__profile__score'),
+            position=Window(
+                expression=Rank(),
+                order_by=F('member__profile__score').desc(),
+            )
+        ).order_by('position')
+
+        return [{
+                "id": member.member.id,
+                "username": member.member.username,
+                "full_name": member.member.get_full_name(),
+                "email": member.member.email,
+                "is_admin": member.is_admin,
+                "joined_at": member.joined_at,
+                "pending": member.pending,
+                "position": int(member.position) if not member.pending else None,
+                "score": member.score if not member.pending else None,
+                "workouts": member.member.workouts.count(),
+                "meals": member.member.meals.count(),
+            }
+            for member in members
         ]
 
 
@@ -287,6 +338,7 @@ class GroupMemberSerializer(serializers.ModelSerializer):
         """
         errors = {}
         read_only = getattr(self.Meta, 'read_only_fields', ())
+
         for field in read_only:
             if field in (self.initial_data or {}):
                 errors[field] = "This field is read-only and cannot be modified."

@@ -3,15 +3,27 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from groups.models import Group, GroupMembers
 from groups.permissions import IsMember, IsAdminMember, IsGroupMember
-from groups.serializer import GroupMemberSerializer, GroupListSerializer, GroupDetailSerializer
+from groups.serializer import GroupMemberSerializer, GroupListSerializer, GroupDetailSerializer, \
+    GroupAdminListSerializer
 from groups.services import compute_group_members_data
+
+
+@extend_schema(tags=['groups'])
+class GroupsAdminAPIView(ListAPIView):
+    """
+    API view for listing all main groups for admin users.
+    - GET: Returns list of all main groups (admin only)
+    """
+    queryset = Group.objects.filter(main=True)
+    serializer_class = GroupAdminListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
 
 @extend_schema(tags=['Groups'])
