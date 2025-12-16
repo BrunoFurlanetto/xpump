@@ -15,15 +15,14 @@ class GroupListSerializer(serializers.ModelSerializer):
 
     members = serializers.SerializerMethodField()
     pending_members = serializers.SerializerMethodField()
-    other_groups = serializers.SerializerMethodField(read_only=True)
     created_by = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    stats = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Group
         fields = [
             'id',
             'name',
+            'photo',
             'description',
             'created_by',
             'owner',
@@ -32,7 +31,7 @@ class GroupListSerializer(serializers.ModelSerializer):
             'pending_members',
             'main',
         ]  # Include all model fields in serialization
-        read_only_fields = ['created_by', 'created_at', 'members', 'pending_members', 'main']  # Prevent modification of read-only fields
+        read_only_fields = ['photo', 'created_by', 'created_at', 'members', 'pending_members', 'main']  # Prevent modification of read-only fields
 
     def get_members(self, obj):
         """
@@ -81,120 +80,6 @@ class GroupListSerializer(serializers.ModelSerializer):
             }
             for member in pending_members
         ]
-
-    def get_stats(self, obj):
-        """
-        Return group statistics (use cache if available):
-            - total_members
-            - total_points
-            - total_workouts
-            - total_meals
-            - mean_streak
-            - mean_workout_streak
-            - mean_meal_streak
-        """
-        from django.db.models import Sum, Avg
-
-        if hasattr(self, '_members_cache'):
-            members = self._members_cache
-            members = list(members) if not isinstance(members, list) else members
-            total_members = getattr(self, '_members_count_cache', len(members))
-
-            total_points = 0
-            total_workouts = 0
-            total_meals = 0
-            workout_streaks = []
-            meal_streaks = []
-
-            for gm in members:
-                # pontos (anotação 'score' ou fallback para profile.score)
-                score = getattr(gm, 'score', None)
-                if score is None:
-                    score = getattr(getattr(gm, 'member', None), 'profile', None)
-                    score = getattr(score, 'score', 0) if score is not None else 0
-
-                total_points += score or 0
-
-                # contagens (usa .count() para evitar carregar objetos)
-                member_obj = getattr(gm, 'member', None)
-
-                if member_obj is not None:
-                    print(member_obj)
-                    try:
-                        total_workouts += member_obj.workouts.count()
-                    except Exception:
-                        pass
-                    try:
-                        total_meals += member_obj.meals.count()
-                    except Exception:
-                        pass
-
-                    if getattr(member_obj, 'workout_streak', None) is not None:
-                        workout_streaks.append(member_obj.workout_streak.current_streak)
-                    if getattr(member_obj, 'meal_streak', None) is not None:
-                        meal_streaks.append(member_obj.meal_streak.current_streak)
-
-            mean_workout_streak = (sum(workout_streaks) / len(workout_streaks)) if workout_streaks else None
-            mean_meal_streak = (sum(meal_streaks) / len(meal_streaks)) if meal_streaks else None
-
-            return {
-                "total_members": total_members,
-                "total_points": total_points,
-                "total_workouts": total_workouts,
-                "total_meals": total_meals,
-                "mean_streak": ((mean_workout_streak + mean_meal_streak) / 2) if (mean_workout_streak is not None and mean_meal_streak is not None) else None,
-                "mean_workout_streak": mean_workout_streak,
-                "mean_meal_streak": mean_meal_streak,
-            }
-
-        workouts_subq = WorkoutCheckin.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values('cnt')
-        meals_subq = Meal.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values('cnt')
-
-        members_annotated = obj.groupmembers_set.filter(pending=False).annotate(
-            points=F('member__profile__score'),
-            workouts_count=Subquery(workouts_subq, output_field=IntegerField()),
-            meals_count=Subquery(meals_subq, output_field=IntegerField()),
-        )
-
-        totals = members_annotated.aggregate(
-            total_points=Sum('points'),
-            total_workouts=Sum('workouts_count'),
-            total_meals=Sum('meals_count'),
-            mean_workout_streak=Avg('member__workout_streak__current_streak'),
-            mean_meal_streak=Avg('member__meal_streak__current_streak'),
-        )
-
-        total_members = members_annotated.count()
-        mw = totals.get('mean_workout_streak') or 0
-        mm = totals.get('mean_meal_streak') or 0
-
-        return {
-            "total_members": total_members,
-            "total_points": totals.get('total_points') or 0,
-            "total_workouts": totals.get('total_workouts') or 0,
-            "total_meals": totals.get('total_meals') or 0,
-            "mean_streak": (mw + mm) / 2 if (mw or mm) else 0,
-            "mean_workout_streak": mw,
-            "mean_meal_streak": mm,
-        }
-
-    def get_other_groups(self, obj):
-        """
-        Retrieve and serialize other groups associated with the same members as the current group.
-        Excludes the current group from the list.
-        """
-        print(self.context.get('detail'))
-        if not self.context.get('detail'):
-            return None
-
-        from groups.services import compute_another_groups
-
-        print(obj.owner, self.context['request'].user.id)
-        if self.context['request'].user.is_superuser:
-            if obj.main:
-                return compute_another_groups(obj)
-
-        return None
 
 
 class GroupDetailSerializer(serializers.ModelSerializer):
@@ -214,15 +99,17 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'photo',
             'description',
             'created_by',
             'owner',
             'created_at',
             'members',
             'stats',
+            'other_groups',
             'main',
         ]  # Include all model fields in serialization
-        read_only_fields = ['created_by', 'created_at', 'members', 'pending_members', 'main']  # Prevent modification of read-only fields
+        read_only_fields = ['created_by', 'created_at', 'members', 'pending_members', 'other_groups', 'main']  # Prevent modification of read-only fields
 
     def get_members(self, obj):
         """
@@ -373,14 +260,9 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         Retrieve and serialize other groups associated with the same members as the current group.
         Excludes the current group from the list.
         """
-        print(self.context.get('detail'))
-        if not self.context.get('detail'):
-            return None
-
         from groups.services import compute_another_groups
 
-        print(obj.owner, self.context['request'].user.id)
-        if self.context['request'].user.is_superuser:
+        if obj.owner == self.context['request'].user:
             if obj.main:
                 return compute_another_groups(obj)
 

@@ -2,6 +2,7 @@ import secrets
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.core.validators import FileExtensionValidator
 
 
 def invate_code_generator():
@@ -23,6 +24,12 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     created_by = models.ForeignKey(User, editable=False, on_delete=models.PROTECT, related_name='group_created_by')
     owner = models.ForeignKey(User, on_delete=models.PROTECT, related_name='group_owner', blank=True)
+    photo = models.ImageField(
+        upload_to='group_photos',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'mp4'])]
+    )
     main = models.BooleanField(default=False)
 
     def __str__(self):

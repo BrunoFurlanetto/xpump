@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from groups.models import Group, GroupMembers
 from groups.permissions import IsMember, IsAdminMember, IsGroupMember
-from groups.serializer import GroupMemberSerializer, GroupListSerializer
+from groups.serializer import GroupMemberSerializer, GroupListSerializer, GroupDetailSerializer
 from groups.services import compute_group_members_data, compute_another_groups
 
 
@@ -46,7 +46,7 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
     Only group owners can delete groups.
     """
     queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    serializer_class = GroupDetailSerializer
     permission_classes = [IsAuthenticated, IsGroupMember]
 
     def get_serializer_context(self):
@@ -108,7 +108,7 @@ class GroupMeAPIView(APIView):
     def get(self, request, *args, **kwargs):
         members = GroupMembers.objects.filter(member=self.request.user)
         groups = Group.objects.filter(groupmembers__in=members).distinct()
-        serializer = GroupSerializer(groups, many=True, context={'request': request})
+        serializer = GroupListSerializer(groups, many=True, context={'request': request})
 
         data = serializer.data
         pending_map = {gm.group_id: gm.pending for gm in members}
