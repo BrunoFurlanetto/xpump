@@ -9,7 +9,7 @@ import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-mo
 
 const GroupList = ({ groups }: { groups: Group[] }) => {
   const confirmedGroups = groups.filter((group) => !group.pending);
-  const companyGroup = confirmedGroups.find((group) => group.main === true);
+  const companyGroup = confirmedGroups.filter((group) => group.main === true);
 
   const otherGroups = confirmedGroups.filter((group) => group.main !== true);
   return (
@@ -26,7 +26,9 @@ const GroupList = ({ groups }: { groups: Group[] }) => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <GroupCard group={companyGroup} />
+            {companyGroup.map((group) => (
+              <GroupCard key={group.id} group={group} />
+            ))}
           </div>
         </div>
       )}

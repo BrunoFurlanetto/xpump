@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { GroupsAPI, Group, CreateGroupData, UpdateMemberData } from "@/lib/api/groups";
+import { GroupsAPI, CreateGroupData, UpdateMemberData } from "@/lib/api/groups";
 import { toast } from "sonner";
+import { useUserAuth } from "@/context/userAuthContext";
 
 // Query Keys
 export const groupsKeys = {
@@ -15,9 +16,27 @@ export const groupsKeys = {
 
 // Hook para buscar todos os grupos
 export function useGroupsQuery() {
+  // Verifica se o usuário é administrador (Personal Trainer)
+  const { roles, isFetching } = useUserAuth();
+
   return useQuery({
     queryKey: groupsKeys.list(),
-    queryFn: () => GroupsAPI.listMyGroups(),
+    queryFn: () => {
+      const isAdmin = roles.some(role => role.toLowerCase() === "admin");
+      console.log("User is admin:", isAdmin);
+      return isAdmin ? GroupsAPI.listGroupsAdmin() : GroupsAPI.listMyGroups()
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    enabled: !isFetching,
+  });
+}
+
+
+// Hook para buscar todos os grupos (admin)
+export function useGroupsAdminQuery() {
+  return useQuery({
+    queryKey: groupsKeys.list(),
+    queryFn: () => GroupsAPI.listGroupsAdmin(),
     staleTime: 2 * 60 * 1000, // 2 minutos
   });
 }
@@ -56,7 +75,7 @@ export function useUpdateGroup() {
   return useMutation({
     mutationFn: ({ groupId, data }: { groupId: number; data: Partial<CreateGroupData> }) =>
       GroupsAPI.updateGroup(groupId, data),
-    onSuccess: (updatedGroup, variables) => {
+    onSuccess: (updatedGroup) => {
       queryClient.invalidateQueries({ queryKey: groupsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: groupsKeys.details() });
       toast.success("Grupo atualizado com sucesso!");

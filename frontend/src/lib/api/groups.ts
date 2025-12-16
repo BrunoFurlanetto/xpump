@@ -12,6 +12,7 @@ export interface Group {
   stats: GroupStats;
   main: boolean;
   pending: boolean;
+  members_count: number;
 }
 
 export interface GroupMember {
@@ -74,6 +75,18 @@ export class GroupsAPI {
     return response.json();
   }
 
+  /**
+   * List all groups that is enterprise to admins
+   */
+  static async listGroupsAdmin(): Promise<Group[]> {
+    const response = await fetch(`/api/groups?endpoint=admin`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar grupos");
+    }
+
+    return response.json();
+  }
   /**
    * Get a specific group by ID with optional period filter
    */

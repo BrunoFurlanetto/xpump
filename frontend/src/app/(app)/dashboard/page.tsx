@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const userId = user?.id ? parseInt(user.id) : null;
 
   // Verifica se o usuário é administrador (Personal Trainer)
-  const isAdmin = roles.includes("admin") || roles.includes("Admin");
+  const isAdmin = roles.some(role => role.toLowerCase() === "admin");
 
   // Se for admin, mostra o dashboard administrativo
   if (isAdmin) {
