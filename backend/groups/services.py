@@ -2,8 +2,10 @@
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, FloatField, FilteredRelation
+from django.db.models import Sum, Count, Q, FloatField, FilteredRelation, Prefetch
 from django.db.models.functions import Coalesce
+
+from groups.models import GroupMembers
 
 
 def compute_group_members_data(group, period):
@@ -22,7 +24,6 @@ def compute_group_members_data(group, period):
         start = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
         raise ValidationError('Period must be "week" or "month"')
-    print(start)
 
     base_qs = (
         group.groupmembers_set
@@ -76,3 +77,24 @@ def compute_group_members_data(group, period):
     }
 
     return group_data
+
+
+def compute_another_groups(main_group):
+    group_members = GroupMembers.objects.filter(group=main_group).select_related(
+        'member',
+        'member__profile'
+    ).prefetch_related(
+        Prefetch(
+            'member__groupmembers_set',
+            queryset=GroupMembers.objects.select_related('group').filter(pending=False),
+            to_attr='other_groups_memberships'
+        )
+    )
+
+    for gm in group_members:
+        other_groups = [
+            {'id': o.group.id, 'name': o.group.name, 'owner': o.group.created_by.get_full_name()}
+            for o in getattr(gm.member, 'other_groups_memberships', [])
+        ]
+
+    return other_groups
