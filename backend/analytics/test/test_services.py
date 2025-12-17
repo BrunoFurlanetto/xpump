@@ -130,7 +130,10 @@ class UserAnalyticsServiceTest(TestCase):
         )
 
         active_ids = UserAnalyticsService.get_active_user_ids(week_ago)
-        self.assertNotIn(self.user.id, active_ids)
+        users_ids_test = set()
+        users_ids_test.add(self.user.id)
+
+        self.assertNotIn(users_ids_test, active_ids)
 
     def test_get_user_queryset_with_stats(self):
         """Test get_user_queryset_with_stats returns annotated queryset"""
@@ -243,13 +246,19 @@ class GroupAnalyticsServiceTest(TestCase):
             phone='(11)99999-9999',
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.test_client
+        )
         self.member = User.objects.create_user(
             username='member',
             email='member@example.com',
             password='testpass123'
         )
         Profile.objects.create(user=self.owner, employer=self.test_client)
-        Profile.objects.create(user=self.member, employer=self.member)
+        Profile.objects.create(user=self.member, employer=self.test_client)
 
         self.group = Group.objects.create(
             name='Test Group',
@@ -337,6 +346,12 @@ class SystemAnalyticsServiceTest(TestCase):
             phone='11999999999',
             address='Test Address',
             owners=self.user
+        )
+        self.season = Season.objects.create(
+            name='Season 1',
+            start_date=timezone.now() - timedelta(days=180),
+            end_date=timezone.now() + timedelta(days=180),
+            client=self.client
         )
         Profile.objects.create(user=self.user, score=1000, level=3, employer=self.client)
 
