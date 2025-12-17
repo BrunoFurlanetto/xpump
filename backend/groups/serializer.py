@@ -14,7 +14,6 @@ class GroupListSerializer(serializers.ModelSerializer):
     """
 
     members_count = serializers.SerializerMethodField()
-    pending_members = serializers.SerializerMethodField()
     created_by = serializers.CharField(source='created_by.get_full_name', read_only=True)
 
     class Meta:
