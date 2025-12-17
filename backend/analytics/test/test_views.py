@@ -13,7 +13,7 @@ from rest_framework import status
 from clients.models import Client
 from gamification.models import Season
 from profiles.models import Profile
-from groups.models import Group, GroupMembers
+from groups.models import Group
 from workouts.models import WorkoutCheckin
 
 

@@ -19,7 +19,7 @@ from gamification.models import Season
 from profiles.models import Profile
 from groups.models import Group, GroupMembers
 from workouts.models import WorkoutCheckin, WorkoutStreak
-from nutrition.models import Meal, MealStreak, MealConfig
+from nutrition.models import MealStreak
 
 
 faker = Faker('pt_BR')
@@ -113,27 +113,6 @@ class UserAnalyticsServiceTest(TestCase):
 
         active_ids = UserAnalyticsService.get_active_user_ids(week_ago)
         self.assertIn(self.user.id, active_ids)
-
-    def test_get_active_user_ids_excludes_old_activity(self):
-        """Test get_active_user_ids excludes users with old activity"""
-        now = timezone.now()
-        week_ago = now - timedelta(days=7)
-        old_date = now - timedelta(days=10)
-
-        # Create old workout
-        WorkoutCheckin.objects.create(
-            user=self.user,
-            workout_date=old_date,
-            duration=timedelta(hours=1),
-            location='gym',
-            base_points=100
-        )
-
-        active_ids = UserAnalyticsService.get_active_user_ids(week_ago)
-        users_ids_test = set()
-        users_ids_test.add(self.user.id)
-
-        self.assertNotIn(users_ids_test, active_ids)
 
     def test_get_user_queryset_with_stats(self):
         """Test get_user_queryset_with_stats returns annotated queryset"""

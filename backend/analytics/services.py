@@ -1,5 +1,4 @@
-from datetime import timedelta, datetime
-from typing import Dict, List, Set, Optional, Tuple
+from datetime import timedelta
 from django.contrib.auth.models import User
 from django.db.models import Count, Max, Avg, Case, When, IntegerField
 from django.utils import timezone

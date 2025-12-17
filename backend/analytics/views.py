@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from analytics.pagination import StandardResultsSetPagination
 from analytics.serializer import (
     SystemStatsSerializer,
     UserStatsSerializer,
@@ -24,12 +25,6 @@ from analytics.services import (
     ActivityFeedService
 )
 from groups.models import Group
-
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 100
 
 
 @extend_schema(tags=['Admin Analytics'])
@@ -136,7 +131,6 @@ class UserListAPIView(ListAPIView):
             for user in users
         ]
 
-
         if page is not None:
             serializer = self.get_serializer(users_data, many=True)
 
@@ -224,9 +218,17 @@ class RecentActivitiesAPIView(APIView):
         ]
     )
     def get(self, request):
-        limit = int(request.query_params.get('limit', 20))
-        activity_type = request.query_params.get('type', None)
+        limit_param = request.query_params.get('limit', 20)
 
+        try:
+            limit = int(limit_param)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'Invalid limit parameter. It must be an integer.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        activity_type = request.query_params.get('type', None)
         activities = ActivityFeedService.get_recent_activities(limit, activity_type)
         serializer = ActivitySerializer(activities, many=True)
 
