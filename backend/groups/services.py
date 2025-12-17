@@ -80,6 +80,7 @@ def compute_group_members_data(group, period):
     return group_data
 
 
+# python
 def compute_another_groups(main_group):
     group_members = GroupMembers.objects.filter(group=main_group).select_related(
         'member',
@@ -87,28 +88,52 @@ def compute_another_groups(main_group):
     ).prefetch_related(
         Prefetch(
             'member__groupmembers_set',
-            queryset=GroupMembers.objects.select_related('group').filter(pending=False),
+            queryset=GroupMembers.objects.select_related('group', 'group__created_by').filter(pending=False),
             to_attr='other_groups_memberships'
         )
     )
-    other_groups = []
-    seen = set()
+
+    groups_info = {}
+    gids = set()
 
     for gm in group_members:
-        for member in getattr(gm.member, 'other_groups_memberships', []):
-            if member.group == main_group:
+        for member_gm in getattr(gm.member, 'other_groups_memberships', []):
+            if member_gm.group_id == main_group.id:
                 continue
-
-            gid = member.group.id
-
-            if gid in seen:
+            gid = member_gm.group_id
+            if gid in groups_info:
                 continue
+            groups_info[gid] = {
+                'name': member_gm.group.name,
+                'owner': getattr(member_gm.group.created_by, 'get_full_name', lambda: '')(),
+            }
+            gids.add(gid)
 
-            seen.add(gid)
-            other_groups.append({
-                'id': gid,
-                'name': member.group.name,
-                'owner': member.group.created_by.get_full_name()
-            })
+    if not gids:
+        return []
+
+    aggs = (
+        GroupMembers.objects
+        .filter(group_id__in=gids, pending=False)
+        .values('group_id')
+        .annotate(
+            n_members=Count('member', distinct=True),
+            pts=Coalesce(Sum('member__profile__score'), 0.0, output_field=FloatField()),
+        )
+    )
+
+    agg_map = {a['group_id']: a for a in aggs}
+
+    other_groups = []
+    for gid, info in groups_info.items():
+        a = agg_map.get(gid, {})
+        other_groups.append({
+            'id': gid,
+            'name': info['name'],
+            'owner': info['owner'],
+            'pts': float(a.get('pts') or 0.0),
+            'n_members': int(a.get('n_members') or 0),
+        })
 
     return other_groups
+
