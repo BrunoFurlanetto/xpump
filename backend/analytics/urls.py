@@ -25,4 +25,3 @@ urlpatterns = [
     # Activities
     path('admin/system/activities/', RecentActivitiesAPIView.as_view(), name='admin-system-activities'),
 ]
-
