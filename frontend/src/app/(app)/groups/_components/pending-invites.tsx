@@ -84,7 +84,7 @@ export function PendingInvites({ groups }: PendingInvitesProps) {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      {group.members.filter((m) => !m.pending).length} membros
+                      {group.members_count} membros
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />

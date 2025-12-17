@@ -10,8 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useGroupsQuery } from "@/hooks/useGroupsQuery";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function GroupsPage() {
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("admin");
   const { data: groups = [], isLoading } = useGroupsQuery();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -29,7 +32,8 @@ export default function GroupsPage() {
     <GroupsLoadingProvider>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {!isAdmin &&
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Grupos</h1>
             <p className="text-muted-foreground text-sm sm:text-base">
@@ -38,6 +42,7 @@ export default function GroupsPage() {
           </div>
           <CreateGroupModal />
         </div>
+        }
         <PendingInvites groups={groups} />
 
         {/* Barra de Pesquisa */}

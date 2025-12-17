@@ -9,12 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Users } from "lucide-react";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { CreateGroupData } from "@/lib/api/groups";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
 import { useCreateGroup } from "@/hooks/useGroupsQuery";
 
-export function CreateGroupModal() {
+interface CreateGroupModalProps {
+  onGroupCreated?: () => void;
+}
+
+export function CreateGroupModal({ onGroupCreated }: CreateGroupModalProps = {}) {
   const router = useRouter();
   const createGroup = useCreateGroup();
   const [isOpen, setIsOpen] = useState(false);
@@ -53,11 +56,16 @@ export function CreateGroupModal() {
       await createGroup.mutateAsync(formData);
       handleClose();
 
-      // Show global loading overlay during refresh
-      startRefresh();
-      startTransition(() => {
-        router.refresh();
-      });
+      // Use custom callback if provided, otherwise refresh
+      if (onGroupCreated) {
+        onGroupCreated();
+      } else {
+        // Show global loading overlay during refresh
+        startRefresh();
+        startTransition(() => {
+          router.refresh();
+        });
+      }
     } catch (error) {
       console.error("Erro ao criar grupo:", error);
       // Erro já tratado no hook

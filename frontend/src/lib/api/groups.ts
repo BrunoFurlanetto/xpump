@@ -13,6 +13,13 @@ export interface Group {
   main: boolean;
   pending: boolean;
   members_count: number;
+  other_groups: {
+    id: number;
+    name: string;
+    owner: string; // Nome completo do dono
+    pts: number;
+    n_members: number;
+  }[];
 }
 
 export interface GroupMember {

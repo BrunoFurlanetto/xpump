@@ -63,7 +63,8 @@ export function useCreateGroup() {
       return newGroup;
     },
     onError: (error: any) => {
-      toast.error(error.message || "Erro ao criar grupo");
+      console.error("Erro ao criar grupo:", error);
+      toast.error("Erro ao criar grupo");
     },
   });
 }

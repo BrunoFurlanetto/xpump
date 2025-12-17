@@ -41,8 +41,17 @@ export function GroupsLoadingProvider({ children }: { children: ReactNode }) {
 
 export function useGroupsLoading() {
   const context = useContext(GroupsLoadingContext);
+
+  // Return default values if used outside provider
   if (!context) {
-    throw new Error("useGroupsLoading must be used within GroupsLoadingProvider");
+    const [, defaultStartTransition] = useTransition();
+    return {
+      isRefreshing: false,
+      startRefresh: () => {},
+      isPending: false,
+      startTransition: defaultStartTransition,
+    };
   }
+
   return context;
 }

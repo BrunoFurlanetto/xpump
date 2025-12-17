@@ -26,7 +26,7 @@ export function useAuth() {
   // Função para verificar se o usuário tem uma role específica
   const hasRole = useCallback(
     (role: string) => {
-      return roles?.includes(role);
+      return roles?.some(r => r.toLowerCase() === role.toLowerCase());
     },
     [roles]
   );
