@@ -11,15 +11,16 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import { CreateGroupData } from "@/lib/api/groups";
 import { useRouter } from "next/navigation";
 import { useGroupsLoading } from "./groups-loading-context";
-import { useCreateGroup } from "@/hooks/useGroupsQuery";
+import { useCreateGroup, useCreateGroupLikeAdmin } from "@/hooks/useGroupsQuery";
 
 interface CreateGroupModalProps {
   onGroupCreated?: () => void;
+  groupId?: number;
 }
 
-export function CreateGroupModal({ onGroupCreated }: CreateGroupModalProps = {}) {
+export function CreateGroupModal({ onGroupCreated, groupId }: CreateGroupModalProps = {}) {
   const router = useRouter();
-  const createGroup = useCreateGroup();
+  const createGroup = groupId ? useCreateGroupLikeAdmin(groupId) : useCreateGroup();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<CreateGroupData>({
     name: "",

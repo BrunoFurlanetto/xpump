@@ -398,6 +398,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                   onGroupCreated={async () => {
                     await fetchGroupData(period);
                   }}
+                  groupId={group.id}
                 />
               </div>
 

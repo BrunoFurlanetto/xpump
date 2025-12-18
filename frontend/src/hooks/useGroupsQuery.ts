@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { GroupsAPI, CreateGroupData, UpdateMemberData } from "@/lib/api/groups";
 import { toast } from "sonner";
-import { useUserAuth } from "@/context/userAuthContext";
+import { useAuth } from "./useAuth";
 
 // Query Keys
 export const groupsKeys = {
@@ -16,28 +16,12 @@ export const groupsKeys = {
 
 // Hook para buscar todos os grupos
 export function useGroupsQuery() {
-  // Verifica se o usuário é administrador (Personal Trainer)
-  const { roles, isFetching } = useUserAuth();
-
+  const { hasRole, isFetching } = useAuth();
   return useQuery({
     queryKey: groupsKeys.list(),
-    queryFn: () => {
-      const isAdmin = roles.some(role => role.toLowerCase() === "admin");
-      console.log("User is admin:", isAdmin);
-      return isAdmin ? GroupsAPI.listGroupsAdmin() : GroupsAPI.listMyGroups()
-    },
+    queryFn: () => hasRole('admin') ? GroupsAPI.listGroupsAdmin() : GroupsAPI.listMyGroups(),
     staleTime: 2 * 60 * 1000, // 2 minutos
     enabled: !isFetching,
-  });
-}
-
-
-// Hook para buscar todos os grupos (admin)
-export function useGroupsAdminQuery() {
-  return useQuery({
-    queryKey: groupsKeys.list(),
-    queryFn: () => GroupsAPI.listGroupsAdmin(),
-    staleTime: 2 * 60 * 1000, // 2 minutos
   });
 }
 
@@ -56,6 +40,7 @@ export function useCreateGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
+
     mutationFn: (data: CreateGroupData) => GroupsAPI.createGroup(data),
     onSuccess: (newGroup) => {
       queryClient.invalidateQueries({ queryKey: groupsKeys.lists() });
@@ -66,6 +51,27 @@ export function useCreateGroup() {
       console.error("Erro ao criar grupo:", error);
       toast.error("Erro ao criar grupo");
     },
+
+  });
+}
+
+// Hook para criar grupo
+export function useCreateGroupLikeAdmin( groupId: number ) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+
+    mutationFn: (data: CreateGroupData) => GroupsAPI.createGroupLikeAdmin({ ...data, group_id: groupId }),
+    onSuccess: (newGroup) => {
+      queryClient.invalidateQueries({ queryKey: groupsKeys.lists() });
+      toast.success("Grupo criado com sucesso!");
+      return newGroup;
+    },
+    onError: (error: any) => {
+      console.error("Erro ao criar grupo:", error);
+      toast.error("Erro ao criar grupo");
+    },
+
   });
 }
 

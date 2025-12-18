@@ -59,6 +59,12 @@ export interface CreateGroupData {
   description: string;
 }
 
+export interface CreateGroupLikeAdminData {
+  name: string;
+  description: string;
+  group_id: number;
+}
+
 export interface UpdateMemberData {
   is_admin: boolean;
 }
@@ -114,6 +120,27 @@ export class GroupsAPI {
    */
   static async createGroup(data: CreateGroupData): Promise<Group> {
     const response = await fetch(`/api/groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Erro ao criar grupo" }));
+      throw new Error(error.detail || "Erro ao criar grupo");
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create a new group like admin
+   * this is used when an admin system need create a group but not be part of it
+   */
+  static async createGroupLikeAdmin(data: CreateGroupLikeAdminData): Promise<Group> {
+    const response = await fetch(`/api/groups-like-admin`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
