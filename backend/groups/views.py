@@ -131,7 +131,7 @@ class CreateGroupFromMainAPIView(CreateAPIView):
     def check_permissions_for_main(self, main_group):
         if not main_group.main:
             raise PermissionDenied("This group is not a main group.")
-        if self.request.user != main_group.owner and not self.request.user.is_superuser:
+        if self.request.user.is_superuser:
             raise PermissionDenied("Only main group owner or superuser can create subgroups.")
 
     def perform_create(self, serializer):
