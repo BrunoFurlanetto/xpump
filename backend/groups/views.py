@@ -263,6 +263,12 @@ class InviteGroupAPIView(APIView):
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        if invited_user.profile.employer != request.user.profile.employer:
+            return Response(
+                {"detail": "User does not belong to the same employer."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         group = Group.objects.get(id=self.kwargs['group_id'])
         member_exists = GroupMembers.objects.filter(member=invited_user, group=group)
 
