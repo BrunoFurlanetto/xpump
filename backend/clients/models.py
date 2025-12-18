@@ -28,7 +28,8 @@ class Client(models.Model):
         verbose_name='Atualizado por'
     )
     owners = models.ForeignKey(User, on_delete=models.PROTECT, related_name='client', verbose_name='Proprietário')
-    groups = models.ForeignKey(Group, blank=True, null=True, on_delete=models.PROTECT, related_name='client', verbose_name='Grupo')
+    main_group = models.ForeignKey(Group, blank=True, null=True, on_delete=models.PROTECT, related_name='client', verbose_name='Grupo principal')
+    groups = models.ManyToManyField(Group, blank=True, related_name='clients', verbose_name='Grupos')
     client_code = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name='Código do Cliente')
 
     class Meta:

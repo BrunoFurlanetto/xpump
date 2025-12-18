@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db.models import Window, F, Count, OuterRef, Subquery, IntegerField
 from django.db.models.functions import Rank
 from rest_framework import serializers
@@ -5,6 +6,73 @@ from rest_framework import serializers
 from groups.models import Group, GroupMembers
 from nutrition.models import Meal
 from workouts.models import WorkoutCheckin
+
+
+class GroupCreateFromMainSerializer(serializers.ModelSerializer):
+    """
+    Serializer to create a new group from a main group.
+    The new group will be associated with the same client as the main group.
+    """
+
+    members_list = serializers.ListField(write_only=True, required=False)
+
+    class Meta:
+        model = Group
+        fields = [
+            'id',
+            'name',
+            'photo',
+            'description',
+            'created_by',
+            'owner',
+            'created_at',
+            'members_list',
+            'main',
+        ]  # Include all model fields in serialization
+        read_only_fields = ['created_by', 'created_at', 'main']  # Prevent modification of read-only fields
+
+    def validate_name(self, value):
+        """
+        Check if the group name is not empty and is not too long.
+        """
+        if not value.strip():
+            raise serializers.ValidationError("A group name is required.")
+
+        return value.strip()
+
+    def create(self, validated_data):
+        """
+        Create a new group instance from the validated data.
+        Sets 'main' to False and assigns the owner to the creator.
+        """
+        add_creator = validated_data.pop('add_creator', True)
+        members_list = validated_data.pop('members_list', [])
+        group = Group(**validated_data)
+        members = []
+
+        if members_list:
+            if isinstance(members_list[0], int):
+                members = User.objects.filter(id__in=members_list)
+                found_ids = {member.id for member in members}
+                missing = [i for i in members_list if i not in found_ids]
+
+                if missing:
+                    raise serializers.ValidationError(f"Users with IDs {missing} do not exist.")
+            elif isinstance(members_list[0], str):
+                members = User.objects.filter(username__in=members_list)
+                found_ids = {member.username for member in members}
+                missing = [u for u in members_list if u not in found_ids]
+
+                if missing:
+                    raise serializers.ValidationError(f"Users with usernames {missing} do not exist.")
+            else:
+                raise serializers.ValidationError("members_list must be a list of IDs or a list of usernames.")
+
+            members = list(members)
+
+        group.save(add_creator=add_creator, members_list=members)
+
+        return group
 
 
 class GroupListSerializer(serializers.ModelSerializer):

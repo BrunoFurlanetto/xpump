@@ -28,7 +28,7 @@ class ClientSerializer(serializers.ModelSerializer):
             except Exception as e:
                 raise serializers.ValidationError(f"Error creating client or main group: {str(e)}")
 
-            client.groups = main_group
+            client.main_group = main_group
             client.save()
 
         return client

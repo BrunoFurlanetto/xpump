@@ -1,17 +1,20 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, ListAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from clients.models import Client
 from groups.models import Group, GroupMembers
 from groups.permissions import IsMember, IsAdminMember, IsGroupMember
 from groups.serializer import GroupMemberSerializer, GroupListSerializer, GroupDetailSerializer, \
-    GroupAdminListSerializer
+    GroupAdminListSerializer, GroupCreateFromMainSerializer
 from groups.services import compute_group_members_data
 
 
@@ -100,8 +103,56 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
 
         return Response(base, status=status.HTTP_200_OK)
 
-# @extend_schema(tags=['Groups'])
-# class GroupStatsAPIView(APIView):
+
+@extend_schema(
+    tags=['Groups'],
+    request=GroupCreateFromMainSerializer,
+    responses={
+        201: GroupDetailSerializer,
+        400: {'description': 'Bad Request - The group is not primary or the data is invalid.'},
+        403: {'description': 'Forbidden - User does not have permission.'},
+        404: {'description': 'Not Found - Group or client not found.'}
+    },
+    summary='Create a group from a parent group.',
+    description='Creates a new group (subgroup) associated with the same client as the main group. '
+                'Only the owner of the main group or superusers can create subgroups.'
+)
+class CreateGroupFromMainAPIView(CreateAPIView):
+    """
+    API view to create a new group from a parent group.
+    The new group will be associated with the same client as the main group.
+    """
+    serializer_class = GroupCreateFromMainSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_main_group(self):
+        return get_object_or_404(Group, pk=self.kwargs.get('group_id'))
+
+    def check_permissions_for_main(self, main_group):
+        if not main_group.main:
+            raise PermissionDenied("This group is not a main group.")
+        if self.request.user != main_group.owner and not self.request.user.is_superuser:
+            raise PermissionDenied("Only main group owner or superuser can create subgroups.")
+
+    def perform_create(self, serializer):
+        main_group = self.get_main_group()
+        self.check_permissions_for_main(main_group)
+
+        client = get_object_or_404(Client, main_group=main_group)
+
+        with transaction.atomic():
+            new_group = serializer.save(created_by=self.request.user, owner=main_group.owner, add_creator=False)
+            client.groups.add(new_group)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        new_group = serializer.instance
+        response_serializer = GroupDetailSerializer(new_group, context={'request': request})
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 @extend_schema(tags=['Groups'])
