@@ -270,6 +270,14 @@ class InviteGroupAPIView(APIView):
             )
 
         group = Group.objects.get(id=self.kwargs['group_id'])
+        client = Client.group_belongs_to_client(group)
+
+        if client != request.user.profile.employer:
+            return Response(
+                {"detail": "User does not belong to the same employer."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         member_exists = GroupMembers.objects.filter(member=invited_user, group=group)
 
         if member_exists.exists() and member_exists.first().pending:

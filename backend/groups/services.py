@@ -9,7 +9,17 @@ from django.db.models.functions import Coalesce
 from groups.models import GroupMembers, Group
 
 
-def create_group_for_client(client, *, name, owner, created_by, photo=None, description=None, main=False, members_list=None, add_creator=True):
+def create_group_for_client(
+        client,
+        name,
+        owner,
+        created_by,
+        photo=None,
+        description='',
+        main=False,
+        members_list=None,
+        add_creator=True
+):
     """
     Create a Group and link it to the client:
     - if main=True: define client.main_group
@@ -181,4 +191,3 @@ def compute_another_groups(main_group):
         })
 
     return other_groups
-

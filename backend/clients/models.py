@@ -38,3 +38,10 @@ class Client(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def group_belongs_to_client(cls, group):
+        """
+        Check if a given group belongs to any client as main_group or in groups.
+        """
+        return cls.objects.filter(models.Q(main_group=group) | models.Q(groups=group)).first()

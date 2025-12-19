@@ -140,14 +140,16 @@ class GroupListSerializer(serializers.ModelSerializer):
         """
         Create a new group instance from the validated data.
         """
-        group = Group.objects.create(**validated_data)
+        # group = Group.objects.create(**validated_data)
+        owner = validated_data.get('owner', None)
 
-        create_group_for_client(
-            client=group.owner.profile.employer,
-            name=group.name,
-            owner=group.owner,
-            photo=group.photo,
-            created_by=group.created_by,
+        group = create_group_for_client(
+            client=owner.profile.employer,
+            name=validated_data.get('name'),
+            description=validated_data.get('description', ''),
+            owner=owner,
+            photo=validated_data.get('photo', None),
+            created_by=owner,
         )
 
         return group
