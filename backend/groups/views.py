@@ -272,7 +272,7 @@ class InviteGroupAPIView(APIView):
         group = Group.objects.get(id=self.kwargs['group_id'])
         client = Client.group_belongs_to_client(group)
 
-        if client != request.user.profile.employer:
+        if client != invited_user.profile.employer:
             return Response(
                 {"detail": "User does not belong to the same employer."},
                 status=status.HTTP_403_FORBIDDEN
