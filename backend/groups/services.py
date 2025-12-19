@@ -137,57 +137,24 @@ def compute_group_members_data(group, period):
 
 # python
 def compute_another_groups(main_group):
-    group_members = GroupMembers.objects.filter(group=main_group).select_related(
-        'member',
-        'member__profile'
-    ).prefetch_related(
-        Prefetch(
-            'member__groupmembers_set',
-            queryset=GroupMembers.objects.select_related('group', 'group__created_by').filter(pending=False),
-            to_attr='other_groups_memberships'
-        )
+    client = main_group.client.first()
+    groups = list(client.groups.all())
+
+    aggregations = GroupMembers.objects.filter(group__in=groups, pending=False).values('group').annotate(
+        members_count=Count('id'),
+        members_score_sum=Coalesce(Sum('member__profile__score'), 0.0)
     )
 
-    groups_info = {}
-    gids = set()
-
-    for gm in group_members:
-        for member_gm in getattr(gm.member, 'other_groups_memberships', []):
-            if member_gm.group_id == main_group.id:
-                continue
-            gid = member_gm.group_id
-            if gid in groups_info:
-                continue
-            groups_info[gid] = {
-                'name': member_gm.group.name,
-                'owner': getattr(member_gm.group.created_by, 'get_full_name', lambda: '')(),
-            }
-            gids.add(gid)
-
-    if not gids:
-        return []
-
-    aggs = (
-        GroupMembers.objects
-        .filter(group_id__in=gids, pending=False)
-        .values('group_id')
-        .annotate(
-            n_members=Count('member', distinct=True),
-            pts=Coalesce(Sum('member__profile__score'), 0.0, output_field=FloatField()),
-        )
-    )
-
-    agg_map = {a['group_id']: a for a in aggs}
-
+    aggregations_map = {item['group']: item for item in aggregations}
     other_groups = []
-    for gid, info in groups_info.items():
-        a = agg_map.get(gid, {})
+
+    for group in groups:
+        data = aggregations_map.get(group.id, {'members_count': 0, 'members_score_sum': 0.0})
         other_groups.append({
-            'id': gid,
-            'name': info['name'],
-            'owner': info['owner'],
-            'pts': float(a.get('pts') or 0.0),
-            'n_members': int(a.get('n_members') or 0),
+            "id": group.id,
+            "name": group.name,
+            "pts": data['members_score_sum'],
+            "n_members": data['members_count'],
         })
 
     return other_groups
