@@ -2,8 +2,10 @@ from django.contrib.auth.models import User
 from django.db.models import Window, F, Count, OuterRef, Subquery, IntegerField
 from django.db.models.functions import Rank
 from rest_framework import serializers
+from urllib3 import request
 
 from groups.models import Group, GroupMembers
+from groups.services import create_group_for_client
 from nutrition.models import Meal
 from workouts.models import WorkoutCheckin
 
@@ -31,24 +33,22 @@ class GroupCreateFromMainSerializer(serializers.ModelSerializer):
         ]  # Include all model fields in serialization
         read_only_fields = ['created_by', 'created_at', 'main']  # Prevent modification of read-only fields
 
-    def validate_name(self, value):
+    def validate(self, attrs):
         """
-        Check if the group name is not empty and is not too long.
+        Validate that required fields are provided and not empty.
+        1. 'name' must be provided and not empty.
+        2. 'members_list' (if provided) must contain valid user IDs or usernames.
         """
-        if not value.strip():
-            raise serializers.ValidationError("A group name is required.")
+        # Validate that the group name is provided and not empty.
+        name = attrs.get('name', '')
 
-        return value.strip()
+        if not isinstance(name, str) or not name.strip():
+            raise serializers.ValidationError({'name': 'A group name is required.'})
 
-    def create(self, validated_data):
-        """
-        Create a new group instance from the validated data.
-        Sets 'main' to False and assigns the owner to the creator.
-        """
-        add_creator = validated_data.pop('add_creator', True)
-        members_list = validated_data.pop('members_list', [])
-        group = Group(**validated_data)
-        members = []
+        attrs['name'] = name.strip()
+
+        # Validate members_list if provided
+        members_list = attrs.get('members_list', [])
 
         if members_list:
             if isinstance(members_list[0], int):
@@ -68,9 +68,40 @@ class GroupCreateFromMainSerializer(serializers.ModelSerializer):
             else:
                 raise serializers.ValidationError("members_list must be a list of IDs or a list of usernames.")
 
+        return attrs
+
+    def create(self, validated_data):
+        """
+        Create a new group instance from the validated data.
+        Sets 'main' to False and assigns the owner to the creator.
+        """
+        add_creator = validated_data.pop('add_creator', True)
+        client = validated_data.pop('client', None)
+        members_list = validated_data.pop('members_list', [])
+        created_by = self.context['request'].user
+        members = []
+
+        if not client:
+            raise serializers.ValidationError({'client': 'A client is required.'})
+
+        if members_list:
+            if isinstance(members_list[0], int):
+                members = User.objects.filter(id__in=members_list)
+            elif isinstance(members_list[0], str):
+                members = User.objects.filter(username__in=members_list)
+
             members = list(members)
 
-        group.save(add_creator=add_creator, members_list=members)
+        group = create_group_for_client(
+            client=client,
+            name=validated_data.get('name'),
+            photo=validated_data.get('photo', None),
+            description=validated_data.get('description', None),
+            owner=client.owners,
+            created_by=created_by,
+            members_list=members,
+            add_creator=add_creator,
+        )
 
         return group
 
@@ -104,6 +135,22 @@ class GroupListSerializer(serializers.ModelSerializer):
         Return the count of active (non-pending) members in the group.
         """
         return obj.groupmembers_set.filter(pending=False).count()
+
+    def create(self, validated_data):
+        """
+        Create a new group instance from the validated data.
+        """
+        group = Group.objects.create(**validated_data)
+
+        create_group_for_client(
+            client=group.owner.profile.employer,
+            name=group.name,
+            owner=group.owner,
+            photo=group.photo,
+            created_by=group.created_by,
+        )
+
+        return group
 
 
 class GroupAdminListSerializer(GroupListSerializer):

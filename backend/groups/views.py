@@ -131,8 +131,8 @@ class CreateGroupFromMainAPIView(CreateAPIView):
     def check_permissions_for_main(self, main_group):
         if not main_group.main:
             raise PermissionDenied("This group is not a main group.")
-        if self.request.user.is_superuser:
-            raise PermissionDenied("Only main group owner or superuser can create subgroups.")
+        if not self.request.user.is_superuser:
+            raise PermissionDenied("Only superuser can create subgroups.")
 
     def perform_create(self, serializer):
         main_group = self.get_main_group()
@@ -141,7 +141,7 @@ class CreateGroupFromMainAPIView(CreateAPIView):
         client = get_object_or_404(Client, main_group=main_group)
 
         with transaction.atomic():
-            new_group = serializer.save(created_by=self.request.user, owner=main_group.owner, add_creator=False)
+            new_group = serializer.save(client=client, add_creator=False)
             client.groups.add(new_group)
 
     def create(self, request, *args, **kwargs):

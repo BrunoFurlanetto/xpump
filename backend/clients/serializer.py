@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from clients.models import Client
 from groups.models import Group
+from groups.services import create_group_for_client
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -19,7 +20,8 @@ class ClientSerializer(serializers.ModelSerializer):
                 if not owner:
                     raise serializers.ValidationError({'owner': 'Client does not have an owner user relationship.'})
 
-                main_group = Group.objects.create(
+                create_group_for_client(
+                    client=client,
                     name=client.name,
                     owner=client.owners,
                     created_by=client.owners,
@@ -27,8 +29,5 @@ class ClientSerializer(serializers.ModelSerializer):
                 )
             except Exception as e:
                 raise serializers.ValidationError(f"Error creating client or main group: {str(e)}")
-
-            client.main_group = main_group
-            client.save()
 
         return client

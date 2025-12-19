@@ -1,11 +1,56 @@
 # python
 from datetime import timedelta
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 from django.db.models import Sum, Count, Q, FloatField, FilteredRelation, Prefetch
 from django.db.models.functions import Coalesce
 
-from groups.models import GroupMembers
+from groups.models import GroupMembers, Group
+
+
+def create_group_for_client(client, *, name, owner, created_by, photo=None, description=None, main=False, members_list=None, add_creator=True):
+    """
+    Create a Group and link it to the client:
+    - if main=True: define client.main_group
+    - if main=False: add the group to client.groups (ManyToMany)
+    - create the records in GroupMembers
+    """
+
+    members_list = members_list or []
+
+    with transaction.atomic():
+        group = Group.objects.create(
+            name=name,
+            owner=owner,
+            photo=photo,
+            description=description,
+            created_by=created_by,
+            main=main,
+        )
+
+        if main:
+            client.main_group = group
+            client.save(update_fields=['main_group'])
+        else:
+            client.groups.add(group)
+
+        if add_creator and created_by:
+            GroupMembers.objects.create(
+                member=created_by,
+                group=group,
+                is_admin=True,
+                pending=False
+            )
+
+        to_create = [
+            GroupMembers(member=member, group=group, pending=False)
+            for member in members_list
+        ]
+        if to_create:
+            GroupMembers.objects.bulk_create(to_create)
+
+        return group
 
 
 def compute_group_members_data(group, period):
