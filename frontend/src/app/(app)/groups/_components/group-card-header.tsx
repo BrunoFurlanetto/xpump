@@ -17,16 +17,12 @@ const GroupCardHeader = ({
   avatar,
   stats,
   currentUserRole,
-  showManageButton = false,
-  onManageClick,
 }: {
   name: string;
   description: string;
   avatar?: string | null;
   stats?: GroupStats;
   currentUserRole: "owner" | "admin" | "member";
-  showManageButton?: boolean;
-  onManageClick?: () => void;
 }) => {
   const getInitials = (name: string) => {
     return name

@@ -89,8 +89,8 @@ class UserSerializer(serializers.ModelSerializer):
         # Create user with hashed password
         user = User.objects.create_user(**validated_data)
         profile = Profile.objects.create(user=user, employer=employer)
-        profile.groups.add(employer.groups)
-        GroupMembers.objects.create(member=user, group=employer.groups, pending=False)
+        profile.groups.add(employer.main_group)
+        GroupMembers.objects.create(member=user, group=employer.main_group, pending=False)
 
         return user
 

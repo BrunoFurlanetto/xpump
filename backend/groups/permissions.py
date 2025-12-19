@@ -11,6 +11,9 @@ class IsGroupMember(BasePermission):
         return view.kwargs.get('pk')
 
     def has_permission(self, request, view):
+        if getattr(request.user, 'is_superuser', False):
+            return True
+
         group_id = self._get_group_id(request, view)
 
         if not group_id:
@@ -22,6 +25,9 @@ class IsGroupMember(BasePermission):
         return GroupMembers.objects.filter(group_id=group_id, member_id=request.user.id, pending=False).exists()
 
     def has_object_permission(self, request, view, obj):
+        if getattr(request.user, 'is_superuser', False):
+            return True
+
         group_id = self._get_group_id(request, view)
 
         if not group_id:
@@ -37,6 +43,9 @@ class IsMember(BasePermission):
         return view.kwargs.get('group_id') or request.data.get('group_id')
 
     def has_permission(self, request, view):
+        if getattr(request.user, 'is_superuser', False):
+            return True
+
         group_id = self._get_group_id(request, view)
 
         if not group_id:
@@ -53,6 +62,9 @@ class IsMember(BasePermission):
         return membership.pending is False
 
     def has_object_permission(self, request, view, obj):
+        if getattr(request.user, 'is_superuser', False):
+            return True
+
         group_id = self._get_group_id(request, view)
 
         if not group_id:
@@ -72,6 +84,9 @@ class IsAdminMember(BasePermission):
         return view.kwargs.get('group_id') or request.data.get('group_id')
 
     def has_permission(self, request, view):
+        if getattr(request.user, 'is_superuser', False):
+            return True
+
         group_id = self._get_group_id(request, view)
 
         if not group_id:
@@ -84,6 +99,9 @@ class IsAdminMember(BasePermission):
         return membership.is_admin
 
     def has_object_permission(self, request, view, obj):
+        if getattr(request.user, 'is_superuser', False):
+            return True
+
         group_id = self._get_group_id(request, view)
 
         if not group_id:

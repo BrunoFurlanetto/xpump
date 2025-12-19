@@ -39,7 +39,7 @@ class UserAuthenticationTests(APITestCase):
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
         self.employer_group = Group.objects.create(name='Test Group', owner=self.user, created_by=self.user, main=True)
-        self.employer.groups = self.employer_group
+        self.employer.main_group = self.employer_group
         self.employer.save()
 
     def test_user_creation(self):

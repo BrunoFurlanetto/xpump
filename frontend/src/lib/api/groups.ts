@@ -12,6 +12,14 @@ export interface Group {
   stats: GroupStats;
   main: boolean;
   pending: boolean;
+  members_count: number;
+  other_groups: {
+    id: number;
+    name: string;
+    owner: string; // Nome completo do dono
+    pts: number;
+    n_members: number;
+  }[];
 }
 
 export interface GroupMember {
@@ -51,6 +59,12 @@ export interface CreateGroupData {
   description: string;
 }
 
+export interface CreateGroupLikeAdminData {
+  name: string;
+  description: string;
+  group_id: number;
+}
+
 export interface UpdateMemberData {
   is_admin: boolean;
 }
@@ -75,6 +89,18 @@ export class GroupsAPI {
   }
 
   /**
+   * List all groups that is enterprise to admins
+   */
+  static async listGroupsAdmin(): Promise<Group[]> {
+    const response = await fetch(`/api/groups?endpoint=admin`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar grupos");
+    }
+
+    return response.json();
+  }
+  /**
    * Get a specific group by ID with optional period filter
    */
   static async getGroup(groupId: number, period: "week" | "month" | "all" = "all"): Promise<Group> {
@@ -94,6 +120,27 @@ export class GroupsAPI {
    */
   static async createGroup(data: CreateGroupData): Promise<Group> {
     const response = await fetch(`/api/groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Erro ao criar grupo" }));
+      throw new Error(error.detail || "Erro ao criar grupo");
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create a new group like admin
+   * this is used when an admin system need create a group but not be part of it
+   */
+  static async createGroupLikeAdmin(data: CreateGroupLikeAdminData): Promise<Group> {
+    const response = await fetch(`/api/groups-like-admin`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
