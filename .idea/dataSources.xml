@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-group-endpoint</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="xpump-dev-admin-stats@localhost" uuid="78dedefe-69e1-4632-966f-4b4db96785de">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-admin-stats</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
