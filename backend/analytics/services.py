@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Max, Avg, Case, When, IntegerField
 from django.utils import timezone
 
+from clients.models import Client
 from gamification.models import Season
 from groups.models import Group, GroupMembers
 from nutrition.models import Meal, MealStreak
@@ -528,8 +529,28 @@ class SystemAnalyticsService:
             date_joined__gte=month_start
         ).count()
 
+        new_users_this_week = User.objects.filter(
+            is_staff=False,
+            is_superuser=False,
+            date_joined__gte=week_start
+        ).count()
+
+        new_users_today = User.objects.filter(
+            is_staff=False,
+            is_superuser=False,
+            date_joined__gte=today_start
+        ).count()
+
         # Group statistics
         total_groups = Group.objects.count()
+
+        # Client statistics
+        total_clients = Client.objects.count()
+        active_clients = Client.objects.filter(is_active=True).count()
+        inactive_clients = total_clients - active_clients
+        new_clients_this_month = Client.objects.filter(created_at__gte=month_start).count()
+        new_clients_this_week = Client.objects.filter(created_at__gte=week_start).count()
+        new_clients_today = Client.objects.filter(created_at__gte=today_start).count()
 
         # Workout statistics - optimized with single aggregate query
         workout_stats = WorkoutCheckin.objects.aggregate(
@@ -551,12 +572,38 @@ class SystemAnalyticsService:
         post_stats = Post.objects.aggregate(
             total=Count('id'),
             today=Count(Case(When(created_at__gte=today_start, then=1), output_field=IntegerField())),
-            week=Count(Case(When(created_at__gte=week_start, then=1), output_field=IntegerField()))
+            week=Count(Case(When(created_at__gte=week_start, then=1), output_field=IntegerField())),
+            month=Count(Case(When(created_at__gte=month_start, then=1), output_field=IntegerField()))
         )
 
-        # Get all counts in parallel
-        total_comments = Comment.objects.count()
-        total_likes = PostLike.objects.count() + CommentLike.objects.count()
+        comment_stats = Comment.objects.aggregate(
+            total=Count('id'),
+            today=Count(Case(When(created_at__gte=today_start, then=1), output_field=IntegerField())),
+            week=Count(Case(When(created_at__gte=week_start, then=1), output_field=IntegerField())),
+            month=Count(Case(When(created_at__gte=month_start, then=1), output_field=IntegerField()))
+        )
+
+        # Combine PostLike and CommentLike statistics
+        post_like_stats = PostLike.objects.aggregate(
+            total=Count('id'),
+            today=Count(Case(When(created_at__gte=today_start, then=1), output_field=IntegerField())),
+            week=Count(Case(When(created_at__gte=week_start, then=1), output_field=IntegerField())),
+            month=Count(Case(When(created_at__gte=month_start, then=1), output_field=IntegerField()))
+        )
+
+        comment_like_stats = CommentLike.objects.aggregate(
+            total=Count('id'),
+            today=Count(Case(When(created_at__gte=today_start, then=1), output_field=IntegerField())),
+            week=Count(Case(When(created_at__gte=week_start, then=1), output_field=IntegerField())),
+            month=Count(Case(When(created_at__gte=month_start, then=1), output_field=IntegerField()))
+        )
+
+        # Combine likes from posts and comments
+        total_likes = (post_like_stats['total'] or 0) + (comment_like_stats['total'] or 0)
+        likes_today = (post_like_stats['today'] or 0) + (comment_like_stats['today'] or 0)
+        likes_this_week = (post_like_stats['week'] or 0) + (comment_like_stats['week'] or 0)
+        likes_this_month = (post_like_stats['month'] or 0) + (comment_like_stats['month'] or 0)
+
         pending_reports = Report.objects.filter(status='pending').count()
 
         # Gamification statistics
@@ -587,7 +634,15 @@ class SystemAnalyticsService:
             'active_users': active_users,
             'inactive_users': inactive_users,
             'new_users_this_month': new_users_this_month,
+            'new_users_this_week': new_users_this_week,
+            'new_users_today': new_users_today,
             'total_groups': total_groups,
+            'total_clients': total_clients,
+            'active_clients': active_clients,
+            'inactive_clients': inactive_clients,
+            'new_clients_this_month': new_clients_this_month,
+            'new_clients_this_week': new_clients_this_week,
+            'new_clients_today': new_clients_today,
             'total_workouts': workout_stats['total'] or 0,
             'workouts_today': workout_stats['today'] or 0,
             'workouts_this_week': workout_stats['week'] or 0,
@@ -597,10 +652,17 @@ class SystemAnalyticsService:
             'meals_this_week': meal_stats['week'] or 0,
             'meals_this_month': meal_stats['month'] or 0,
             'total_posts': post_stats['total'] or 0,
-            'total_comments': total_comments,
-            'total_likes': total_likes,
             'posts_today': post_stats['today'] or 0,
             'posts_this_week': post_stats['week'] or 0,
+            'posts_this_month': post_stats['month'] or 0,
+            'total_comments': comment_stats['total'] or 0,
+            'comments_today': comment_stats['today'] or 0,
+            'comments_this_week': comment_stats['week'] or 0,
+            'comments_this_month': comment_stats['month'] or 0,
+            'total_likes': total_likes,
+            'likes_today': likes_today,
+            'likes_this_week': likes_this_week,
+            'likes_this_month': likes_this_month,
             'pending_reports': pending_reports,
             'average_user_level': round(profile_stats['avg_level'] or 0, 2),
             'average_user_score': round(profile_stats['avg_score'] or 0, 2),

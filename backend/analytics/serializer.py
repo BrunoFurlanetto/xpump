@@ -8,9 +8,19 @@ class SystemStatsSerializer(serializers.Serializer):
     active_users = serializers.IntegerField()
     inactive_users = serializers.IntegerField()
     new_users_this_month = serializers.IntegerField()
+    new_users_this_week = serializers.IntegerField()
+    new_users_today = serializers.IntegerField()
 
     # Group statistics
     total_groups = serializers.IntegerField()
+
+    # Client statistics
+    total_clients = serializers.IntegerField()
+    active_clients = serializers.IntegerField()
+    inactive_clients = serializers.IntegerField()
+    new_clients_this_month = serializers.IntegerField()
+    new_clients_this_week = serializers.IntegerField()
+    new_clients_today = serializers.IntegerField()
 
     # Workout statistics
     total_workouts = serializers.IntegerField()
@@ -26,10 +36,19 @@ class SystemStatsSerializer(serializers.Serializer):
 
     # Social feed statistics
     total_posts = serializers.IntegerField()
-    total_comments = serializers.IntegerField()
-    total_likes = serializers.IntegerField()
     posts_today = serializers.IntegerField()
     posts_this_week = serializers.IntegerField()
+    posts_this_month = serializers.IntegerField()
+
+    total_comments = serializers.IntegerField()
+    comments_today = serializers.IntegerField()
+    comments_this_week = serializers.IntegerField()
+    comments_this_month = serializers.IntegerField()
+
+    total_likes = serializers.IntegerField()
+    likes_today = serializers.IntegerField()
+    likes_this_week = serializers.IntegerField()
+    likes_this_month = serializers.IntegerField()
 
     # Moderation statistics
     pending_reports = serializers.IntegerField()
