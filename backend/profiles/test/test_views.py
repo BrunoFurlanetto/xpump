@@ -52,7 +52,7 @@ class ProfilesAPIViewTestCase(APITestCase):
             address='Rua Exemplo, 123, Bairro, Cidade - SP',
         )
         self.employer_group = Group.objects.create(name='Employer Group', owner=self.user, main=True, created_by=self.user)
-        self.client_obj.groups = self.employer_group
+        self.client_obj.main_group = self.employer_group
         self.client_obj.save()
 
         self.url = reverse('profiles-list')  # URL for the user list endpoint
@@ -160,7 +160,7 @@ class ProfileAPIViewTestCase(APITestCase):
         )
 
         self.employer_group = Group.objects.create(name='Employer Group', owner=self.user, main=True, created_by=self.user)
-        self.client_obj.groups = self.employer_group
+        self.client_obj.main_group = self.employer_group
         self.client_obj.save()
 
         # Creation profiles from users-list endpoint
@@ -318,7 +318,7 @@ class ProfileUnauthorizedAccessTestCase(APITestCase):
         )
 
         self.employer_group = Group.objects.create(name='Employer Group', owner=self.user, main=True, created_by=self.user)
-        self.client_obj.groups = self.employer_group
+        self.client_obj.main_group = self.employer_group
         self.client_obj.save()
 
         # Creation profiles from users-list endpoint

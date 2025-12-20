@@ -1,20 +1,177 @@
+from django.contrib.auth.models import User
 from django.db.models import Window, F, Count, OuterRef, Subquery, IntegerField
 from django.db.models.functions import Rank
 from rest_framework import serializers
+from urllib3 import request
 
 from groups.models import Group, GroupMembers
+from groups.services import create_group_for_client
 from nutrition.models import Meal
 from workouts.models import WorkoutCheckin
 
 
-class GroupSerializer(serializers.ModelSerializer):
+class GroupCreateFromMainSerializer(serializers.ModelSerializer):
+    """
+    Serializer to create a new group from a main group.
+    The new group will be associated with the same client as the main group.
+    """
+
+    members_list = serializers.ListField(write_only=True, required=False)
+
+    class Meta:
+        model = Group
+        fields = [
+            'id',
+            'name',
+            'photo',
+            'description',
+            'created_by',
+            'owner',
+            'created_at',
+            'members_list',
+            'main',
+        ]  # Include all model fields in serialization
+        read_only_fields = ['created_by', 'created_at', 'main']  # Prevent modification of read-only fields
+
+    def validate(self, attrs):
+        """
+        Validate that required fields are provided and not empty.
+        1. 'name' must be provided and not empty.
+        2. 'members_list' (if provided) must contain valid user IDs or usernames.
+        """
+        # Validate that the group name is provided and not empty.
+        name = attrs.get('name', '')
+
+        if not isinstance(name, str) or not name.strip():
+            raise serializers.ValidationError({'name': 'A group name is required.'})
+
+        attrs['name'] = name.strip()
+
+        # Validate members_list if provided
+        members_list = attrs.get('members_list', [])
+
+        if members_list:
+            if isinstance(members_list[0], int):
+                members = User.objects.filter(id__in=members_list)
+                found_ids = {member.id for member in members}
+                missing = [i for i in members_list if i not in found_ids]
+
+                if missing:
+                    raise serializers.ValidationError(f"Users with IDs {missing} do not exist.")
+            elif isinstance(members_list[0], str):
+                members = User.objects.filter(username__in=members_list)
+                found_ids = {member.username for member in members}
+                missing = [u for u in members_list if u not in found_ids]
+
+                if missing:
+                    raise serializers.ValidationError(f"Users with usernames {missing} do not exist.")
+            else:
+                raise serializers.ValidationError("members_list must be a list of IDs or a list of usernames.")
+
+        return attrs
+
+    def create(self, validated_data):
+        """
+        Create a new group instance from the validated data.
+        Sets 'main' to False and assigns the owner to the creator.
+        """
+        add_creator = validated_data.pop('add_creator', True)
+        client = validated_data.pop('client', None)
+        members_list = validated_data.pop('members_list', [])
+        created_by = self.context['request'].user
+        members = []
+
+        if not client:
+            raise serializers.ValidationError({'client': 'A client is required.'})
+
+        if members_list:
+            if isinstance(members_list[0], int):
+                members = User.objects.filter(id__in=members_list)
+            elif isinstance(members_list[0], str):
+                members = User.objects.filter(username__in=members_list)
+
+            members = list(members)
+
+        group = create_group_for_client(
+            client=client,
+            name=validated_data.get('name'),
+            photo=validated_data.get('photo', None),
+            description=validated_data.get('description', None),
+            owner=client.owners,
+            created_by=created_by,
+            members_list=members,
+            add_creator=add_creator,
+        )
+
+        return group
+
+
+class GroupListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Group model.
+    Handles serialization/deserialization of group data for API endpoints.
+    """
+
+    members_count = serializers.SerializerMethodField()
+    created_by = serializers.CharField(source='created_by.get_full_name', read_only=True)
+
+    class Meta:
+        model = Group
+        fields = [
+            'id',
+            'name',
+            'photo',
+            'description',
+            'created_by',
+            'owner',
+            'created_at',
+            'members_count',
+            'main',
+        ]  # Include all model fields in serialization
+        read_only_fields = ['photo', 'created_by', 'created_at', 'members_count', 'main']  # Prevent modification of read-only fields
+
+    def get_members_count(self, obj):
+        """
+        Return the count of active (non-pending) members in the group.
+        """
+        return obj.groupmembers_set.filter(pending=False).count()
+
+    def create(self, validated_data):
+        """
+        Create a new group instance from the validated data.
+        """
+        # group = Group.objects.create(**validated_data)
+        owner = validated_data.get('owner', None)
+
+        group = create_group_for_client(
+            client=owner.profile.employer,
+            name=validated_data.get('name'),
+            description=validated_data.get('description', ''),
+            owner=owner,
+            photo=validated_data.get('photo', None),
+            created_by=owner,
+        )
+
+        return group
+
+
+class GroupAdminListSerializer(GroupListSerializer):
+    """
+    Serializer for Group model.
+    Handles serialization/deserialization of group data for API endpoints.
+    """
+    pass
+
+
+class GroupDetailSerializer(serializers.ModelSerializer):
     """
     Serializer for Group model.
     Handles serialization/deserialization of group data for API endpoints.
     """
 
     members = serializers.SerializerMethodField()
-    pending_members = serializers.SerializerMethodField()
+    # pending_members = serializers.SerializerMethodField()
+    other_groups = serializers.SerializerMethodField(read_only=True)
     created_by = serializers.CharField(source='created_by.get_full_name', read_only=True)
     stats = serializers.SerializerMethodField(read_only=True)
 
@@ -23,16 +180,17 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'photo',
             'description',
             'created_by',
             'owner',
             'created_at',
-            'stats',
             'members',
-            'pending_members',
+            'stats',
+            'other_groups',
             'main',
         ]  # Include all model fields in serialization
-        read_only_fields = ['created_by', 'created_at', 'members', 'pending_members', 'main', 'stats']  # Prevent modification of read-only fields
+        read_only_fields = ['created_by', 'created_at', 'members', 'other_groups', 'main']  # Prevent modification of read-only fields
 
     def get_members(self, obj):
         """
@@ -180,6 +338,19 @@ class GroupSerializer(serializers.ModelSerializer):
             "mean_meal_streak": mm,
         }
 
+    def get_other_groups(self, obj):
+        """
+        Retrieve and serialize other groups associated with the same members as the current group.
+        Excludes the current group from the list.
+        """
+        from groups.services import compute_another_groups
+
+        if obj.owner == self.context['request'].user or self.context['request'].user.is_superuser:
+            if obj.main:
+                return compute_another_groups(obj)
+
+        return None
+
 
 class GroupMemberSerializer(serializers.ModelSerializer):
     """
@@ -199,6 +370,7 @@ class GroupMemberSerializer(serializers.ModelSerializer):
         """
         errors = {}
         read_only = getattr(self.Meta, 'read_only_fields', ())
+
         for field in read_only:
             if field in (self.initial_data or {}):
                 errors[field] = "This field is read-only and cannot be modified."

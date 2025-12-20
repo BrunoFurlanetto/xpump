@@ -28,7 +28,8 @@ class Client(models.Model):
         verbose_name='Atualizado por'
     )
     owners = models.ForeignKey(User, on_delete=models.PROTECT, related_name='client', verbose_name='Proprietário')
-    groups = models.ForeignKey(Group, blank=True, null=True, on_delete=models.PROTECT, related_name='client', verbose_name='Grupo')
+    main_group = models.ForeignKey(Group, blank=True, null=True, on_delete=models.PROTECT, related_name='client', verbose_name='Grupo principal')
+    groups = models.ManyToManyField(Group, blank=True, related_name='clients', verbose_name='Grupos')
     client_code = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name='Código do Cliente')
 
     class Meta:
@@ -37,3 +38,10 @@ class Client(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def group_belongs_to_client(cls, group):
+        """
+        Check if a given group belongs to any client as main_group or in groups.
+        """
+        return cls.objects.filter(models.Q(main_group=group) | models.Q(groups=group)).first()

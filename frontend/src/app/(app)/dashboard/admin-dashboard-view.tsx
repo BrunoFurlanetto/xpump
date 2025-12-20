@@ -71,8 +71,8 @@ export default function AdminDashboardView() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total de Clientes"
-          value={stats?.total_clients || 0}
-          subtitle={`${stats?.active_clients || 0} ativos, ${stats?.inactive_clients || 0} inativos`}
+          value={stats?.total_users || 0}
+          subtitle={`${stats?.active_users || 0} ativos, ${stats?.inactive_users || 0} inativos`}
           icon={Users}
           color="text-blue-400"
           bgColor="bg-blue-500/10"
@@ -114,7 +114,7 @@ export default function AdminDashboardView() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
               <UserCheck className="h-8 w-8 mx-auto mb-2 text-blue-400" />
-              <p className="text-2xl font-bold text-foreground">{stats?.new_clients_this_month || 0}</p>
+              <p className="text-2xl font-bold text-foreground">{stats?.new_users_this_month || 0}</p>
               <p className="text-xs text-muted-foreground">Novos Clientes</p>
             </div>
             <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
@@ -129,7 +129,7 @@ export default function AdminDashboardView() {
             </div>
             <div className="text-center p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
               <Activity className="h-8 w-8 mx-auto mb-2 text-yellow-400" />
-              <p className="text-2xl font-bold text-foreground">{stats?.pending_validations || 0}</p>
+              <p className="text-2xl font-bold text-foreground">{stats?.pending_reports || 0}</p>
               <p className="text-xs text-muted-foreground">Pendentes</p>
             </div>
           </div>
@@ -243,7 +243,7 @@ export default function AdminDashboardView() {
             </div>
             <div className="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
               <UserCheck className="h-6 w-6 mx-auto mb-2 text-blue-400" />
-              <p className="text-2xl font-bold text-foreground">{stats?.active_clients || 0}</p>
+              <p className="text-2xl font-bold text-foreground">{stats?.active_users || 0}</p>
               <p className="text-sm text-muted-foreground">Clientes Ativos</p>
             </div>
           </div>

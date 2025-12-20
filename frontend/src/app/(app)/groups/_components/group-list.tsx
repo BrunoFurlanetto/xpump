@@ -3,13 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Crown } from "lucide-react";
 import { GroupCard } from "@/app/(app)/groups/_components/group-card";
-import React from "react";
 import { Group } from "@/lib/api/groups";
 import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-modal";
 
 const GroupList = ({ groups }: { groups: Group[] }) => {
   const confirmedGroups = groups.filter((group) => !group.pending);
-  const companyGroup = confirmedGroups.find((group) => group.main === true);
+  const companyGroup = confirmedGroups.filter((group) => group.main === true);
 
   const otherGroups = confirmedGroups.filter((group) => group.main !== true);
   return (
@@ -19,14 +18,16 @@ const GroupList = ({ groups }: { groups: Group[] }) => {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Grupo da Empresa</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Grupos</h2>
             <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
               Oficial
             </Badge>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <GroupCard group={companyGroup} />
+            {companyGroup.map((group) => (
+              <GroupCard key={group.id} group={group} />
+            ))}
           </div>
         </div>
       )}

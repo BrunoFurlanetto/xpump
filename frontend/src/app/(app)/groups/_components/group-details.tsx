@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, Crown, Users, ArrowLeft, UserCog, Loader2, Calendar, Users2 } from "lucide-react";
+import { Trophy, Medal, Crown, Users, ArrowLeft, UserCog, Loader2, Calendar, Users2, Search, Star } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group, GroupsAPI } from "@/lib/api/groups";
 import Link from "next/link";
@@ -14,6 +14,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import GroupCardHeader from "./group-card-header";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { CreateGroupModal } from "./create-group-modal";
 
 interface GroupDetailsProps {
   group: Group;
@@ -28,6 +31,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
   const [group, setGroup] = useState(initialGroup);
   const [period, setPeriod] = useState<"week" | "month" | "all">(externalPeriod || "week");
   const [isLoading, setIsLoading] = useState(false);
+  const [groupSearchTerm, setGroupSearchTerm] = useState("");
 
   // Sincronizar período externo se fornecido
   useEffect(() => {
@@ -70,7 +74,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
   const currentUserMember = group.members.find((m) => m.id === Number(user?.id));
   const currentUserRole = group.owner === Number(user?.id) ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
 
-  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin";
+  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin" || hasRole("Admin");
 
   const getPositionIcon = (position: number) => {
     switch (position) {
@@ -117,21 +121,20 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
   if (canManageMembers) tabs += 1;
   if (canSeeGroupsTab) tabs += 1;
 
+  // Filtrar grupos com base na busca
+  const filteredGroups = (group.other_groups || []).filter((otherGroup) =>
+    otherGroup.name.toLowerCase().includes(groupSearchTerm.toLowerCase()) ||
+    otherGroup.owner.toLowerCase().includes(groupSearchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Back Button */}
       <div className="flex items-start">
-        <Link
-          href="/groups"
-          className={buttonVariants({
-            variant: "outline",
-            size: "sm",
-            className: "border-border text-foreground hover:bg-muted",
-          })}
-        >
+        <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
-        </Link>
+        </Button>
       </div>
 
       {/* Group Header */}
@@ -141,8 +144,6 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
         avatar={null}
         stats={group.stats}
         currentUserRole={currentUserRole}
-        showManageButton={canManageMembers}
-        onManageClick={() => setActiveTab("members")}
       />
 
       {/* Conteúdo Principal com Abas */}
@@ -231,9 +232,8 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                       rankedMembers.map((member, index) => (
                         <div
                           key={member.id}
-                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${
-                            index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
-                          }`}
+                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
+                            }`}
                           onClick={() => router.push(`/profile/${member.profile_id}`)}
                         >
                           <div className="flex items-center gap-3">
@@ -386,6 +386,99 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                 await fetchGroupData(period);
               }}
             />
+          </TabsContent>
+        )}
+
+        {/* Aba de Grupos da Empresa */}
+        {canSeeGroupsTab && (
+          <TabsContent value="groups">
+            <div className="w-full flex justify-end mb-4">
+              <div className="max-w-60">
+                <CreateGroupModal
+                  onGroupCreated={async () => {
+                    await fetchGroupData(period);
+                  }}
+                  groupId={group.id}
+                />
+              </div>
+
+            </div>
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users2 className="h-5 w-5" />
+                    Grupos da Empresa
+                    <Badge variant="secondary">{group.other_groups?.length || 0}</Badge>
+                  </CardTitle>
+                </div>
+
+                {/* Barra de Busca */}
+                <div className="relative pt-2">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Buscar grupos..."
+                    value={groupSearchTerm}
+                    onChange={(e) => setGroupSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {filteredGroups.length > 0 ? (
+                    filteredGroups.map((otherGroup) => (
+                      <div
+                        key={otherGroup.id}
+                        className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 border border-border transition-colors cursor-pointer hover:bg-muted/50"
+                        onClick={() => router.push(`/groups/${otherGroup.id}`)}
+                      >
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+                            {getInitials(otherGroup.name)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-foreground truncate">{otherGroup.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Criado por: {otherGroup.owner}
+                          </p>
+                          <div className="flex mt-1 flex-wrap items-center justify-center sm:justify-start gap-3">
+                            {/* Total Members */}
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                              <Users className="h-3 w-3 text-emerald-500" />
+                              <span className="text-xs font-medium text-emerald-400">
+                                {otherGroup.n_members || 0} membro{otherGroup.n_members !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            {/* Total Points */}
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+                              <Star className="h-3 w-3 text-yellow-500" />
+                              <span className="text-xs font-medium text-yellow-400">
+                                {otherGroup.pts?.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} pts
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Users2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>
+                        {groupSearchTerm
+                          ? "Nenhum grupo encontrado com esse termo"
+                          : "Nenhum outro grupo na empresa"}
+                      </p>
+                      {groupSearchTerm && (
+                        <p className="text-sm mt-2">Tente ajustar os termos de busca</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         )}
       </Tabs>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { GroupDetails } from "@/app/(app)/groups/_components/group-details";
 import { useGroupQuery } from "@/hooks/useGroupsQuery";
 import { GroupDetailsSkeleton } from "@/app/(app)/groups/_components/group-details-skeleton";

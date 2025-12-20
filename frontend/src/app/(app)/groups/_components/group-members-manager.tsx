@@ -59,6 +59,7 @@ export function GroupMembersManager({
 
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
+      member.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.email.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -195,16 +196,26 @@ export function GroupMembersManager({
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="font-semibold text-sm">{member.username.charAt(0).toUpperCase()}</span>
+                      <span className="font-semibold text-sm">
+                        {member.full_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </span>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0 space-y-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-medium truncate max-w-[160px] sm:max-w-[220px]">
-                              {member.username}
+                          <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                            <span className="font-semibold text-foreground truncate max-w-[160px] sm:max-w-[220px]">
+                              {member.full_name}
                             </span>
+                            <Badge variant="secondary" className="text-xs">
+                              @{member.username}
+                            </Badge>
                             {member.id === currentUserId && (
                               <Badge variant="outline" className="text-xs">
                                 Você

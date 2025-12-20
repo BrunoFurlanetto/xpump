@@ -2,6 +2,7 @@ import secrets
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.core.validators import FileExtensionValidator
 
 
 def invate_code_generator():
@@ -23,28 +24,54 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     created_by = models.ForeignKey(User, editable=False, on_delete=models.PROTECT, related_name='group_created_by')
     owner = models.ForeignKey(User, on_delete=models.PROTECT, related_name='group_owner', blank=True)
+    photo = models.ImageField(
+        upload_to='group_photos',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])]
+    )
     main = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        """
-        Override save method to automatically add the creator as an admin member
-        when a new group is created.
-        """
-        if not self.pk:  # New group creation
-            super().save(*args, **kwargs)
-            # Automatically add creator as admin member
-            GroupMembers.objects.create(
-                member=self.created_by,
-                joined_at=self.created_at,
-                is_admin=True,
-                group=self,
-                pending=False
-            )
-        else:
-            super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     """
+    #     Override save method to automatically add the creator as an admin member
+    #     when a new group is created.
+    #     """
+    #     add_creator = kwargs.pop('add_creator', True)
+    #     members_list = kwargs.pop('members_list', [])
+    #
+    #     if not self.pk:  # New group creation
+    #         super().save(*args, **kwargs)
+    #         # Automatically add creator as admin member
+    #
+    #         if not self.main:
+    #             self.owner.profile.employer.groups.add(self)
+    #         else:
+    #             self.owner.profile.employer.main_group = self
+    #             self.owner.profile.employer.save()
+    #
+    #         if add_creator:
+    #             GroupMembers.objects.create(
+    #                 member=self.created_by,
+    #                 joined_at=self.created_at,
+    #                 is_admin=True,
+    #                 group=self,
+    #                 pending=False
+    #             )
+    #
+    #         if members_list:
+    #             for member in members_list:
+    #                 GroupMembers.objects.create(
+    #                     member=member,
+    #                     joined_at=self.created_at,
+    #                     group=self,
+    #                     pending=False
+    #                 )
+    #     else:
+    #         super().save(*args, **kwargs)
 
     def member_count(self):
         """

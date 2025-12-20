@@ -1,17 +1,32 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from clients.models import Client
 from groups.models import Group, GroupMembers
 from groups.permissions import IsMember, IsAdminMember, IsGroupMember
-from groups.serializer import GroupSerializer, GroupMemberSerializer
+from groups.serializer import GroupMemberSerializer, GroupListSerializer, GroupDetailSerializer, \
+    GroupAdminListSerializer, GroupCreateFromMainSerializer
 from groups.services import compute_group_members_data
+
+
+@extend_schema(tags=['groups'])
+class GroupsAdminAPIView(ListAPIView):
+    """
+    API view for listing all main groups for admin users.
+    - GET: Returns list of all main groups (admin only)
+    """
+    queryset = Group.objects.filter(main=True)
+    serializer_class = GroupAdminListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
 
 @extend_schema(tags=['Groups'])
@@ -22,7 +37,7 @@ class GroupsAPIView(ListCreateAPIView):
     - POST: Creates new group with authenticated user as owner and admin
     """
     queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    serializer_class = GroupListSerializer
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
@@ -46,7 +61,7 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
     Only group owners can delete groups.
     """
     queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    serializer_class = GroupDetailSerializer
     permission_classes = [IsAuthenticated, IsGroupMember]
 
     def destroy(self, request, *args, **kwargs):
@@ -88,8 +103,56 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
 
         return Response(base, status=status.HTTP_200_OK)
 
-# @extend_schema(tags=['Groups'])
-# class GroupStatsAPIView(APIView):
+
+@extend_schema(
+    tags=['Groups'],
+    request=GroupCreateFromMainSerializer,
+    responses={
+        201: GroupDetailSerializer,
+        400: {'description': 'Bad Request - The group is not primary or the data is invalid.'},
+        403: {'description': 'Forbidden - User does not have permission.'},
+        404: {'description': 'Not Found - Group or client not found.'}
+    },
+    summary='Create a group from a parent group.',
+    description='Creates a new group (subgroup) associated with the same client as the main group. '
+                'Only the owner of the main group or superusers can create subgroups.'
+)
+class CreateGroupFromMainAPIView(CreateAPIView):
+    """
+    API view to create a new group from a parent group.
+    The new group will be associated with the same client as the main group.
+    """
+    serializer_class = GroupCreateFromMainSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_main_group(self):
+        return get_object_or_404(Group, pk=self.kwargs.get('group_id'))
+
+    def check_permissions_for_main(self, main_group):
+        if not main_group.main:
+            raise PermissionDenied("This group is not a main group.")
+        if not self.request.user.is_superuser:
+            raise PermissionDenied("Only superuser can create subgroups.")
+
+    def perform_create(self, serializer):
+        main_group = self.get_main_group()
+        self.check_permissions_for_main(main_group)
+
+        client = get_object_or_404(Client, main_group=main_group)
+
+        with transaction.atomic():
+            new_group = serializer.save(client=client, add_creator=False)
+            client.groups.add(new_group)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        new_group = serializer.instance
+        response_serializer = GroupDetailSerializer(new_group, context={'request': request})
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 @extend_schema(tags=['Groups'])
@@ -103,7 +166,7 @@ class GroupMeAPIView(APIView):
     def get(self, request, *args, **kwargs):
         members = GroupMembers.objects.filter(member=self.request.user)
         groups = Group.objects.filter(groupmembers__in=members).distinct()
-        serializer = GroupSerializer(groups, many=True)
+        serializer = GroupListSerializer(groups, many=True, context={'request': request})
 
         data = serializer.data
         pending_map = {gm.group_id: gm.pending for gm in members}
@@ -201,6 +264,14 @@ class InviteGroupAPIView(APIView):
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
         group = Group.objects.get(id=self.kwargs['group_id'])
+        client = Client.group_belongs_to_client(group)
+
+        if client != invited_user.profile.employer:
+            return Response(
+                {"detail": "User does not belong to the same employer."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         member_exists = GroupMembers.objects.filter(member=invited_user, group=group)
 
         if member_exists.exists() and member_exists.first().pending:
