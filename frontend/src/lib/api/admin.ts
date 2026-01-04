@@ -7,6 +7,16 @@ export interface SystemDashboardStats {
   active_users: number;
   inactive_users: number;
   new_users_this_month: number;
+  new_users_this_week: number;
+  new_users_today: number;
+
+  // Client statistics
+  total_clients: number;
+  active_clients: number;
+  inactive_clients: number;
+  new_clients_this_month: number;
+  new_clients_this_week: number;
+  new_clients_today: number;
 
   // Group statistics
   total_groups: number;
@@ -25,10 +35,19 @@ export interface SystemDashboardStats {
 
   // Social feed statistics
   total_posts: number;
-  total_comments: number;
-  total_likes: number;
   posts_today: number;
   posts_this_week: number;
+  posts_this_month: number;
+
+  total_comments: number;
+  comments_today: number;
+  comments_this_week: number;
+  comments_this_month: number;
+
+  total_likes: number;
+  likes_today: number;
+  likes_this_week: number;
+  likes_this_month: number;
 
   // Moderation statistics
   pending_reports: number;
