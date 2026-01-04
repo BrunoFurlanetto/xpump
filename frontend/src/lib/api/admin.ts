@@ -2,20 +2,45 @@
 
 // ===== DASHBOARD GERAL DO SISTEMA (Personal Trainer) =====
 export interface SystemDashboardStats {
-  total_clients: number;
-  active_clients: number;
-  inactive_clients: number;
+  // User statistics
+  total_users: number;
+  active_users: number;
+  inactive_users: number;
+  new_users_this_month: number;
+
+  // Group statistics
   total_groups: number;
+
+  // Workout statistics
   total_workouts: number;
-  total_meals: number;
   workouts_today: number;
   workouts_this_week: number;
   workouts_this_month: number;
+
+  // Meal statistics
+  total_meals: number;
   meals_today: number;
   meals_this_week: number;
   meals_this_month: number;
-  new_clients_this_month: number;
-  pending_validations: number;
+
+  // Social feed statistics
+  total_posts: number;
+  total_comments: number;
+  total_likes: number;
+  posts_today: number;
+  posts_this_week: number;
+
+  // Moderation statistics
+  pending_reports: number;
+
+  // Gamification statistics
+  average_user_level: number;
+  average_user_score: number;
+  average_workout_streak: number;
+  average_meal_streak: number;
+
+  // Season statistics
+  active_seasons: number;
 }
 
 export interface ClientOverview {
@@ -24,36 +49,65 @@ export interface ClientOverview {
   first_name: string;
   last_name: string;
   email: string;
-  workout_count: number;
-  meal_count: number;
-  current_workout_streak: number;
-  current_meal_streak: number;
-  last_activity?: string;
+  date_joined: string;
+
+  // Profile info
   profile_score: number;
   profile_level: number;
+
+  // Activity counts
+  workout_count: number;
+  meal_count: number;
+  post_count: number;
+
+  // Streaks
+  current_workout_streak: number;
+  longest_workout_streak: number;
+  current_meal_streak: number;
+  longest_meal_streak: number;
+
+  // Last activity
+  last_activity: string | null;
   is_active: boolean;
-  date_joined: string;
+
+  // Group memberships
+  group_count: number;
 }
 
 export interface GroupOverview {
   id: number;
   name: string;
   description: string;
+  created_at: string;
+  created_by: string;
+  owner: string;
+  is_main: boolean;
+
+  // Member statistics
   member_count: number;
+  active_members_today: number;
+  active_members_this_week: number;
+
+  // Activity statistics
   total_workouts: number;
   total_meals: number;
-  created_at: string;
-  active_members_today: number;
+  workouts_this_week: number;
+  meals_this_week: number;
+
+  // Top performer
+  top_performer_username: string | null;
+  top_performer_score: number | null;
 }
 
 export interface SystemActivity {
   id: number;
-  type: "workout" | "meal" | "client_join" | "group_created";
+  type: string;
   user_id: number;
   user_name: string;
   description: string;
   timestamp: string;
-  related_id?: number;
+  related_id: number | null;
+  details?: any;
 }
 
 // ===== DASHBOARD DE GRUPO (Admin específico de grupo) =====
