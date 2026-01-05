@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const isAdmin = roles.some((role) => role.toLowerCase() === "admin");
 
   // Se for admin, mostra o dashboard administrativo
-  if (!isAdmin) {
+  if (isAdmin) {
     return <AdminDashboardView />;
   }
 

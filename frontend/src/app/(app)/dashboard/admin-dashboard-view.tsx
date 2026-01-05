@@ -55,11 +55,6 @@ export default function AdminDashboardView() {
   const { data: clientsData, isLoading: isLoadingClients } = useAllClients(1, 5, "-last_activity");
   const { data: groupsData, isLoading: isLoadingGroups } = useAllGroups(1, 5);
 
-  // Log para verificar os dados recebidos do backend
-  if (stats) {
-    console.log("📊 Dados do backend:", stats);
-  }
-
   // Dados para gráficos
   const activityData = [
     {
@@ -121,23 +116,6 @@ export default function AdminDashboardView() {
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Dashboard Administrativo 📊</h1>
         <p className="text-muted-foreground text-sm sm:text-base">Visão geral do sistema - Personal Trainer</p>
       </div>
-
-      {/* Debug: Mostrar dados brutos recebidos */}
-      {stats && (
-        <Card className="bg-muted/50 border-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              🔍 Debug: Dados recebidos do Backend
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-xs overflow-auto max-h-96 p-4 bg-background rounded-lg">
-              {JSON.stringify(stats, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Estatísticas Principais - Usuários e Clientes */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -246,7 +224,7 @@ export default function AdminDashboardView() {
               Atividades no Sistema
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ChartContainer
               config={{
                 workouts: {
@@ -262,7 +240,7 @@ export default function AdminDashboardView() {
                   color: "hsl(var(--chart-3))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[250px] sm:h-[300px] w-full min-w-[300px]"
             >
               <BarChart data={activityData}>
                 <XAxis dataKey="name" />
@@ -284,7 +262,7 @@ export default function AdminDashboardView() {
               Novos Usuários
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ChartContainer
               config={{
                 users: {
@@ -292,7 +270,7 @@ export default function AdminDashboardView() {
                   color: "hsl(var(--chart-1))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[250px] sm:h-[300px] w-full min-w-[300px]"
             >
               <LineChart data={userActivityData}>
                 <XAxis dataKey="name" />
@@ -321,7 +299,7 @@ export default function AdminDashboardView() {
               Novos Clientes
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ChartContainer
               config={{
                 clients: {
@@ -329,7 +307,7 @@ export default function AdminDashboardView() {
                   color: "hsl(var(--chart-2))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[250px] sm:h-[300px] w-full min-w-[300px]"
             >
               <LineChart data={clientActivityData}>
                 <XAxis dataKey="name" />
@@ -356,20 +334,20 @@ export default function AdminDashboardView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 h-[300px] content-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-auto sm:h-[300px] content-center">
               <div className="text-center p-6 bg-green-500/10 rounded-lg border border-green-500/20">
-                <Dumbbell className="h-10 w-10 mx-auto mb-3 text-green-400" />
-                <p className="text-4xl font-bold text-foreground mb-2">
+                <Dumbbell className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-3 text-green-400" />
+                <p className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
                   {parseFloat((stats?.average_workout_streak || 0).toFixed(1))}
                 </p>
-                <p className="text-sm text-muted-foreground">Sequência Média de Treinos</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Sequência Média de Treinos</p>
               </div>
               <div className="text-center p-6 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                <Utensils className="h-10 w-10 mx-auto mb-3 text-orange-400" />
-                <p className="text-4xl font-bold text-foreground mb-2">
+                <Utensils className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-3 text-orange-400" />
+                <p className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
                   {parseFloat((stats?.average_meal_streak || 0).toFixed(1))}
                 </p>
-                <p className="text-sm text-muted-foreground">Sequência Média de Refeições</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Sequência Média de Refeições</p>
               </div>
             </div>
           </CardContent>
