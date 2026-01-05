@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useUserAuth } from "@/context/userAuthContext";
 import Image from "next/image";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import {
@@ -374,14 +375,7 @@ function PostCard({
                 else if (fileUrl.includes(".avi")) videoType = "video/x-msvideo";
                 else if (fileUrl.includes(".mkv")) videoType = "video/x-matroska";
 
-                return (
-                  <div key={file.id} className="relative w-full aspect-video rounded-lg overflow-hidden bg-black">
-                    <video controls className="w-full h-full object-cover" preload="metadata">
-                      <source src={file.file} type={videoType} />
-                      Seu navegador não suporta vídeos.
-                    </video>
-                  </div>
-                );
+                return <VideoPlayer key={file.id} src={file.file} type={videoType} />;
               } else {
                 return (
                   <div key={file.id} className="relative w-full aspect-square rounded-lg overflow-hidden bg-muted">
