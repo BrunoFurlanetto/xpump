@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -52,10 +52,29 @@ export default function FeedPage() {
   const [commentTexts, setCommentTexts] = useState<{ [key: number]: string }>({});
   const [expandedPosts, setExpandedPosts] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Queries
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useFeedQuery();
   console.log(data);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Mutations
   const createPostMutation = useCreatePost();
@@ -230,19 +249,15 @@ export default function FeedPage() {
         ))}
       </div>
 
-      {/* Load More */}
+      {/* Infinite scroll trigger */}
       {hasNextPage && (
-        <div className="flex justify-center py-4">
-          <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage} variant="outline">
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Carregando...
-              </>
-            ) : (
-              "Carregar mais"
-            )}
-          </Button>
+        <div ref={loadMoreRef} className="flex justify-center py-4">
+          {isFetchingNextPage && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Carregando mais posts...</span>
+            </div>
+          )}
         </div>
       )}
 
