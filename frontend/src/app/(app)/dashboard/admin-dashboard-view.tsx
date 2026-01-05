@@ -224,7 +224,7 @@ export default function AdminDashboardView() {
               Atividades no Sistema
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ChartContainer
               config={{
                 workouts: {
@@ -240,7 +240,7 @@ export default function AdminDashboardView() {
                   color: "hsl(var(--chart-3))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[250px] sm:h-[300px] w-full min-w-[300px]"
             >
               <BarChart data={activityData}>
                 <XAxis dataKey="name" />
@@ -262,7 +262,7 @@ export default function AdminDashboardView() {
               Novos Usuários
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ChartContainer
               config={{
                 users: {
@@ -270,7 +270,7 @@ export default function AdminDashboardView() {
                   color: "hsl(var(--chart-1))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[250px] sm:h-[300px] w-full min-w-[300px]"
             >
               <LineChart data={userActivityData}>
                 <XAxis dataKey="name" />
@@ -299,7 +299,7 @@ export default function AdminDashboardView() {
               Novos Clientes
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ChartContainer
               config={{
                 clients: {
@@ -307,7 +307,7 @@ export default function AdminDashboardView() {
                   color: "hsl(var(--chart-2))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[250px] sm:h-[300px] w-full min-w-[300px]"
             >
               <LineChart data={clientActivityData}>
                 <XAxis dataKey="name" />
@@ -334,20 +334,20 @@ export default function AdminDashboardView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 h-[300px] content-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-auto sm:h-[300px] content-center">
               <div className="text-center p-6 bg-green-500/10 rounded-lg border border-green-500/20">
-                <Dumbbell className="h-10 w-10 mx-auto mb-3 text-green-400" />
-                <p className="text-4xl font-bold text-foreground mb-2">
+                <Dumbbell className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-3 text-green-400" />
+                <p className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
                   {parseFloat((stats?.average_workout_streak || 0).toFixed(1))}
                 </p>
-                <p className="text-sm text-muted-foreground">Sequência Média de Treinos</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Sequência Média de Treinos</p>
               </div>
               <div className="text-center p-6 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                <Utensils className="h-10 w-10 mx-auto mb-3 text-orange-400" />
-                <p className="text-4xl font-bold text-foreground mb-2">
+                <Utensils className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-3 text-orange-400" />
+                <p className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
                   {parseFloat((stats?.average_meal_streak || 0).toFixed(1))}
                 </p>
-                <p className="text-sm text-muted-foreground">Sequência Média de Refeições</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Sequência Média de Refeições</p>
               </div>
             </div>
           </CardContent>
