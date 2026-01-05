@@ -5,7 +5,7 @@ import { useActionState, useEffect, useState } from "react";
 import { ActionResponse, submitRegister } from "./actions";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { User, Lock, Mail, UserPlus, ArrowRight } from "lucide-react";
+import { User, Lock, Mail, UserPlus, ArrowRight, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const initialState: ActionResponse = {
@@ -23,7 +23,7 @@ export default function RegisterForm() {
     last_name: "",
     username: "",
     email: "",
-    // company_code: "",
+    client_code: "",
     password: "",
     password2: "",
   });
@@ -52,7 +52,7 @@ export default function RegisterForm() {
         last_name: "",
         username: "",
         email: "",
-        // company_code: "",
+        client_code: "",
         password: "",
         password2: "",
       });
@@ -179,6 +179,34 @@ export default function RegisterForm() {
           />
         </div>
         {state?.errors?.email && <p className="text-red-400 text-xs flex items-center gap-1">{state.errors.email}</p>}
+      </motion.div>
+
+      {/* Campo de Código da Empresa */}
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <label htmlFor="client_code" className="text-sm font-medium text-white">
+          Código da Empresa
+        </label>
+        <div className="relative">
+          <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            id="client_code"
+            name="client_code"
+            type="text"
+            autoComplete="organization"
+            value={formValues.client_code}
+            onChange={(e) => handleInputChange("client_code", e.target.value)}
+            className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            placeholder="Digite o código da empresa"
+          />
+        </div>
+        {state?.errors?.client_code && (
+          <p className="text-red-400 text-xs flex items-center gap-1">{state.errors.client_code}</p>
+        )}
       </motion.div>
 
       {/* Senhas */}
