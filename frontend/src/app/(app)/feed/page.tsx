@@ -54,6 +54,7 @@ export default function FeedPage() {
 
   // Queries
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useFeedQuery();
+  console.log(data);
 
   // Mutations
   const createPostMutation = useCreatePost();
@@ -149,11 +150,6 @@ export default function FeedPage() {
       <Card className="bg-card border-border">
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                <User className="h-5 w-5" />
-              </AvatarFallback>
-            </Avatar>
             <div className="flex-1 space-y-3">
               <Textarea
                 placeholder="Compartilhe algo com a comunidade..."
@@ -302,8 +298,29 @@ function PostCard({
   const isOwnPost = post.user.id === currentUserId;
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-3">
+    <Card className="bg-card border-border relative">
+      <div className="absolute right-2 top-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isOwnPost && (
+              <DropdownMenuItem onClick={() => onDelete(post.id)} className="text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Deletar
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem>
+              <Flag className="h-4 w-4 mr-2" />
+              Denunciar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <CardHeader className="pb-3 mt-2 overflow-hidden">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1">
             <Avatar className="h-10 w-10">
@@ -313,37 +330,18 @@ function PostCard({
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="font-semibold truncate">{post.user.full_name}</p>
-                <Badge variant="outline" className="h-5 text-xs shrink-0">
+                <p className="font-semibold truncate text-xs">{post.user.full_name}</p>
+                <span className="truncate text-xs text-foreground px-1 bg-border rounded-full">
                   Nível {post.user.profile_level}
-                </Badge>
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="truncate">@{post.user.username}</span>
+                <span className="truncate text-xs">@{post.user.username}</span>
                 <span>•</span>
-                <span className="shrink-0">{formatTimeAgo(post.created_at)}</span>
+                <span className="shrink-0 text-xs">{formatTimeAgo(post.created_at)}</span>
               </div>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {isOwnPost && (
-                <DropdownMenuItem onClick={() => onDelete(post.id)} className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Deletar
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem>
-                <Flag className="h-4 w-4 mr-2" />
-                Denunciar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </CardHeader>
 
@@ -358,13 +356,28 @@ function PostCard({
         {post.content_files.length > 0 && (
           <div className="grid grid-cols-1 gap-2">
             {post.content_files.map((file) => {
-              const isVideo = file.file.endsWith(".mp4") || file.file.endsWith(".webm") || file.file.endsWith(".mov");
+              // Detecta vídeos por extensão ou parâmetros de query
+              const fileUrl = file.file.toLowerCase();
+              const isVideo =
+                fileUrl.includes(".mp4") ||
+                fileUrl.includes(".webm") ||
+                fileUrl.includes(".mov") ||
+                fileUrl.includes(".avi") ||
+                fileUrl.includes(".mkv") ||
+                fileUrl.match(/\.(mp4|webm|mov|avi|mkv)(\?|$|#)/i);
 
               if (isVideo) {
+                // Determina o tipo MIME baseado na extensão
+                let videoType = "video/mp4";
+                if (fileUrl.includes(".webm")) videoType = "video/webm";
+                else if (fileUrl.includes(".mov")) videoType = "video/quicktime";
+                else if (fileUrl.includes(".avi")) videoType = "video/x-msvideo";
+                else if (fileUrl.includes(".mkv")) videoType = "video/x-matroska";
+
                 return (
                   <div key={file.id} className="relative w-full aspect-video rounded-lg overflow-hidden bg-black">
-                    <video controls className="w-full h-full object-cover">
-                      <source src={file.file} type="video/mp4" />
+                    <video controls className="w-full h-full object-cover" preload="metadata">
+                      <source src={file.file} type={videoType} />
                       Seu navegador não suporta vídeos.
                     </video>
                   </div>
@@ -438,9 +451,9 @@ function PostCard({
               <span>{post.comments_count}</span>
             </Button>
 
-            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+            {/* <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
               <Share2 className="h-4 w-4" />
-            </Button>
+            </Button> */}
           </div>
         </div>
 
