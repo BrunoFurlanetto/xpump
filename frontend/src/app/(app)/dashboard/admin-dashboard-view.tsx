@@ -55,11 +55,6 @@ export default function AdminDashboardView() {
   const { data: clientsData, isLoading: isLoadingClients } = useAllClients(1, 5, "-last_activity");
   const { data: groupsData, isLoading: isLoadingGroups } = useAllGroups(1, 5);
 
-  // Log para verificar os dados recebidos do backend
-  if (stats) {
-    console.log("📊 Dados do backend:", stats);
-  }
-
   // Dados para gráficos
   const activityData = [
     {
@@ -121,23 +116,6 @@ export default function AdminDashboardView() {
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Dashboard Administrativo 📊</h1>
         <p className="text-muted-foreground text-sm sm:text-base">Visão geral do sistema - Personal Trainer</p>
       </div>
-
-      {/* Debug: Mostrar dados brutos recebidos */}
-      {stats && (
-        <Card className="bg-muted/50 border-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              🔍 Debug: Dados recebidos do Backend
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-xs overflow-auto max-h-96 p-4 bg-background rounded-lg">
-              {JSON.stringify(stats, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Estatísticas Principais - Usuários e Clientes */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
