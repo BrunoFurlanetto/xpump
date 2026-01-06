@@ -44,16 +44,19 @@ class PostViewSet(ModelViewSet):
         if user.is_superuser:
             # Filter by visibility (optional for superusers)
             visibility_filter = self.request.query_params.get('visibility', None)
+
             if visibility_filter:
                 queryset = queryset.filter(visibility=visibility_filter)
 
             # Filter by content type
             content_type = self.request.query_params.get('content_type', None)
+
             if content_type:
                 queryset = queryset.filter(content_type=content_type)
 
             # Filter by user
             user_id = self.request.query_params.get('user_id', None)
+
             if user_id:
                 queryset = queryset.filter(user_id=user_id)
 
