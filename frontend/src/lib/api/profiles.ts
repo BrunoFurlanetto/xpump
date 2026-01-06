@@ -115,7 +115,7 @@ export class ProfilesAPI {
     }
 
     const response = await fetch(`/api/v1/profiles/${profileId}`, {
-      method: "PUT",
+      method: "PATCH",
       body: formData,
     });
 
