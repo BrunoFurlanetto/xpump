@@ -34,16 +34,39 @@ class PostViewSet(ModelViewSet):
         if not user.is_authenticated:
             raise PermissionDenied('User not authenticated!')
 
-        employer = getattr(getattr(user, 'profile', None), 'employer', None)
-
-        if employer is None:
-            raise ValidationError('User has no associated employer!')
-
         queryset = Post.objects.select_related(
             'user__profile', 'workout_checkin', 'meal'
         ).prefetch_related(
             'comments__user', 'likes__user', 'content_files'
         )
+
+        # Superusers can see all posts without employer filtering
+        if user.is_superuser:
+            # Filter by visibility (optional for superusers)
+            visibility_filter = self.request.query_params.get('visibility', None)
+
+            if visibility_filter:
+                queryset = queryset.filter(visibility=visibility_filter)
+
+            # Filter by content type
+            content_type = self.request.query_params.get('content_type', None)
+
+            if content_type:
+                queryset = queryset.filter(content_type=content_type)
+
+            # Filter by user
+            user_id = self.request.query_params.get('user_id', None)
+
+            if user_id:
+                queryset = queryset.filter(user_id=user_id)
+
+            return queryset.order_by('-created_at')
+
+        # Regular users need employer validation
+        employer = getattr(getattr(user, 'profile', None), 'employer', None)
+
+        if employer is None:
+            raise ValidationError('User has no associated employer!')
 
         # Filter by visibility
         visibility_filter = self.request.query_params.get('visibility', None)
