@@ -211,6 +211,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         return [{
                 "id": member.member.id,
                 "username": member.member.username,
+                "photo": member.member.photo,
                 "full_name": member.member.get_full_name(),
                 "email": member.member.email,
                 "profile_id": getattr(getattr(member.member, 'profile', None), 'id', None),
