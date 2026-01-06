@@ -57,12 +57,19 @@ export interface GroupStats {
 export interface CreateGroupData {
   name: string;
   description: string;
+  photo?: File;
 }
 
 export interface CreateGroupLikeAdminData {
   name: string;
   description: string;
   group_id: number;
+}
+
+export interface UpdateGroupData {
+  name?: string;
+  description?: string;
+  photo?: File;
 }
 
 export interface UpdateMemberData {
@@ -159,13 +166,24 @@ export class GroupsAPI {
   /**
    * Update group information
    */
-  static async updateGroup(groupId: number, data: Partial<CreateGroupData>): Promise<Group> {
-    const response = await fetch(`/api/groups/${groupId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+  static async updateGroup(groupId: number, data: UpdateGroupData): Promise<Group> {
+    const formData = new FormData();
+
+    if (data.name !== undefined) {
+      formData.append("name", data.name);
+    }
+
+    if (data.description !== undefined) {
+      formData.append("description", data.description);
+    }
+
+    if (data.photo) {
+      formData.append("photo", data.photo);
+    }
+
+    const response = await fetch(`/api/v1/groups/${groupId}`, {
+      method: "PUT",
+      body: formData,
     });
 
     if (!response.ok) {

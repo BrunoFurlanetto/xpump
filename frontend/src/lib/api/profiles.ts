@@ -114,8 +114,8 @@ export class ProfilesAPI {
       formData.append("notification_preferences", JSON.stringify(data.notification_preferences));
     }
 
-    const response = await fetch(`/api/profiles/${profileId}`, {
-      method: "PATCH",
+    const response = await fetch(`/api/v1/profiles/${profileId}`, {
+      method: "PUT",
       body: formData,
     });
 

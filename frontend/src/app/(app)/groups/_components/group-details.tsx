@@ -122,9 +122,10 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
   if (canSeeGroupsTab) tabs += 1;
 
   // Filtrar grupos com base na busca
-  const filteredGroups = (group.other_groups || []).filter((otherGroup) =>
-    otherGroup.name.toLowerCase().includes(groupSearchTerm.toLowerCase()) ||
-    otherGroup.owner.toLowerCase().includes(groupSearchTerm.toLowerCase())
+  const filteredGroups = (group.other_groups || []).filter(
+    (otherGroup) =>
+      otherGroup.name.toLowerCase().includes(groupSearchTerm.toLowerCase()) ||
+      otherGroup.owner.toLowerCase().includes(groupSearchTerm.toLowerCase())
   );
 
   return (
@@ -144,6 +145,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
         avatar={null}
         stats={group.stats}
         currentUserRole={currentUserRole}
+        groupId={group.id}
       />
 
       {/* Conteúdo Principal com Abas */}
@@ -232,8 +234,9 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                       rankedMembers.map((member, index) => (
                         <div
                           key={member.id}
-                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
-                            }`}
+                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${
+                            index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
+                          }`}
                           onClick={() => router.push(`/profile/${member.profile_id}`)}
                         >
                           <div className="flex items-center gap-3">
@@ -401,7 +404,6 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                   groupId={group.id}
                 />
               </div>
-
             </div>
             <Card className="bg-card border-border">
               <CardHeader>
@@ -441,9 +443,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
 
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-foreground truncate">{otherGroup.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Criado por: {otherGroup.owner}
-                          </p>
+                          <p className="text-sm text-muted-foreground">Criado por: {otherGroup.owner}</p>
                           <div className="flex mt-1 flex-wrap items-center justify-center sm:justify-start gap-3">
                             {/* Total Members */}
                             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
@@ -467,13 +467,9 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                     <div className="text-center py-12 text-muted-foreground">
                       <Users2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>
-                        {groupSearchTerm
-                          ? "Nenhum grupo encontrado com esse termo"
-                          : "Nenhum outro grupo na empresa"}
+                        {groupSearchTerm ? "Nenhum grupo encontrado com esse termo" : "Nenhum outro grupo na empresa"}
                       </p>
-                      {groupSearchTerm && (
-                        <p className="text-sm mt-2">Tente ajustar os termos de busca</p>
-                      )}
+                      {groupSearchTerm && <p className="text-sm mt-2">Tente ajustar os termos de busca</p>}
                     </div>
                   )}
                 </div>
