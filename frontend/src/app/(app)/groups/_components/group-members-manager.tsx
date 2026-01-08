@@ -36,6 +36,7 @@ interface GroupMembersManagerProps {
   members: GroupMember[];
   currentUserId: number;
   currentUserRole: "owner" | "admin" | "member";
+  clientCode?: string | null;
   onMemberUpdate: () => void;
 }
 
@@ -45,6 +46,7 @@ export function GroupMembersManager({
   members,
   currentUserId,
   currentUserRole,
+  clientCode,
   onMemberUpdate,
 }: GroupMembersManagerProps) {
   const router = useRouter();
@@ -317,6 +319,7 @@ export function GroupMembersManager({
         close={() => setShowInviteModal(false)}
         groupId={groupId}
         groupName={groupName}
+        clientCode={clientCode}
       />
     </>
   );
