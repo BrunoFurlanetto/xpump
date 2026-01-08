@@ -19,14 +19,14 @@ interface GroupStats {
 const GroupCardHeader = ({
   name,
   description,
-  avatar,
+  photo,
   stats,
   currentUserRole,
   groupId,
 }: {
   name: string;
   description: string;
-  avatar?: string | null;
+  photo?: string | null;
   stats?: GroupStats;
   currentUserRole: "owner" | "admin" | "member";
   groupId?: number;
@@ -72,7 +72,7 @@ const GroupCardHeader = ({
             {/* Avatar com Badge de Role */}
             <div className="relative flex-shrink-0">
               <Avatar className="h-24 w-24 sm:h-32 sm:w-32 ring-4 ring-background border-2 border-border shadow-xl">
-                {avatar ? <AvatarImage src={avatar} alt={name} className="object-cover" /> : null}
+                {photo && <AvatarImage src={photo} alt={name} className="object-cover" />}
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-2xl font-bold">
                   {getInitials(name)}
                 </AvatarFallback>
@@ -184,7 +184,7 @@ const GroupCardHeader = ({
           currentData={{
             name,
             description,
-            photo: avatar || null,
+            photo: photo || null,
           }}
         />
       )}
