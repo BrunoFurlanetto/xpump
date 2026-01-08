@@ -174,11 +174,13 @@ class GroupDetailSerializer(serializers.ModelSerializer):
     other_groups = serializers.SerializerMethodField(read_only=True)
     created_by = serializers.CharField(source='created_by.get_full_name', read_only=True)
     stats = serializers.SerializerMethodField(read_only=True)
+    client_code = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Group
         fields = [
             'id',
+            'client_code',
             'name',
             'photo',
             'description',
@@ -190,7 +192,16 @@ class GroupDetailSerializer(serializers.ModelSerializer):
             'other_groups',
             'main',
         ]  # Include all model fields in serialization
-        read_only_fields = ['created_by', 'created_at', 'members', 'other_groups', 'main']  # Prevent modification of read-only fields
+        read_only_fields = ['created_by', 'created_at', 'members', 'other_groups', 'main', 'client_code']  # Prevent modification of read-only fields
+
+    def get_client_code(self, obj):
+        """
+        Return the client code associated with the group's owner.
+        """
+        if obj.owner == self.context['request'].user or self.context['request'].user.is_superuser:
+            return obj.owner.profile.employer.client_code
+
+        return None
 
     def get_members(self, obj):
         """
