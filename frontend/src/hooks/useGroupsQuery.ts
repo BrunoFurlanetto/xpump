@@ -9,19 +9,19 @@ import { useAuth } from "./useAuth";
 export const groupsKeys = {
   all: ["groups"] as const,
   lists: () => [...groupsKeys.all, "list"] as const,
-  list: () => [...groupsKeys.lists()] as const,
+  list: (userId?: string) => [...groupsKeys.lists(), userId] as const,
   details: () => [...groupsKeys.all, "detail"] as const,
   detail: (id: number, period?: string) => [...groupsKeys.details(), id, period] as const,
 };
 
 // Hook para buscar todos os grupos
 export function useGroupsQuery() {
-  const { hasRole, isFetching } = useAuth();
+  const { hasRole, isFetching, user } = useAuth();
   return useQuery({
-    queryKey: groupsKeys.list(),
+    queryKey: groupsKeys.list(user?.id),
     queryFn: () => (hasRole("admin") ? GroupsAPI.listGroupsAdmin() : GroupsAPI.listMyGroups()),
     staleTime: 2 * 60 * 1000, // 2 minutos
-    enabled: !isFetching,
+    enabled: !isFetching && !!user?.id,
   });
 }
 
