@@ -44,6 +44,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import MediaContent from "./media-content";
 
 export default function FeedPage() {
   const { user } = useUserAuth();
@@ -369,38 +370,9 @@ function PostCard({
         {post.content_text && <p className="text-sm leading-relaxed">{post.content_text}</p>}
 
         {/* Mídia */}
-        {post.content_files.length > 0 && (
-          <div className="grid grid-cols-1 gap-2">
-            {post.content_files.map((file) => {
-              // Detecta vídeos por extensão ou parâmetros de query
-              const fileUrl = file.file.toLowerCase();
-              const isVideo =
-                fileUrl.includes(".mp4") ||
-                fileUrl.includes(".webm") ||
-                fileUrl.includes(".mov") ||
-                fileUrl.includes(".avi") ||
-                fileUrl.includes(".mkv") ||
-                fileUrl.match(/\.(mp4|webm|mov|avi|mkv)(\?|$|#)/i);
-
-              if (isVideo) {
-                // Determina o tipo MIME baseado na extensão
-                let videoType = "video/mp4";
-                if (fileUrl.includes(".webm")) videoType = "video/webm";
-                else if (fileUrl.includes(".mov")) videoType = "video/quicktime";
-                else if (fileUrl.includes(".avi")) videoType = "video/x-msvideo";
-                else if (fileUrl.includes(".mkv")) videoType = "video/x-matroska";
-
-                return <VideoPlayer key={file.id} src={file.file} type={videoType} />;
-              } else {
-                return (
-                  <div key={file.id} className="relative w-full aspect-square rounded-lg overflow-hidden bg-muted">
-                    <Image src={file.file} alt="Post media" fill className="object-cover" />
-                  </div>
-                );
-              }
-            })}
-          </div>
-        )}
+        <MediaContent content={post.content_files} />
+        <MediaContent content={post?.workout_checkin?.proofs ?? []} />
+        <MediaContent content={post?.meal?.proofs ?? []} />
 
         {/* Workout Data */}
         {post.workout_checkin && (

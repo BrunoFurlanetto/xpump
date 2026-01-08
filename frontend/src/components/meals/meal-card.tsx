@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,8 @@ import {
 import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
 import { Meal } from "@/lib/api/nutrition";
 import { MealType } from "@/hooks/useMealsQuery";
+import { ImageModal } from "@/components/ui/image-modal";
+import { useImageModal } from "@/hooks/useImageModal";
 
 interface MealCardProps {
   meal: Meal;
@@ -39,6 +42,7 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const imageModal = useImageModal();
 
   const handleSaveComments = async () => {
     try {
@@ -157,12 +161,21 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
           )}
 
           {meal.proofs && meal.proofs.length > 0 && (
-            <div className="mt-3">
-              <img
-                src={meal.proofs[0].file}
-                alt="Foto da refeição"
-                className="w-full h-32 object-cover rounded-lg border border-border"
-              />
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {meal.proofs.map((proof, index) => (
+                <div
+                  key={proof.id}
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() =>
+                    imageModal.openModal(
+                      meal.proofs.map((p) => p.file),
+                      index
+                    )
+                  }
+                >
+                  <Image src={proof.file} alt={`Foto da refeição ${index + 1}`} fill className="object-cover" />
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -185,6 +198,14 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImageModal
+        images={imageModal.selectedImages}
+        initialIndex={imageModal.selectedIndex}
+        isOpen={imageModal.isOpen}
+        onClose={imageModal.closeModal}
+        alt={`Foto da refeição - ${mealType.name}`}
+      />
     </>
   );
 }

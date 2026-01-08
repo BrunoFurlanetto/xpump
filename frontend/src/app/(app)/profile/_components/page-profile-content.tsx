@@ -9,9 +9,10 @@ import ProfileStatistics from "./profile-statistics";
 
 interface PageProfileContentProps {
   profile: ProfileWithUser;
+  isOwnProfile?: boolean;
 }
 
-export default function PageProfileContent({ profile }: PageProfileContentProps) {
+export default function PageProfileContent({ profile, isOwnProfile = false }: PageProfileContentProps) {
   const userName = `${profile.userData.first_name} ${profile.userData.last_name}`.trim() || profile.userData.username;
 
   return (
@@ -23,7 +24,10 @@ export default function PageProfileContent({ profile }: PageProfileContentProps)
         name={userName}
         level={profile.level}
         current_streak={profile.workout_streak.current_streak}
-        showEditButton={false}
+        showEditButton={isOwnProfile}
+        profileId={profile.id}
+        height={profile.height}
+        weight={profile.weight}
       />
 
       {/* Estatísticas Principais */}

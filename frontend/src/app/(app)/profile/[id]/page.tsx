@@ -52,7 +52,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
         </Button>
       </div>
 
-      <PageProfileContent profile={profile} />
+      <PageProfileContent profile={profile} isOwnProfile={false} />
     </div>
   );
 }

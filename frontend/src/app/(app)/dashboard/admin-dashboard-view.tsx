@@ -21,6 +21,7 @@ import { useSystemStats, useAllClients, useAllGroups } from "@/hooks/useAdminQue
 import Link from "next/link";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from "recharts";
+import { CreateClientModal } from "@/components/admin/CreateClientModal";
 
 interface StatCardProps {
   title: string;
@@ -112,9 +113,12 @@ export default function AdminDashboardView() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Dashboard Administrativo 📊</h1>
-        <p className="text-muted-foreground text-sm sm:text-base">Visão geral do sistema - Personal Trainer</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Dashboard Administrativo 📊</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Visão geral do sistema - Personal Trainer</p>
+        </div>
+        <CreateClientModal />
       </div>
 
       {/* Estatísticas Principais - Usuários e Clientes */}

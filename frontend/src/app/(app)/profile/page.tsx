@@ -33,7 +33,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <PageProfileContent profile={profile} />
+      <PageProfileContent profile={profile} isOwnProfile={true} />
     </div>
   );
 }

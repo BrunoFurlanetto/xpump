@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { GroupsAPI, CreateGroupData, UpdateMemberData } from "@/lib/api/groups";
+import { GroupsAPI, CreateGroupData, UpdateMemberData, UpdateGroupData } from "@/lib/api/groups";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
 
@@ -9,19 +9,19 @@ import { useAuth } from "./useAuth";
 export const groupsKeys = {
   all: ["groups"] as const,
   lists: () => [...groupsKeys.all, "list"] as const,
-  list: () => [...groupsKeys.lists()] as const,
+  list: (userId?: string) => [...groupsKeys.lists(), userId] as const,
   details: () => [...groupsKeys.all, "detail"] as const,
   detail: (id: number, period?: string) => [...groupsKeys.details(), id, period] as const,
 };
 
 // Hook para buscar todos os grupos
 export function useGroupsQuery() {
-  const { hasRole, isFetching } = useAuth();
+  const { hasRole, isFetching, user } = useAuth();
   return useQuery({
-    queryKey: groupsKeys.list(),
-    queryFn: () => hasRole('admin') ? GroupsAPI.listGroupsAdmin() : GroupsAPI.listMyGroups(),
+    queryKey: groupsKeys.list(user?.id),
+    queryFn: () => (hasRole("admin") ? GroupsAPI.listGroupsAdmin() : GroupsAPI.listMyGroups()),
     staleTime: 2 * 60 * 1000, // 2 minutos
-    enabled: !isFetching,
+    enabled: !isFetching && !!user?.id,
   });
 }
 
@@ -40,7 +40,6 @@ export function useCreateGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-
     mutationFn: (data: CreateGroupData) => GroupsAPI.createGroup(data),
     onSuccess: (newGroup) => {
       queryClient.invalidateQueries({ queryKey: groupsKeys.lists() });
@@ -51,16 +50,14 @@ export function useCreateGroup() {
       console.error("Erro ao criar grupo:", error);
       toast.error("Erro ao criar grupo");
     },
-
   });
 }
 
 // Hook para criar grupo
-export function useCreateGroupLikeAdmin( groupId: number ) {
+export function useCreateGroupLikeAdmin(groupId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-
     mutationFn: (data: CreateGroupData) => GroupsAPI.createGroupLikeAdmin({ ...data, group_id: groupId }),
     onSuccess: (newGroup) => {
       queryClient.invalidateQueries({ queryKey: groupsKeys.lists() });
@@ -71,7 +68,6 @@ export function useCreateGroupLikeAdmin( groupId: number ) {
       console.error("Erro ao criar grupo:", error);
       toast.error("Erro ao criar grupo");
     },
-
   });
 }
 
@@ -80,8 +76,7 @@ export function useUpdateGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ groupId, data }: { groupId: number; data: Partial<CreateGroupData> }) =>
-      GroupsAPI.updateGroup(groupId, data),
+    mutationFn: ({ groupId, data }: { groupId: number; data: UpdateGroupData }) => GroupsAPI.updateGroup(groupId, data),
     onSuccess: (updatedGroup) => {
       queryClient.invalidateQueries({ queryKey: groupsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: groupsKeys.details() });

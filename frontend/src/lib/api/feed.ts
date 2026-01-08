@@ -50,6 +50,7 @@ export interface WorkoutCheckin {
   validation_status: number;
   validation_status_name: string;
   created_at: string;
+  proofs: ContentFile[];
 }
 
 export interface Meal {
@@ -63,6 +64,7 @@ export interface Meal {
   validation_status: number;
   validation_status_name: string;
   created_at: string;
+  proofs: ContentFile[];
 }
 
 export interface Post {

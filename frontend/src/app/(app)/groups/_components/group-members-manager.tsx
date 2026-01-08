@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Users,
   Search,
@@ -195,16 +196,17 @@ export function GroupMembersManager({
                   onClick={() => router.push(`/profile/${member.profile_id}`)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="font-semibold text-sm">
+                    <Avatar className="h-10 w-10">
+                      {member.photo && <AvatarImage src={member.photo} alt={member.full_name} />}
+                      <AvatarFallback className="bg-primary/10 text-primary">
                         {member.full_name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")
                           .toUpperCase()
                           .slice(0, 2)}
-                      </span>
-                    </div>
+                      </AvatarFallback>
+                    </Avatar>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
