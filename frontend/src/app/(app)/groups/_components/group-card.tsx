@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +47,7 @@ export function GroupCard({ group }: GroupCardProps) {
   const { startRefresh, startTransition } = useGroupsLoading();
 
   const isOwner = Number(user?.id) === group.owner;
-  const isAdmin = group.owner == Number(user?.id)
+  const isAdmin = group.owner == Number(user?.id);
   const canInvite = isOwner || isAdmin;
   const canDelete = isOwner && !group.main; // Owner can delete only non-main groups
 
@@ -86,6 +87,15 @@ export function GroupCard({ group }: GroupCardProps) {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -111,9 +121,12 @@ export function GroupCard({ group }: GroupCardProps) {
               onClick={() => router.push(`/groups/${group.id}`)}
             >
               <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
+                <Avatar className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg">
+                  {group.photo && <AvatarImage src={group.photo} alt={group.name} className="object-cover" />}
+                  <AvatarFallback className="rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                    {getInitials(group.name)}
+                  </AvatarFallback>
+                </Avatar>
                 {isOwner && (
                   <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-yellow-500 rounded-full flex items-center justify-center">
                     <Crown className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
@@ -219,24 +232,24 @@ export function GroupCard({ group }: GroupCardProps) {
               <span className="text-foreground">{formatDate(group.created_at)}</span>
             </div>
 
-          {/*   {/* Preview dos membros */}
-          {/*   <div> */}
-          {/*     <p className="text-xs text-muted-foreground mb-2">Membros ativos:</p> */}
-          {/*     <div className="flex items-center gap-1"> */}
-          {/*       {group.members.slice(0, 3).map((member) => ( */}
-          {/*         <Avatar key={member.id} className="h-5 w-5 sm:h-6 sm:w-6 border border-border"> */}
-          {/*           <AvatarFallback className="text-xs bg-gradient-to-br from-gray-500 to-gray-600 text-white"> */}
-          {/*             {getInitials(member.username)} */}
-          {/*           </AvatarFallback> */}
-          {/*         </Avatar> */}
-          {/*       ))} */}
-          {/*       {group.members_count > 3 && ( */}
-          {/*         <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-muted/50 border border-border flex items-center justify-center"> */}
-          {/*           <span className="text-xs text-muted-foreground">+{group.members_count - 3}</span> */}
-          {/*         </div> */}
-          {/*       )} */}
-          {/*     </div> */}
-          {/*   </div> */}
+            {/*   {/* Preview dos membros */}
+            {/*   <div> */}
+            {/*     <p className="text-xs text-muted-foreground mb-2">Membros ativos:</p> */}
+            {/*     <div className="flex items-center gap-1"> */}
+            {/*       {group.members.slice(0, 3).map((member) => ( */}
+            {/*         <Avatar key={member.id} className="h-5 w-5 sm:h-6 sm:w-6 border border-border"> */}
+            {/*           <AvatarFallback className="text-xs bg-gradient-to-br from-gray-500 to-gray-600 text-white"> */}
+            {/*             {getInitials(member.username)} */}
+            {/*           </AvatarFallback> */}
+            {/*         </Avatar> */}
+            {/*       ))} */}
+            {/*       {group.members_count > 3 && ( */}
+            {/*         <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-muted/50 border border-border flex items-center justify-center"> */}
+            {/*           <span className="text-xs text-muted-foreground">+{group.members_count - 3}</span> */}
+            {/*         </div> */}
+            {/*       )} */}
+            {/*     </div> */}
+            {/*   </div> */}
           </div>
         </CardContent>
       </Card>

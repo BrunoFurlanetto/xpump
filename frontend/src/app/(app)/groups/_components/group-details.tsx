@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, Crown, Users, ArrowLeft, UserCog, Loader2, Calendar, Users2, Search, Star } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
@@ -142,7 +142,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
       <GroupCardHeader
         name={group.name}
         description={group.description}
-        avatar={null}
+        photo={group.photo}
         stats={group.stats}
         currentUserRole={currentUserRole}
         groupId={group.id}
@@ -242,6 +242,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                           <div className="flex items-center gap-3">
                             {getPositionIcon(member.position || 0)}
                             <Avatar className="h-10 w-10">
+                              {member.photo && <AvatarImage src={member.photo} alt={member.full_name} />}
                               <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
                                 {getInitials(member.full_name)}
                               </AvatarFallback>
@@ -292,6 +293,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                               <span className="text-white font-bold text-lg">2º</span>
                             </div>
                             <Avatar className="h-12 w-12 mx-auto mb-2">
+                              {topThree[1].photo && <AvatarImage src={topThree[1].photo} alt={topThree[1].full_name} />}
                               <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600">
                                 {getInitials(topThree[1].full_name)}
                               </AvatarFallback>
@@ -310,6 +312,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                               <span className="text-white font-bold text-lg">1º</span>
                             </div>
                             <Avatar className="h-14 w-14 mx-auto mb-2 ring-2 ring-yellow-400">
+                              {topThree[0].photo && <AvatarImage src={topThree[0].photo} alt={topThree[0].full_name} />}
                               <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-yellow-600">
                                 {getInitials(topThree[0].full_name)}
                               </AvatarFallback>
@@ -328,6 +331,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                               <span className="text-white font-bold text-lg">3º</span>
                             </div>
                             <Avatar className="h-12 w-12 mx-auto mb-2">
+                              {topThree[2].photo && <AvatarImage src={topThree[2].photo} alt={topThree[2].full_name} />}
                               <AvatarFallback className="bg-gradient-to-br from-amber-700 to-amber-800">
                                 {getInitials(topThree[2].full_name)}
                               </AvatarFallback>

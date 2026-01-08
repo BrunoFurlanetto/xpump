@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Loader2, User, X } from "lucide-react";
 import { useUpdateProfile } from "@/hooks/useProfilesQuery";
 import { toast } from "sonner";
-import Image from "next/image";
 
 interface EditProfileModalProps {
   isOpen: boolean;

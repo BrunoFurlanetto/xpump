@@ -3,6 +3,7 @@ export interface Group {
   id: number;
   name: string;
   description: string;
+  photo?: string | null;
   created_by: string; // Nome completo do criador
   owner: number;
   owner_profile_id: number;
@@ -28,6 +29,7 @@ export interface GroupMember {
   full_name: string;
   username: string;
   email: string;
+  photo?: string | null;
   is_admin: boolean;
   joined_at: string;
   pending: boolean;

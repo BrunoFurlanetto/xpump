@@ -203,6 +203,19 @@ export interface UpdateValidationData {
   admin_notes?: string;
 }
 
+export interface CreateClientData {
+  name: string;
+  cnpj: string;
+  contact_email: string;
+  phone: string;
+  address: string;
+  owner_username: string;
+  owner_email: string;
+  owner_password: string;
+  owner_first_name: string;
+  owner_last_name: string;
+}
+
 export class AdminAPI {
   // ===== ENDPOINTS PARA DASHBOARD GERAL DO SISTEMA =====
 
@@ -292,6 +305,26 @@ export class AdminAPI {
     if (!response.ok) {
       throw new Error("Erro ao buscar detalhes do cliente");
     }
+    return response.json();
+  }
+
+  /**
+   * Cria um novo cliente com usuário owner
+   */
+  static async createClient(data: CreateClientData): Promise<any> {
+    const response = await fetch("/api/v1/clients/create-with-owner/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Erro ao criar cliente" }));
+      throw new Error(error.detail || error.message || "Erro ao criar cliente");
+    }
+
     return response.json();
   }
 
