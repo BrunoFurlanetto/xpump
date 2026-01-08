@@ -113,7 +113,7 @@ def compute_group_members_data(group, period):
         result.append({
             "id": m.member.id,
             "username": m.member.username,
-            "photo": m.member.photo,
+            "photo": m.member.profile.photo,
             "full_name": m.member.get_full_name(),
             "email": m.member.email,
             "is_admin": m.is_admin,
