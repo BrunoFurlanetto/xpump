@@ -1,4 +1,5 @@
 # clients/models.py
+import secrets
 import uuid
 
 from django.contrib.auth.models import User
@@ -7,6 +8,13 @@ from django.db import models
 from django.utils import timezone
 
 from groups.models import Group
+
+
+def clinet_code_generator():
+    """
+    Generate a unique 6-character URL-safe code for clients.
+    """
+    return secrets.token_urlsafe(6)
 
 
 class Client(models.Model):
@@ -30,7 +38,7 @@ class Client(models.Model):
     owners = models.ForeignKey(User, on_delete=models.PROTECT, related_name='client', verbose_name='Proprietário')
     main_group = models.ForeignKey(Group, blank=True, null=True, on_delete=models.PROTECT, related_name='client', verbose_name='Grupo principal')
     groups = models.ManyToManyField(Group, blank=True, related_name='clients', verbose_name='Grupos')
-    client_code = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name='Código do Cliente')
+    client_code = models.CharField(default=clinet_code_generator, editable=False, max_length=8, verbose_name='Código do Cliente')
 
     class Meta:
         verbose_name = "Cliente"
