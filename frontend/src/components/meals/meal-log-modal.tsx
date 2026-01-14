@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Utensils, Camera, Upload, X, Clock, Share2 } from "lucide-react";
+import { Loader2, Utensils, Camera, Upload, X, Clock, Share2, Coffee } from "lucide-react";
 import { CreateMealData, MealType } from "@/hooks/useMealsQuery";
 
 interface MealLogModalProps {
@@ -34,6 +34,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
   const [mealPhoto, setMealPhoto] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [shareToFeed, setShareToFeed] = useState(true); // Padrão: compartilhar
+  const [fasting, setFasting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,7 +49,9 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
       newErrors.meal_date = "Data e hora da refeição são obrigatórias";
     }
 
-    // Comments is optional in the API, so we don't validate it
+    if (!fasting && mealPhoto === null) {
+      newErrors.image = "Por favor, adicione uma foto para registrar a refeição";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -66,6 +69,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
         comments: formData.comments,
         proof_files: mealPhoto ? [mealPhoto] : undefined,
         share_to_feed: shareToFeed,
+        fasting: fasting,
       };
 
       await onSubmit(submitData);
@@ -137,7 +141,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Tipo de Refeição */}
           <div className="space-y-2">
-            <Label className="text-foreground">Tipo de Refeição *</Label>
+            <Label className="text-foreground">Tipo de Refeição</Label>
             <div className="grid grid-cols-3 gap-2">
               {mealTypes.map((mealType) => (
                 <Button
@@ -181,9 +185,23 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
             <p className="text-xs text-muted-foreground">A refeição será registrada com o horário atual</p>
           </div>
 
+          <div className="flex items-center space-x-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <Checkbox id="fasting" checked={fasting} onCheckedChange={(checked) => setFasting(checked === true)} />
+            <div className="flex-1">
+              <label
+                htmlFor="fasting"
+                className="text-sm font-medium text-foreground cursor-pointer flex items-center gap-2"
+              >
+                <Coffee className="h-4 w-4 text-primary" />
+                Jejum
+              </label>
+              <p className="text-xs text-muted-foreground">Selecione se você está em jejum</p>
+            </div>
+          </div>
+
           {/* Foto da Refeição */}
           <div className="space-y-2">
-            <Label className="text-foreground">Foto da Refeição (opcional)</Label>
+            <Label className="text-foreground">Foto da Refeição</Label>
 
             {!imagePreview ? (
               <div className="border-2 border-dashed border-border rounded-lg p-4">
@@ -238,7 +256,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
           {/* Descrição */}
           <div className="space-y-2">
             <Label htmlFor="comments" className="text-foreground">
-              Descrição da Refeição (opcional)
+              Descrição da Refeição
             </Label>
             <Textarea
               id="comments"

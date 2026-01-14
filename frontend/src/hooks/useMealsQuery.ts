@@ -108,14 +108,10 @@ export function useCreateMeal() {
         meal_time: data.meal_time,
         comments: data.comments,
         proof_files: data.proof_files,
+        fasting: data.fasting,
       };
 
       const result = await NutritionAPI.createMeal(apiData);
-
-      if (data.share_to_feed) {
-        console.log("Compartilhando refeição no feed...");
-        // TODO: Implementar compartilhamento no feed
-      }
 
       return { result, share_to_feed: data.share_to_feed };
     },

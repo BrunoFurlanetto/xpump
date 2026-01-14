@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
+import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee } from "lucide-react";
 import { Meal } from "@/lib/api/nutrition";
 import { MealType } from "@/hooks/useMealsQuery";
 import { ImageModal } from "@/components/ui/image-modal";
@@ -84,18 +84,27 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                <span className="text-lg">{mealType.icon}</span>
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  meal.fasting
+                    ? "bg-gradient-to-br from-amber-500/30 to-orange-500/20"
+                    : "bg-gradient-to-br from-primary/20 to-primary/10"
+                }`}
+              >
+                {meal.fasting ? (
+                  <Coffee className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                ) : (
+                  <span className="text-lg">{mealType.icon}</span>
+                )}
               </div>
               <div>
-                <Badge variant="secondary" className="text-xs">
-                  <Trophy className="h-3 w-3 mr-1" />
-                  {Math.round(meal.base_points * meal.multiplier)} pts
-                </Badge>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-foreground">{mealType.name}</h4>
+                  <h4 className="font-semibold text-foreground">{meal.fasting ? `Jejum` : mealType.name}</h4>
+                  <Badge variant="secondary" className="text-xs">
+                    <Trophy className="h-3 w-3 mr-1" />
+                    {Math.round(meal.base_points * meal.multiplier)}
+                  </Badge>
                 </div>
-
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span>{formatTime(meal.meal_time)}</span>

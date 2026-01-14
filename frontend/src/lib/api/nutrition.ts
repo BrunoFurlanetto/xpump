@@ -22,6 +22,7 @@ export interface Meal {
   }>;
   current_streak: number;
   longest_streak: number;
+  fasting: boolean;
 }
 
 export interface CreateMealData {
@@ -30,6 +31,7 @@ export interface CreateMealData {
   comments?: string;
   proof_files?: File[];
   share_to_feed?: boolean;
+  fasting: boolean;
 }
 
 export interface MealChoice {
@@ -57,7 +59,7 @@ export interface DailyMeals {
 
 export class NutritionAPI {
   static async getMealConfigs(): Promise<MealConfig[]> {
-    const response = await fetch(`/api/nutrition?endpoint=meal-type/`);
+    const response = await fetch(`/api/v1/meals/meal-type`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar tipos de refeição");
@@ -67,7 +69,7 @@ export class NutritionAPI {
   }
 
   static async getMealChoices(): Promise<MealChoice[]> {
-    const response = await fetch(`/api/nutrition?endpoint=meal-choices/`);
+    const response = await fetch(`/api/v1/meals/meal-choices`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar opções de refeição");
@@ -77,7 +79,7 @@ export class NutritionAPI {
   }
 
   static async getMeals(userId: number): Promise<Meal[]> {
-    const response = await fetch(`/api/nutrition?endpoint=user/${userId}/`);
+    const response = await fetch(`/api/v1/meals/user/${userId}/`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar refeições");
@@ -87,7 +89,7 @@ export class NutritionAPI {
   }
 
   static async getMealsByDateRange(userId: number, startDate: string, endDate: string): Promise<Meal[]> {
-    const response = await fetch(`/api/nutrition?endpoint=user/${userId}/${startDate}/${endDate}`);
+    const response = await fetch(`/api/v1/meals/user/${userId}/${startDate}/${endDate}`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar refeições");
@@ -97,6 +99,7 @@ export class NutritionAPI {
   }
 
   static async createMeal(data: CreateMealData): Promise<Meal> {
+    console.log("Creating meal with data:", data);
     const formData = new FormData();
 
     formData.append("meal_type", data.meal_type.toString());
@@ -112,7 +115,10 @@ export class NutritionAPI {
       });
     }
 
-    const response = await fetch(`/api/nutrition`, {
+    if (data.fasting) {
+      formData.append("fasting", "true");
+    }
+    const response = await fetch(`/api/v1/meals`, {
       method: "POST",
       body: formData,
     });
@@ -126,7 +132,7 @@ export class NutritionAPI {
   }
 
   static async updateMeal(id: number, comments: string): Promise<Meal> {
-    const response = await fetch(`/api/nutrition/${id}`, {
+    const response = await fetch(`/api/v1/meals/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -142,7 +148,7 @@ export class NutritionAPI {
   }
 
   static async deleteMeal(id: number): Promise<void> {
-    const response = await fetch(`/api/nutrition/${id}`, {
+    const response = await fetch(`/api/v1/meals/${id}`, {
       method: "DELETE",
     });
 

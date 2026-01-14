@@ -25,7 +25,6 @@ export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onD
 
     if (!mealTypeInfo) return null;
 
-    console.log(dayData, getMealTypeInfo(mealTypeId), mealTypeId);
     if (meal) {
       return <MealCard meal={meal} mealType={mealTypeInfo} onUpdateComments={onUpdateMeal} onDelete={onDeleteMeal} />;
     }
