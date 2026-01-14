@@ -6,6 +6,7 @@ import { updateTokenInCookies } from "@/app/(auth)/login/refresh-token-action";
 async function fetchWithTokenRefresh(url: string, options: RequestInit, session: Session) {
   let response = await fetch(url, options);
 
+  // If token expired, try to refresh
   if (response.status === 401 && session.refresh) {
     console.log("🔄 Token expired, attempting refresh...");
 
@@ -21,8 +22,11 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
       const data = await refreshResponse.json();
       if (data.access) {
         console.log("✅ Token refreshed successfully");
+
+        // Update cookies with new token (keep same refresh token)
         await updateTokenInCookies(data.access, session.refresh);
 
+        // Retry original request with new token
         const newOptions = {
           ...options,
           headers: {
@@ -38,51 +42,32 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
   return response;
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
-    const body = await request.json();
-    const { action } = body;
-
-    console.log("📨 Responding to group invite:", { groupId: id, action });
-
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/groups/${id}/accept-invite/`,
+      `${BACKEND_URL}/analytics/admin/system/stats/`,
       {
-        method: "POST",
         headers: {
           Authorization: `Bearer ${session.access}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action }),
       },
       session
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Backend error response:", errorText);
-
-      let error;
-      try {
-        error = JSON.parse(errorText);
-      } catch {
-        error = { detail: errorText || "Error responding to invite" };
-      }
-
+      const error = await response.json().catch(() => ({ detail: "Error fetching system stats" }));
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Invite response processed successfully");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error responding to invite:", error);
+    console.error("Error fetching system stats:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

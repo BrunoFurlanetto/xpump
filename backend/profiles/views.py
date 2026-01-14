@@ -32,15 +32,15 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfilesSerialializer
     permission_classes = [IsAuthenticated]  # Require authentication for profile access
-    http_method_names = ['get', 'put']  # Allow GET (retrieve) and PUT (update) operations
+    http_method_names = ['get', 'put', 'patch']  # Allow GET (retrieve) and PUT (update) operations
 
 
 @extend_schema(tags=['Profiles'])
 class ProfileMeAPIView(APIView):
     """
-        API view for retrieving profile the authenticated user.
-        Returns Profile associated with the user.
-        """
+    API view for retrieving profile the authenticated user.
+    Returns Profile associated with the user.
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):

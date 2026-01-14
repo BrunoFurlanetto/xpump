@@ -90,10 +90,14 @@ class Command(BaseCommand):
                         'contact_email': contact_email,
                         'phone': phone,
                         'address': address,
-                        'owners': owner,
-                        'groups': group,
+                        'owners': owner,  # ForeignKey field
+                        'main_group': group,  # ForeignKey field
                     }
                     client = Client.objects.create(**client_data)
+
+                    # Add many-to-many relations after creating the client
+                    client.groups.add(group)
+
                     self.stdout.write(self.style.NOTICE('Creating profile for owner user.'))
                     Profile.objects.create(user=owner, employer=client)
                     Season.objects.create(

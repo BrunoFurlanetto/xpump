@@ -1,4 +1,3 @@
-import React from "react";
 import Link from "next/link";
 import LoginForm from "./form-login";
 import { RegistrationSuccess } from "./registration-success";
@@ -27,7 +26,7 @@ const Page = () => {
           <div className="text-slate-300 text-sm">
             Novo por aqui?{" "}
             <a href="/register" className="text-purple-400 hover:text-purple-300 transition-colors">
-              Solicite acesso
+              Crie sua conta
             </a>
           </div>
         </div>
