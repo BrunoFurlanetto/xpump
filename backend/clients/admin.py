@@ -4,6 +4,36 @@ from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
 from .models import Client
+from profiles.models import Profile
+
+
+class EmployeeInline(admin.TabularInline):
+    """Inline to display all employees of a client"""
+    model = Profile
+    fk_name = 'employer'
+    extra = 0
+    can_delete = False
+    readonly_fields = ('user_info', 'user_email', 'height', 'weight', 'score', 'level')
+    fields = ('user_info', 'user_email', 'height', 'weight', 'score', 'level')
+    verbose_name = 'Funcionário'
+    verbose_name_plural = 'Funcionários'
+
+    def user_info(self, obj):
+        """Display user's full name and username"""
+        if obj.user:
+            full_name = obj.user.get_full_name() or obj.user.username
+            return format_html('<strong>{}</strong> (@{})', full_name, obj.user.username)
+        return '-'
+    user_info.short_description = 'Nome do Funcionário'
+
+    def user_email(self, obj):
+        """Display user's email"""
+        return obj.user.email if obj.user else '-'
+    user_email.short_description = 'E-mail'
+
+    def has_add_permission(self, request, obj=None):
+        """Prevent adding employees directly from client admin"""
+        return False
 
 
 @admin.register(Client)
@@ -13,6 +43,7 @@ class ClientAdmin(admin.ModelAdmin):
     search_fields = ('name', 'cnpj', 'contact_email', 'phone', 'owners__username', 'owners__email')
     readonly_fields = ('client_code', 'created_at', 'updated_at', 'updated_by')
     filter_horizontal = ('groups',)
+    inlines = [EmployeeInline]
 
     fieldsets = (
         ('Informações Básicas', {
