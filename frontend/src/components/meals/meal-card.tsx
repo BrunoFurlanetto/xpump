@@ -88,13 +88,14 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
                 <span className="text-lg">{mealType.icon}</span>
               </div>
               <div>
+                <Badge variant="secondary" className="text-xs">
+                  <Trophy className="h-3 w-3 mr-1" />
+                  {Math.round(meal.base_points * meal.multiplier)} pts
+                </Badge>
                 <div className="flex items-center gap-2">
                   <h4 className="font-semibold text-foreground">{mealType.name}</h4>
-                  <Badge variant="secondary" className="text-xs">
-                    <Trophy className="h-3 w-3 mr-1" />
-                    {Math.round(meal.base_points * meal.multiplier)} pts
-                  </Badge>
                 </div>
+
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span>{formatTime(meal.meal_time)}</span>

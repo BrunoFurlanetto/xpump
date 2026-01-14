@@ -40,7 +40,6 @@ export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onD
             </div>
             <div>
               <h4 className="font-medium text-foreground">{mealTypeInfo.name}</h4>
-              <p className="text-xs text-muted-foreground">{mealTypeInfo.timeRange}</p>
             </div>
           </div>
 

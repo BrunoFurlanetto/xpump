@@ -116,7 +116,8 @@ export default function MealsPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Refeições registradas hoje</span>
                 <span className="text-foreground font-medium">
-                  {dailyMeals[0]?.meals ? Object.values(dailyMeals[0].meals).filter((m) => m !== null).length : 0}/4
+                  {dailyMeals[0]?.meals ? Object.values(dailyMeals[0].meals).filter((m) => m !== null).length : 0}/
+                  {mealTypes.length}
                 </span>
               </div>
               <Progress value={dailyMeals[0]?.completion_percentage || 0} className="h-2" />
@@ -125,16 +126,16 @@ export default function MealsPage() {
                   {dailyMeals[0]?.completion_percentage === 100
                     ? "🎉 Parabéns! Todas as refeições do dia registradas!"
                     : `Complete suas ${
-                        4 -
+                        mealTypes.length -
                         (dailyMeals[0]?.meals ? Object.values(dailyMeals[0].meals).filter((m) => m !== null).length : 0)
                       } refeições restantes`}
                 </span>
-                {dailyMeals[0]?.total_points && (
-                  <Badge variant="secondary" className="text-xs">
-                    {dailyMeals[0].total_points} pontos hoje
-                  </Badge>
-                )}
               </div>
+              {dailyMeals[0]?.total_points && (
+                <Badge variant="secondary" className="text-xs">
+                  {dailyMeals[0].total_points} pontos hoje
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -170,20 +171,17 @@ export default function MealsPage() {
                     <h3 className="text-lg font-semibold text-foreground capitalize">
                       {formatDateTitle(dayData.date)}
                     </h3>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={dayData.completion_percentage === 100 ? "default" : "outline"}
-                        className="text-xs"
-                      >
-                        {dayData.completion_percentage.toFixed(0)}% completo
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={dayData.completion_percentage === 100 ? "default" : "outline"} className="text-xs">
+                      {dayData.completion_percentage.toFixed(0)}% completo
+                    </Badge>
+                    {dayData.total_points > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Trophy className="h-3 w-3 mr-1" />
+                        {dayData.total_points} pontos
                       </Badge>
-                      {dayData.total_points > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          <Trophy className="h-3 w-3 mr-1" />
-                          {dayData.total_points} pontos
-                        </Badge>
-                      )}
-                    </div>
+                    )}
                   </div>
 
                   <DailyMealCard
