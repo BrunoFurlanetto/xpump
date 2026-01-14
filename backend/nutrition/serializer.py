@@ -73,6 +73,12 @@ class MealSerializer(serializers.ModelSerializer):
                     "Only comments can be updated."
                 )
 
+        # Create operation: require proof files unless fasting
+        files = attrs.get('proof_files', [])
+
+        if not files and not attrs.get('fasting', False):
+            raise serializers.ValidationError('At least one proof file is required.')
+
         return attrs
 
     def get_current_streak(self, obj):
@@ -103,10 +109,6 @@ class MealSerializer(serializers.ModelSerializer):
         files = validated_data.pop('proof_files', [])  # Extract proof files
         user_level = validated_data['user'].profile.level
         checkin = Meal.objects.create(**validated_data)  # Create check-in
-
-        if not files and not validated_data.get('fasting', False):
-            raise serializers.ValidationError('At least one proof file is required.')
-
         level_up = checkin.user.profile.level > user_level
         setattr(checkin, 'level_up', level_up)
 
