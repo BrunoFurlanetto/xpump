@@ -8,7 +8,7 @@ export interface WorkoutCheckin {
   validation_status: number;
   base_points: number;
   multiplier: number;
-  proofs?: Array<{
+  proofs: Array<{
     id: number;
     file: string;
   }>;

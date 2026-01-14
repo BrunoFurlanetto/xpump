@@ -42,49 +42,36 @@ async function fetchWithTokenRefresh(url: string, options: RequestInit, session:
   return response;
 }
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const session = await verifySession(false);
     if (!session?.access) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-
-    console.log("📤 Creating/Updating group with data:", body);
+    // Forward query parameters to backend
+    const searchParams = request.nextUrl.searchParams;
+    const queryString = searchParams.toString();
 
     const response = await fetchWithTokenRefresh(
-      `${BACKEND_URL}/groups/${body.group_id}/create-group/`,
+      `${BACKEND_URL}/analytics/admin/system/users/${queryString ? `?${queryString}` : ''}`,
       {
-        method: "POST",
         headers: {
           Authorization: `Bearer ${session.access}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
       },
       session
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Backend error response:", errorText);
-
-      let error;
-      try {
-        error = JSON.parse(errorText);
-      } catch {
-        error = { detail: errorText || "Error creating group" };
-      }
-
+      const error = await response.json().catch(() => ({ detail: "Error fetching clients" }));
       return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
-    console.log("✅ Group created successfully:", data);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("💥 Error creating group:", error);
+    console.error("Error fetching clients:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

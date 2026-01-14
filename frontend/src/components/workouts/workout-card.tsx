@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MapPin, MessageSquare, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
 import { WorkoutCheckin } from "@/lib/api/workouts";
+import { ImageModal } from "@/components/ui/image-modal";
+import { useImageModal } from "@/hooks/useImageModal";
 
 interface WorkoutCardProps {
   workout: WorkoutCheckin;
@@ -39,6 +42,7 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const imageModal = useImageModal();
 
   const handleSaveComments = async () => {
     try {
@@ -176,6 +180,25 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
               </div>
             )
           )}
+
+          {workout.proofs && workout.proofs.length > 0 && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {workout.proofs.map((proof, index) => (
+                <div
+                  key={proof.id}
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() =>
+                    imageModal.openModal(
+                      workout.proofs.map((p) => p.file),
+                      index
+                    )
+                  }
+                >
+                  <Image src={proof.file} alt={`Foto do treino ${index + 1}`} fill className="object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -196,6 +219,14 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImageModal
+        images={imageModal.selectedImages}
+        initialIndex={imageModal.selectedIndex}
+        isOpen={imageModal.isOpen}
+        onClose={imageModal.closeModal}
+        alt="Foto do treino"
+      />
     </>
   );
 }
