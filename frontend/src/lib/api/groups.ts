@@ -14,6 +14,7 @@ export interface Group {
   main: boolean;
   pending: boolean;
   members_count: number;
+  client_code?: string | null; // Código da empresa (apenas para donos)
   other_groups: {
     id: number;
     name: string;

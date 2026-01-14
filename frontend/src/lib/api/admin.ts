@@ -64,33 +64,29 @@ export interface SystemDashboardStats {
 
 export interface ClientOverview {
   id: number;
-  username: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  date_joined: string;
-
-  // Profile info
-  profile_score: number;
-  profile_level: number;
-
-  // Activity counts
-  workout_count: number;
-  meal_count: number;
-  post_count: number;
-
-  // Streaks
-  current_workout_streak: number;
-  longest_workout_streak: number;
-  current_meal_streak: number;
-  longest_meal_streak: number;
-
-  // Last activity
-  last_activity: string | null;
+  name: string;
+  cnpj: string;
+  contact_email: string;
+  phone: string;
+  address: string;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  client_code: string;
 
-  // Group memberships
-  group_count: number;
+  // Owner info
+  owners: number;
+  owner_name?: string;
+  owner_email?: string;
+
+  // Groups
+  main_group: number | null;
+  groups: number[];
+
+  // Statistics (if provided by backend)
+  total_users?: number;
+  active_users?: number;
+  total_groups?: number;
 }
 
 export interface GroupOverview {
@@ -232,12 +228,12 @@ export class AdminAPI {
   }
 
   /**
-   * Busca lista de todos os clientes com suas estatísticas
+   * Busca lista de todos os clientes (empresas contratadas)
    */
   static async getAllClients(
     page: number = 1,
     pageSize: number = 10,
-    orderBy: string = "-last_activity",
+    orderBy: string = "-created_at",
     filters?: {
       is_active?: boolean;
       search?: string;
@@ -251,12 +247,28 @@ export class AdminAPI {
       ...(filters?.search && { search: filters.search }),
     });
 
-    const response = await fetch(`/api/admin/system/clients?${params}`);
+    const url = `/api/v1/clients?${params}`;
+    console.log("Fetching clients from:", url);
+    const response = await fetch(url);
+    console.log("Response status:", response.status);
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error fetching clients:", errorText);
       throw new Error("Erro ao buscar clientes");
     }
-    return response.json();
+    const responseData = await response.json();
+    console.log("Clients data:", responseData);
+
+    // Se a API retornar um array direto (sem paginação), converte para o formato esperado
+    if (Array.isArray(responseData)) {
+      return {
+        results: responseData,
+        count: responseData.length,
+      };
+    }
+
+    return responseData;
   }
 
   /**
@@ -297,10 +309,10 @@ export class AdminAPI {
   }
 
   /**
-   * Busca estatísticas detalhadas de um cliente específico
+   * Busca detalhes de um cliente específico (empresa)
    */
   static async getClientDetail(clientId: number): Promise<ClientOverview> {
-    const response = await fetch(`/api/admin/system/clients/${clientId}`);
+    const response = await fetch(`/api/v1/clients/${clientId}/`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar detalhes do cliente");
@@ -326,6 +338,40 @@ export class AdminAPI {
     }
 
     return response.json();
+  }
+
+  /**
+   * Atualiza um cliente existente
+   */
+  static async updateClient(clientId: number, data: Partial<CreateClientData>): Promise<any> {
+    const response = await fetch(`/api/v1/clients/${clientId}/`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Erro ao atualizar cliente" }));
+      throw new Error(error.detail || error.message || "Erro ao atualizar cliente");
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Deleta um cliente
+   */
+  static async deleteClient(clientId: number): Promise<void> {
+    const response = await fetch(`/api/v1/clients/${clientId}/`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Erro ao deletar cliente" }));
+      throw new Error(error.detail || error.message || "Erro ao deletar cliente");
+    }
   }
 
   // ===== ENDPOINTS PARA DASHBOARD DE GRUPO =====
