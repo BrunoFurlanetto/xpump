@@ -13,19 +13,19 @@ export function useSystemStats() {
 }
 
 /**
- * Hook para buscar lista de clientes
+ * Hook para buscar lista de clientes (empresas contratadas)
  */
 export function useAllClients(
   page: number = 1,
   pageSize: number = 10,
-  orderBy: string = "-last_activity",
+  orderBy: string = "-created_at",
   filters?: {
     is_active?: boolean;
     search?: string;
   }
 ) {
   return useQuery<{ results: ClientOverview[]; count: number }>({
-    queryKey: ["admin", "system", "clients", page, pageSize, orderBy, filters],
+    queryKey: ["admin", "clients", page, pageSize, orderBy, filters],
     queryFn: () => AdminAPI.getAllClients(page, pageSize, orderBy, filters),
     staleTime: 1000 * 60 * 2, // 2 minutos
   });
@@ -54,11 +54,11 @@ export function useSystemActivities(limit: number = 20, type?: string) {
 }
 
 /**
- * Hook para buscar detalhes de um cliente específico
+ * Hook para buscar detalhes de um cliente específico (empresa)
  */
 export function useClientDetail(clientId: number | null) {
   return useQuery<ClientOverview>({
-    queryKey: ["admin", "system", "client", clientId],
+    queryKey: ["admin", "client", clientId],
     queryFn: () => AdminAPI.getClientDetail(clientId!),
     enabled: !!clientId,
     staleTime: 1000 * 60 * 2, // 2 minutos
