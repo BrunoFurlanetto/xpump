@@ -21,6 +21,7 @@ import {
   Trash2,
   Flag,
   Loader2,
+  Coffee,
 } from "lucide-react";
 import { useUserAuth } from "@/context/userAuthContext";
 import Image from "next/image";
@@ -349,7 +350,7 @@ function PostCard({
               <div className="flex items-center gap-2">
                 <p className="font-semibold truncate text-xs">{post.user.full_name}</p>
                 <span className="truncate text-xs text-foreground px-1 bg-border rounded-full">
-                  Nível {post.user.profile_level}
+                  Nível {post.user.level}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -393,13 +394,28 @@ function PostCard({
 
         {/* Meal Data */}
         {post.meal && (
-          <div className="p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+          <div
+            className={`p-3 rounded-lg border ${
+              post.meal.fasting ? "bg-amber-500/10 border-amber-500/30" : "bg-orange-500/10 border-orange-500/20"
+            }`}
+          >
             <div className="flex items-center gap-2 mb-2">
-              <Utensils className="h-4 w-4 text-orange-400" />
-              <span className="font-semibold text-orange-400">Refeição Registrada</span>
+              {post.meal.fasting ? (
+                <>
+                  <Coffee className="h-4 w-4 text-amber-500" />
+                  <span className="font-semibold text-amber-500">Jejum Registrado</span>
+                </>
+              ) : (
+                <>
+                  <Utensils className="h-4 w-4 text-orange-400" />
+                  <span className="font-semibold text-orange-400">Refeição Registrada</span>
+                </>
+              )}
             </div>
             <div className="text-sm space-y-1">
-              <p className="font-medium">{post.meal.meal_type_name}</p>
+              <p className="font-medium">
+                {post.meal.fasting ? `Jejum ${post.meal.meal_type_name || ""}` : post.meal.meal_type_name}
+              </p>
               {post.meal.comments && <p className="text-muted-foreground">{post.meal.comments}</p>}
               <div className="flex items-center gap-4 text-xs">
                 <span>Horário: {new Date(post.meal.meal_time).toLocaleTimeString("pt-BR")}</span>
