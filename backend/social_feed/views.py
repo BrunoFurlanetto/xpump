@@ -74,25 +74,22 @@ class PostViewSet(ModelViewSet):
         if visibility_filter:
             queryset = queryset.filter(
                 Q(visibility=visibility_filter, user__profile__employer=employer) |
-                Q(user__is_superuser=True)  # Include all posts from superusers
+                Q(visibility=visibility_filter, user__is_superuser=True)  # Include posts from superusers with specified visibility
             )
         else:
-            # Default: show global posts and user's own posts
+            # Default: show global posts from same employer and all posts from superusers
             queryset = queryset.filter(
-                Q(visibility='global') |
-                Q(user__profile__employer=employer) |
+                Q(visibility='global', user__profile__employer=employer) |
                 Q(user__is_superuser=True)  # Include all posts from superusers
             )
 
         # Filter by content type
         content_type = self.request.query_params.get('content_type', None)
-
         if content_type:
             queryset = queryset.filter(content_type=content_type)
 
         # Filter by user
         user_id = self.request.query_params.get('user_id', None)
-
         if user_id:
             queryset = queryset.filter(user_id=user_id)
 
