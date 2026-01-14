@@ -57,7 +57,7 @@ class MealSerializer(serializers.ModelSerializer):
             'id', 'user', 'meal_type', 'meal_time',
             'comments', 'validation_status', 'base_points',
             'multiplier', 'proof_files', 'proofs',
-            'current_streak', 'longest_streak', 'level_up'
+            'current_streak', 'longest_streak', 'level_up', 'fasting'
         ]
         # Prevent modification of automatically calculated fields
         read_only_fields = ('user', 'base_points', 'multiplier', 'validation_status')
@@ -104,7 +104,7 @@ class MealSerializer(serializers.ModelSerializer):
         user_level = validated_data['user'].profile.level
         checkin = Meal.objects.create(**validated_data)  # Create check-in
 
-        if not files:
+        if not files and not validated_data.get('fasting', False):
             raise serializers.ValidationError('At least one proof file is required.')
 
         level_up = checkin.user.profile.level > user_level

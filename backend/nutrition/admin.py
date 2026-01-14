@@ -24,31 +24,15 @@ class MealConfigAdmin(admin.ModelAdmin):
 
     def get_meal_name_display_custom(self, obj):
         return obj.get_meal_name_display()
+
     get_meal_name_display_custom.short_description = 'Tipo de Refeição'
     get_meal_name_display_custom.admin_order_field = 'meal_name'
 
     def save_model(self, request, obj, form, change):
-        """Validação para evitar sobreposição de intervalos"""
-        # Verificar sobreposição de horários
-        overlapping = MealConfig.objects.filter(
-            interval_start__lt=obj.interval_end,
-            interval_end__gt=obj.interval_start
-        ).exclude(pk=obj.pk)
-
-        if overlapping.exists():
-            overlapping_meals = ', '.join([m.get_meal_name_display() for m in overlapping])
-            self.message_user(
-                request,
-                f'Conflito de horários com as refeições: {overlapping_meals}. '
-                f'Os intervalos não podem se sobrepor.',
-                messages.ERROR
-            )
-            return
-
         if obj.interval_end <= obj.interval_start:
             self.message_user(
                 request,
-                'O horário de término deve ser posterior ao horário de início.',
+                'The end time must be later than the start time.',
                 messages.ERROR
             )
             return
@@ -56,14 +40,14 @@ class MealConfigAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):
-        """Proteção contra deleção de MealConfig com refeições associadas"""
+        """MealConfig Deletion Protection with Associated Meals"""
         meals_count = Meal.objects.filter(meal_type=obj).count()
 
         if meals_count > 0:
             self.message_user(
                 request,
-                f'Não é possível deletar a configuração "{obj.get_meal_name_display()}" pois existem {meals_count} '
-                f'refeição(ões) registradas usando esta configuração.',
+                f'Unable to delete the setting "{obj.get_meal_name_display()}" for there are {meals_count} '
+                f'Meal(s) registered using this setting.',
                 messages.ERROR
             )
             return
@@ -71,19 +55,19 @@ class MealConfigAdmin(admin.ModelAdmin):
         super().delete_model(request, obj)
         self.message_user(
             request,
-            f'Configuração de refeição "{obj.get_meal_name_display()}" deletada com sucesso.',
+            f'Meal setting "{obj.get_meal_name_display()}" successfully deleted.',
             messages.SUCCESS
         )
 
     def delete_queryset(self, request, queryset):
-        """Proteção contra deleção em massa"""
+        """Bulk deletion protection"""
         for obj in queryset:
             self.delete_model(request, obj)
 
 
 @admin.register(Meal)
 class MealAdmin(admin.ModelAdmin):
-    list_display = ('user', 'get_meal_type', 'meal_time', 'base_points', 'multiplier', 'validation_status')
+    list_display = ('user', 'get_meal_type', 'fasting', 'meal_time', 'base_points', 'multiplier', 'validation_status')
     list_filter = ('meal_type', 'meal_time', 'validation_status', 'user')
     search_fields = ('user__username', 'user__email', 'comments')
     readonly_fields = ('base_points', 'multiplier')
@@ -105,6 +89,7 @@ class MealAdmin(admin.ModelAdmin):
 
     def get_meal_type(self, obj):
         return obj.meal_type.get_meal_name_display()
+
     get_meal_type.short_description = 'Tipo de Refeição'
     get_meal_type.admin_order_field = 'meal_type__meal_name'
 

@@ -14,7 +14,7 @@ meal_choices = [
     ('lunch', 'Almoço'),
     ('afternoon_snack', 'Lanche da tarde'),
     ('dinner', 'Jantar'),
-    ('snack', 'Lanche'),
+    ('snack', 'Lanche da manhã'),
 ]
 
 
@@ -36,11 +36,14 @@ class MealConfig(models.Model):
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.get_meal_name_display()} - {self.interval_start} to {self.interval_end}"
+        return f"{self.get_meal_name_display()}"
 
     @classmethod
     def all_meals_count(cls):
-        return cls.objects.count()
+        return cls.objects.count() - 1  # Exclude 'jejum' from the count
+
+    class Meta:
+        ordering = ['interval_start']
 
 
 class Meal(models.Model):
@@ -50,6 +53,7 @@ class Meal(models.Model):
     comments = models.TextField(blank=True, null=True)
     validation_status = models.ForeignKey(Status, on_delete=models.PROTECT, default=get_published_status_id)
     base_points = models.FloatField(null=True, blank=True, editable=False)
+    fasting = models.BooleanField(default=False)
     multiplier = models.FloatField(default=1.0)
 
     def __str__(self):
@@ -97,15 +101,6 @@ class Meal(models.Model):
         Gamification().remove_xp(user, meal_points)
 
     def clean(self):
-        if not MealConfig.objects.filter(
-            interval_start__lte=self.meal_time.astimezone().time(),
-            interval_end__gte=self.meal_time.astimezone().time()
-        ).exists():
-            raise ValidationError({"meal_time": "Meal time does not fall within any configured meal intervals."})
-
-        if not (self.meal_type.interval_start < self.meal_time.astimezone().time() < self.meal_type.interval_end):
-            raise ValidationError({"meal_time": "Meal time must be within the configured interval for this meal type."})
-
         if self.id is None:  # Only check for duplicates on creation
             if Meal.objects.filter(user=self.user, meal_type=self.meal_type, meal_time__date=self.meal_time.date()).exists():
                 raise ValidationError({"meal_type": "A meal of this type has already been recorded for today."})
@@ -209,26 +204,32 @@ class MealStreak(models.Model):
         return self.current_streak
 
     def check_streak_ended(self, meal_datetime):
-        all_meals = MealConfig.objects.all().order_by('interval_end')
-        list_all_meals = list(all_meals)
-        current_meal_config = None
-        last_meal_config = None
+        # Cache date conversions to avoid repeated calls
+        meal_date = meal_datetime.astimezone().date()
+        last_meal_date = self.last_meal_datetime.astimezone().date()
 
-        for meal in all_meals:
-            if meal.interval_start <= meal_datetime.time() <= meal.interval_end:
-                current_meal_config = meal
+        # Cache the expected meals count
+        expected_meals_count = MealConfig.all_meals_count()
 
-            if meal.interval_start <= self.last_meal_datetime.astimezone().time() <= meal.interval_end:
-                last_meal_config = meal
+        if last_meal_date == meal_date:
+            # Same day: check if we've already reached the daily goal
+            # Use exists() for better performance when we just need a count check
+            meals_on_day = Meal.objects.filter(
+                user=self.user,
+                meal_time__date=meal_date
+            ).count()
 
-        if list_all_meals.index(current_meal_config) == 0 and list_all_meals.index(last_meal_config) == len(
-                list_all_meals) - 1:
-            return False
+            # Streak continues if we haven't exceeded the expected count
+            return meals_on_day > expected_meals_count
         else:
-            if list_all_meals.index(current_meal_config) == list_all_meals.index(last_meal_config) + 1:
-                return False
-            else:
-                return True
+            # Different day: check if previous day met the goal
+            meals_on_last_day = Meal.objects.filter(
+                user=self.user,
+                meal_time__date=last_meal_date
+            ).count()
+
+            # Streak ended if we didn't meet the goal on the previous day
+            return meals_on_last_day < expected_meals_count
 
     def check_and_reset_streak_if_ended(self, meal_datetime):
         if self.check_streak_ended(meal_datetime):
