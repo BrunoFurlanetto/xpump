@@ -34,7 +34,7 @@ class WorkoutCheckin(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workouts')
     location = models.CharField(max_length=100, null=True, blank=True)
     comments = models.TextField(blank=True)
-    workout_date = models.DateTimeField()
+    workout_date = models.DateTimeField()  # This field represents the date and time for the END of the workout
     duration = models.DurationField()
     validation_status = models.ForeignKey(Status, on_delete=models.PROTECT, default=get_published_status_id)
     base_points = models.FloatField(null=True, blank=True, editable=False)
@@ -98,19 +98,20 @@ class WorkoutCheckin(models.Model):
             raise ValidationError("Duration must be a positive value.")
 
         # Check if there is an overlapping check-in from the same user
-        workout_end_time = self.workout_date + self.duration
+        # workout_end_time = self.workout_date + self.duration
 
         overlapping_workouts = WorkoutCheckin.objects.filter(
             user=self.user,
-            workout_date__lt=workout_end_time,
+            workout_date__lte=self.workout_date,
+            workout_date__gte=self.workout_date - self.duration,
             # The end date of the existing check-in is later than the start date of the new one
         ).exclude(id=self.id)
 
         # For each existing check-in, verify if it overlaps with the new one
         for workout in overlapping_workouts:
-            existing_end_time = workout.workout_date + workout.duration
+            existing_end_time = workout.workout_date
 
-            if existing_end_time > self.workout_date:
+            if existing_end_time > self.workout_date - self.duration:
                 raise ValidationError(
                     f"This check-in is overlapping an existing check-in (ID: {workout.id}) "
                 )
