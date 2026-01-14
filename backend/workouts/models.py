@@ -76,6 +76,22 @@ class WorkoutCheckin(models.Model):
     def delete(self, *args, **kwargs):
         workout_points = self.base_points
         user = self.user
+        workout_date = self.workout_date
+
+        # Check if this workout is part of the current streak BEFORE deleting
+        is_part_of_streak = False
+        try:
+            streak = WorkoutStreak.objects.get(user=user)
+            if streak.current_streak > 0:
+                # Get the last 'current_streak' workouts to check if this workout is part of it
+                last_n_workouts = WorkoutCheckin.objects.filter(
+                    user=user
+                ).order_by('-workout_date')[:streak.current_streak]
+
+                workout_dates = [w.workout_date for w in last_n_workouts]
+                is_part_of_streak = workout_date in workout_dates
+        except RelatedObjectDoesNotExist:
+            streak = None
 
         try:
             super().delete(*args, **kwargs)
@@ -83,6 +99,30 @@ class WorkoutCheckin(models.Model):
             raise e
 
         Gamification().remove_xp(user, workout_points)
+
+        # Update streak if the deleted workout was part of the current streak
+        if streak and is_part_of_streak:
+            self._update_streak_after_deletion(streak, user)
+
+    def _update_streak_after_deletion(self, streak, user):
+        """
+        Update the user's streak after a workout deletion.
+        Decrements the streak since we already confirmed the deleted workout was part of it.
+        """
+        # Decrement the streak
+        streak.current_streak = max(0, streak.current_streak - 1)
+
+        # Update last_workout_datetime to the most recent remaining workout
+        latest_workout = WorkoutCheckin.objects.filter(
+            user=user
+        ).order_by('-workout_date').first()
+
+        if latest_workout:
+            streak.last_workout_datetime = latest_workout.workout_date
+        else:
+            streak.last_workout_datetime = None
+
+        streak.save()
 
     def clean(self):
         """
@@ -154,7 +194,7 @@ class WorkoutPlan(models.Model):
 
 class WorkoutStreak(models.Model):
     """
-    odel representing a user's workout streak tracking system. Tracks current streak, longest streak achieved, last
+    Model representing a user's workout streak tracking system. Tracks current streak, longest streak achieved, last
     workout date, and frequency requirements. Automatically manages streak calculations based on weekly workout frequency
     goals.
     """
