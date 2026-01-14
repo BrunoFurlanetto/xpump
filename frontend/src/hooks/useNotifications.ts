@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 export interface Notification {
   id: string;
-  type: 'achievement' | 'streak' | 'reminder' | 'social' | 'challenge';
+  type: "achievement" | "streak" | "reminder" | "social" | "challenge";
   title: string;
   message: string;
   icon: string;
   isRead: boolean;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
   createdAt: string;
   expiresAt?: string;
   actionUrl?: string;
@@ -28,11 +28,11 @@ export interface Achievement {
   title: string;
   description: string;
   icon: string;
-  category: 'workout' | 'meal' | 'streak' | 'social' | 'points';
+  category: "workout" | "meal" | "streak" | "social" | "points";
   requirements: {
-    type: 'count' | 'streak' | 'points' | 'consistency';
+    type: "count" | "streak" | "points" | "consistency";
     target: number;
-    timeframe?: 'daily' | 'weekly' | 'monthly' | 'all-time';
+    timeframe?: "daily" | "weekly" | "monthly" | "all-time";
   };
   rewards: {
     points: number;
@@ -72,115 +72,115 @@ interface UseNotificationsReturn {
 // Conquistas predefinidas
 const DEFAULT_ACHIEVEMENTS: Achievement[] = [
   {
-    id: 'first_workout',
-    title: 'Primeiro Treino',
-    description: 'Complete seu primeiro treino no XPump',
-    icon: '🏋️',
-    category: 'workout',
+    id: "first_workout",
+    title: "Primeiro Treino",
+    description: "Complete seu primeiro treino no XPump",
+    icon: "🏋️",
+    category: "workout",
     requirements: {
-      type: 'count',
+      type: "count",
       target: 1,
-      timeframe: 'all-time'
+      timeframe: "all-time",
     },
     rewards: {
       points: 50,
-      badge_icon: '🥉'
+      badge_icon: "🥉",
     },
     isUnlocked: false,
-    progress: 0
+    progress: 0,
   },
   {
-    id: 'workout_streak_7',
-    title: 'Guerreiro da Semana',
-    description: 'Mantenha uma sequência de 7 dias consecutivos de treino',
-    icon: '🔥',
-    category: 'streak',
+    id: "workout_streak_7",
+    title: "Guerreiro da Semana",
+    description: "Mantenha uma sequência de 7 dias consecutivos de treino",
+    icon: "🔥",
+    category: "streak",
     requirements: {
-      type: 'streak',
+      type: "streak",
       target: 7,
-      timeframe: 'daily'
+      timeframe: "daily",
     },
     rewards: {
       points: 200,
-      badge_icon: '🏅',
-      title_unlock: 'Guerreiro'
+      badge_icon: "🏅",
+      title_unlock: "Guerreiro",
     },
     isUnlocked: false,
-    progress: 0
+    progress: 0,
   },
   {
-    id: 'meal_consistency',
-    title: 'Nutri Master',
-    description: 'Complete todas as 4 refeições por 5 dias consecutivos',
-    icon: '🍽️',
-    category: 'meal',
+    id: "meal_consistency",
+    title: "Nutri Master",
+    description: "Complete todas as 4 refeições por 5 dias consecutivos",
+    icon: "🍽️",
+    category: "meal",
     requirements: {
-      type: 'consistency',
+      type: "consistency",
       target: 5,
-      timeframe: 'daily'
+      timeframe: "daily",
     },
     rewards: {
       points: 150,
-      badge_icon: '👨‍🍳'
+      badge_icon: "👨‍🍳",
     },
     isUnlocked: false,
-    progress: 0
+    progress: 0,
   },
   {
-    id: 'points_1000',
-    title: 'Milionário',
-    description: 'Acumule 1000 pontos totais',
-    icon: '💰',
-    category: 'points',
+    id: "points_1000",
+    title: "Milionário",
+    description: "Acumule 1000 pontos totais",
+    icon: "💰",
+    category: "points",
     requirements: {
-      type: 'points',
+      type: "points",
       target: 1000,
-      timeframe: 'all-time'
+      timeframe: "all-time",
     },
     rewards: {
       points: 100,
-      badge_icon: '💎'
+      badge_icon: "💎",
     },
     isUnlocked: false,
-    progress: 0
+    progress: 0,
   },
   {
-    id: 'social_butterfly',
-    title: 'Social Butterfly',
-    description: 'Receba 50 curtidas em seus posts',
-    icon: '🦋',
-    category: 'social',
+    id: "social_butterfly",
+    title: "Social Butterfly",
+    description: "Receba 50 curtidas em seus posts",
+    icon: "🦋",
+    category: "social",
     requirements: {
-      type: 'count',
+      type: "count",
       target: 50,
-      timeframe: 'all-time'
+      timeframe: "all-time",
     },
     rewards: {
       points: 75,
-      badge_icon: '⭐'
+      badge_icon: "⭐",
     },
     isUnlocked: false,
-    progress: 0
+    progress: 0,
   },
   {
-    id: 'workout_beast',
-    title: 'Beast Mode',
-    description: 'Complete 100 treinos',
-    icon: '🦍',
-    category: 'workout',
+    id: "workout_beast",
+    title: "Beast Mode",
+    description: "Complete 100 treinos",
+    icon: "🦍",
+    category: "workout",
     requirements: {
-      type: 'count',
+      type: "count",
       target: 100,
-      timeframe: 'all-time'
+      timeframe: "all-time",
     },
     rewards: {
       points: 500,
-      badge_icon: '🦍',
-      title_unlock: 'Beast'
+      badge_icon: "🦍",
+      title_unlock: "Beast",
     },
     isUnlocked: false,
-    progress: 0
-  }
+    progress: 0,
+  },
 ];
 
 export function useNotifications(): UseNotificationsReturn {
@@ -194,79 +194,79 @@ export function useNotifications(): UseNotificationsReturn {
     challenges: true,
     push_enabled: true,
     email_enabled: false,
-    daily_reminder_time: '08:00'
+    daily_reminder_time: "08:00",
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
-      
+
       // TODO: Implementar chamadas para API real
       // Por enquanto, dados mock para desenvolvimento
       const mockNotifications: Notification[] = [
-        {
-          id: 'notif_1',
-          type: 'achievement',
-          title: 'Nova Conquista! 🏆',
-          message: 'Você desbloqueou: Primeiro Treino',
-          icon: '🏋️',
-          isRead: false,
-          priority: 'high',
-          createdAt: '2025-08-29T08:00:00Z',
-          actionUrl: '/achievements',
-          metadata: {
-            achievement_id: 'first_workout',
-            points_earned: 50
-          }
-        },
-        {
-          id: 'notif_2',
-          type: 'streak',
-          title: 'Sequência Mantida! 🔥',
-          message: 'Parabéns! Você manteve sua sequência de treinos por 5 dias',
-          icon: '🔥',
-          isRead: false,
-          priority: 'medium',
-          createdAt: '2025-08-29T07:30:00Z',
-          metadata: {
-            streak_days: 5,
-            points_earned: 25
-          }
-        },
-        {
-          id: 'notif_3',
-          type: 'reminder',
-          title: 'Hora do Treino! 💪',
-          message: 'Não se esqueça de registrar seu treino de hoje',
-          icon: '⏰',
-          isRead: true,
-          priority: 'low',
-          createdAt: '2025-08-28T20:00:00Z',
-          expiresAt: '2025-08-29T23:59:59Z'
-        },
-        {
-          id: 'notif_4',
-          type: 'social',
-          title: 'Novo Comentário 💬',
-          message: 'Ana Costa comentou no seu post de treino',
-          icon: '💬',
-          isRead: true,
-          priority: 'medium',
-          createdAt: '2025-08-28T18:30:00Z',
-          actionUrl: '/feed',
-          metadata: {
-            user_mentioned: 'Ana Costa'
-          }
-        }
+        // {
+        //   id: "notif_1",
+        //   type: "achievement",
+        //   title: "Nova Conquista! 🏆",
+        //   message: "Você desbloqueou: Primeiro Treino",
+        //   icon: "🏋️",
+        //   isRead: false,
+        //   priority: "high",
+        //   createdAt: "2025-08-29T08:00:00Z",
+        //   actionUrl: "/achievements",
+        //   metadata: {
+        //     achievement_id: "first_workout",
+        //     points_earned: 50,
+        //   },
+        // },
+        // {
+        //   id: "notif_2",
+        //   type: "streak",
+        //   title: "Sequência Mantida! 🔥",
+        //   message: "Parabéns! Você manteve sua sequência de treinos por 5 dias",
+        //   icon: "🔥",
+        //   isRead: false,
+        //   priority: "medium",
+        //   createdAt: "2025-08-29T07:30:00Z",
+        //   metadata: {
+        //     streak_days: 5,
+        //     points_earned: 25,
+        //   },
+        // },
+        // {
+        //   id: "notif_3",
+        //   type: "reminder",
+        //   title: "Hora do Treino! 💪",
+        //   message: "Não se esqueça de registrar seu treino de hoje",
+        //   icon: "⏰",
+        //   isRead: true,
+        //   priority: "low",
+        //   createdAt: "2025-08-28T20:00:00Z",
+        //   expiresAt: "2025-08-29T23:59:59Z",
+        // },
+        // {
+        //   id: "notif_4",
+        //   type: "social",
+        //   title: "Novo Comentário 💬",
+        //   message: "Ana Costa comentou no seu post de treino",
+        //   icon: "💬",
+        //   isRead: true,
+        //   priority: "medium",
+        //   createdAt: "2025-08-28T18:30:00Z",
+        //   actionUrl: "/feed",
+        //   metadata: {
+        //     user_mentioned: "Ana Costa",
+        //   },
+        // },
       ];
 
       setNotifications(mockNotifications);
     } catch (error) {
-      console.error('Erro ao buscar notificações:', error);
-      toast.error('Erro ao carregar notificações');
+      console.error("Erro ao buscar notificações:", error);
+      toast.error("Erro ao carregar notificações");
     } finally {
       setIsLoading(false);
     }
@@ -275,18 +275,16 @@ export function useNotifications(): UseNotificationsReturn {
   const markAsRead = async (notificationId: string) => {
     try {
       // TODO: Implementar chamada para API
-      console.log('Marcando notificação como lida:', notificationId);
-      
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === notificationId 
-            ? { ...notification, isRead: true }
-            : notification
+      console.log("Marcando notificação como lida:", notificationId);
+
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === notificationId ? { ...notification, isRead: true } : notification
         )
       );
     } catch (error) {
-      console.error('Erro ao marcar notificação como lida:', error);
-      toast.error('Erro ao atualizar notificação');
+      console.error("Erro ao marcar notificação como lida:", error);
+      toast.error("Erro ao atualizar notificação");
       throw error;
     }
   };
@@ -294,16 +292,14 @@ export function useNotifications(): UseNotificationsReturn {
   const markAllAsRead = async () => {
     try {
       // TODO: Implementar chamada para API
-      console.log('Marcando todas as notificações como lidas');
-      
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, isRead: true }))
-      );
-      
-      toast.success('Todas as notificações foram marcadas como lidas');
+      console.log("Marcando todas as notificações como lidas");
+
+      setNotifications((prev) => prev.map((notification) => ({ ...notification, isRead: true })));
+
+      toast.success("Todas as notificações foram marcadas como lidas");
     } catch (error) {
-      console.error('Erro ao marcar todas como lidas:', error);
-      toast.error('Erro ao atualizar notificações');
+      console.error("Erro ao marcar todas como lidas:", error);
+      toast.error("Erro ao atualizar notificações");
       throw error;
     }
   };
@@ -311,16 +307,14 @@ export function useNotifications(): UseNotificationsReturn {
   const deleteNotification = async (notificationId: string) => {
     try {
       // TODO: Implementar chamada para API
-      console.log('Deletando notificação:', notificationId);
-      
-      setNotifications(prev => 
-        prev.filter(notification => notification.id !== notificationId)
-      );
-      
-      toast.success('Notificação removida');
+      console.log("Deletando notificação:", notificationId);
+
+      setNotifications((prev) => prev.filter((notification) => notification.id !== notificationId));
+
+      toast.success("Notificação removida");
     } catch (error) {
-      console.error('Erro ao deletar notificação:', error);
-      toast.error('Erro ao remover notificação');
+      console.error("Erro ao deletar notificação:", error);
+      toast.error("Erro ao remover notificação");
       throw error;
     }
   };
@@ -328,13 +322,13 @@ export function useNotifications(): UseNotificationsReturn {
   const updateSettings = async (newSettings: Partial<NotificationSettings>) => {
     try {
       // TODO: Implementar chamada para API
-      console.log('Atualizando configurações:', newSettings);
-      
-      setSettings(prev => ({ ...prev, ...newSettings }));
-      toast.success('Configurações atualizadas');
+      console.log("Atualizando configurações:", newSettings);
+
+      setSettings((prev) => ({ ...prev, ...newSettings }));
+      toast.success("Configurações atualizadas");
     } catch (error) {
-      console.error('Erro ao atualizar configurações:', error);
-      toast.error('Erro ao salvar configurações');
+      console.error("Erro ao atualizar configurações:", error);
+      toast.error("Erro ao salvar configurações");
       throw error;
     }
   };
@@ -342,65 +336,61 @@ export function useNotifications(): UseNotificationsReturn {
   const checkForNewAchievements = async () => {
     try {
       // TODO: Implementar lógica real baseada nas estatísticas do usuário
-      console.log('Verificando novas conquistas...');
-      
+      console.log("Verificando novas conquistas...");
+
       // Simulação de conquista desbloqueada
-      const randomAchievement = achievements.find(a => !a.isUnlocked);
+      const randomAchievement = achievements.find((a) => !a.isUnlocked);
       if (randomAchievement && Math.random() > 0.7) {
         const unlockedAchievement = {
           ...randomAchievement,
           isUnlocked: true,
           progress: 100,
-          unlockedAt: new Date().toISOString()
+          unlockedAt: new Date().toISOString(),
         };
-        
-        setAchievements(prev => 
-          prev.map(achievement => 
-            achievement.id === randomAchievement.id 
-              ? unlockedAchievement 
-              : achievement
-          )
+
+        setAchievements((prev) =>
+          prev.map((achievement) => (achievement.id === randomAchievement.id ? unlockedAchievement : achievement))
         );
-        
+
         // Criar notificação da conquista
         const newNotification: Notification = {
           id: `notif_${Date.now()}`,
-          type: 'achievement',
-          title: 'Nova Conquista! 🏆',
+          type: "achievement",
+          title: "Nova Conquista! 🏆",
           message: `Você desbloqueou: ${unlockedAchievement.title}`,
           icon: unlockedAchievement.icon,
           isRead: false,
-          priority: 'high',
+          priority: "high",
           createdAt: new Date().toISOString(),
-          actionUrl: '/achievements',
+          actionUrl: "/achievements",
           metadata: {
             achievement_id: unlockedAchievement.id,
-            points_earned: unlockedAchievement.rewards.points
-          }
+            points_earned: unlockedAchievement.rewards.points,
+          },
         };
-        
-        setNotifications(prev => [newNotification, ...prev]);
+
+        setNotifications((prev) => [newNotification, ...prev]);
         toast.success(`🏆 Conquista desbloqueada: ${unlockedAchievement.title}!`);
       }
     } catch (error) {
-      console.error('Erro ao verificar conquistas:', error);
+      console.error("Erro ao verificar conquistas:", error);
     }
   };
 
   const sendTestNotification = () => {
     const testNotification: Notification = {
       id: `test_${Date.now()}`,
-      type: 'reminder',
-      title: 'Notificação de Teste 🧪',
-      message: 'Esta é uma notificação de teste para verificar o sistema',
-      icon: '🧪',
+      type: "reminder",
+      title: "Notificação de Teste 🧪",
+      message: "Esta é uma notificação de teste para verificar o sistema",
+      icon: "🧪",
       isRead: false,
-      priority: 'medium',
-      createdAt: new Date().toISOString()
+      priority: "medium",
+      createdAt: new Date().toISOString(),
     };
-    
-    setNotifications(prev => [testNotification, ...prev]);
-    toast.success('Notificação de teste criada!');
+
+    setNotifications((prev) => [testNotification, ...prev]);
+    toast.success("Notificação de teste criada!");
   };
 
   useEffect(() => {
@@ -418,6 +408,6 @@ export function useNotifications(): UseNotificationsReturn {
     deleteNotification,
     updateSettings,
     checkForNewAchievements,
-    sendTestNotification
+    sendTestNotification,
   };
 }
