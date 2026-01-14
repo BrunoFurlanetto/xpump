@@ -157,7 +157,7 @@ export function WorkoutCheckinModal({ isOpen, onClose, onSubmit, isLoading = fal
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Data e Hora (readonly - horário atual) */}
-          <div className="space-y-2">
+          <div className="space-y-2 hidden">
             <Label htmlFor="workout_date" className="text-foreground">
               Horário do Treino
             </Label>
@@ -306,7 +306,7 @@ export function WorkoutCheckinModal({ isOpen, onClose, onSubmit, isLoading = fal
           </div>
 
           {/* Compartilhar no feed */}
-          <div className="flex items-center space-x-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="flex items-center space-x-3 p-3 bg-primary/5 border border-primary/20 rounded-lg hidden">
             <Checkbox
               id="shareToFeed"
               checked={shareToFeed}
@@ -325,25 +325,16 @@ export function WorkoutCheckinModal({ isOpen, onClose, onSubmit, isLoading = fal
           </div>
 
           {/* Info sobre pontos */}
-          <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+          {/* <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
             <h4 className="text-sm font-medium text-foreground">💡 Como funciona a pontuação?</h4>
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>• Pontos base calculados pela duração do treino</li>
               <li>• Multiplicador baseado na sua sequência de treinos</li>
               <li>• Quanto mais consistente, mais pontos você ganha!</li>
             </ul>
-          </div>
+          </div> */}
 
           <div className="flex flex-col sm:flex-row gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-              className="flex-1 border-border text-foreground hover:bg-muted"
-            >
-              Cancelar
-            </Button>
             <Button
               type="submit"
               disabled={isLoading}

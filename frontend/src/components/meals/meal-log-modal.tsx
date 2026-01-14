@@ -138,7 +138,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
           {/* Tipo de Refeição */}
           <div className="space-y-2">
             <Label className="text-foreground">Tipo de Refeição *</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {mealTypes.map((mealType) => (
                 <Button
                   key={mealType.id}
@@ -157,19 +157,14 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
                 >
                   <span className="text-lg">{mealType.icon}</span>
                   <span className="text-xs font-medium">{mealType.name}</span>
-                  <span className="text-xs opacity-70">{mealType.timeRange}</span>
                 </Button>
               ))}
             </div>
             {errors.meal_type && <p className="text-sm text-red-400">{errors.meal_type}</p>}
-            {/* Debug info */}
-            <p className="text-xs text-muted-foreground">
-              Selecionado: {formData.meal_type || "Nenhum"} | Tipos disponíveis: {mealTypes.length}
-            </p>
           </div>
 
           {/* Data e Hora (readonly - horário atual) */}
-          <div className="space-y-2">
+          <div className="space-y-2 hidden">
             <Label htmlFor="meal_date" className="text-foreground">
               Horário da Refeição
             </Label>
@@ -262,7 +257,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
           </div>
 
           {/* Compartilhar no feed */}
-          <div className="flex items-center space-x-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="flex items-center space-x-3 p-3 bg-primary/5 border border-primary/20 rounded-lg hidden">
             <Checkbox
               id="shareToFeedMeal"
               checked={shareToFeed}
@@ -281,7 +276,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
           </div>
 
           {/* Info sobre pontos */}
-          <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+          {/* <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
             <h4 className="text-sm font-medium text-foreground">🍎 Sistema de Pontuação</h4>
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>• Café da Manhã: 25 pontos</li>
@@ -290,18 +285,9 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
               <li>• Jantar: 35 pontos</li>
               <li>• Bônus por completar todas as refeições do dia!</li>
             </ul>
-          </div>
+          </div> */}
 
           <div className="flex flex-col sm:flex-row gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-              className="flex-1 border-border text-foreground hover:bg-muted"
-            >
-              Cancelar
-            </Button>
             <Button
               type="submit"
               disabled={isLoading || !formData.meal_type}
