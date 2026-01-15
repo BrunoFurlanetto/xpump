@@ -146,16 +146,22 @@ class Gamification:
     def add_xp(self, user, xp):
         user.profile.score += xp
 
-        if user.profile.level < self.convert_to_level(user.profile.score):
-            user.profile.level += 1
+        # Recalculate level based on current score
+        new_level = self.convert_to_level(user.profile.score)
+        user.profile.level = new_level
 
         user.profile.save()
 
     def remove_xp(self, user, xp):
         user.profile.score -= xp
 
-        if user.profile.level > self.convert_to_level(user.profile.score):
-            user.profile.level -= 1
+        # Ensure score doesn't go negative
+        if user.profile.score < 0:
+            user.profile.score = 0
+
+        # Recalculate level based on current score
+        new_level = self.convert_to_level(user.profile.score)
+        user.profile.level = new_level
 
         user.profile.save()
 
@@ -181,6 +187,10 @@ class Gamification:
         }
 
     def convert_to_level(self, xp):
+        # Handle edge cases
+        if xp <= 0:
+            return 0
+
         base_xp = self.settings.xp_base
         exponential_factor = self.settings.exponential_factor
         level = (xp / base_xp) ** (1 / exponential_factor)
