@@ -126,7 +126,7 @@ class WorkoutStreakAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Informações do Streak (Somente Leitura)', {
-            'fields': ('user', 'current_streak', 'longest_streak', 'last_workout_datetime', 'frequency', 'weekly_remaining'),
+            'fields': ('user', 'current_streak', 'longest_streak', 'last_workout_datetime', 'frequency'),
             'description': 'Estas informações são gerenciadas automaticamente pelo sistema.'
         }),
     )

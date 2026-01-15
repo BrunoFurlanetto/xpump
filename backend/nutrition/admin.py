@@ -191,7 +191,7 @@ class MealStreakAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Informações do Streak (Somente Leitura)', {
-            'fields': ('user', 'current_streak', 'longest_streak', 'last_meal_datetime', 'weekly_remaining'),
+            'fields': ('user', 'current_streak', 'longest_streak', 'last_meal_datetime'),
             'description': 'Estas informações são gerenciadas automaticamente pelo sistema.'
         }),
     )
