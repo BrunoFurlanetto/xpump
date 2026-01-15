@@ -130,15 +130,3 @@ class WorkoutStreakAdmin(admin.ModelAdmin):
             'description': 'Estas informações são gerenciadas automaticamente pelo sistema.'
         }),
     )
-
-    def has_add_permission(self, request):
-        """Don't allow manually adding streaks"""
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        """Don't allow deleting streaks"""
-        return False
-
-    def get_readonly_fields(self, request, obj=None):
-        """All fields are readonly"""
-        return [f.name for f in self.model._meta.fields]

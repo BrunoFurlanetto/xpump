@@ -195,15 +195,3 @@ class MealStreakAdmin(admin.ModelAdmin):
             'description': 'Estas informações são gerenciadas automaticamente pelo sistema.'
         }),
     )
-
-    def has_add_permission(self, request):
-        """Não permite adicionar streaks manualmente"""
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        """Não permite deletar streaks"""
-        return False
-
-    def get_readonly_fields(self, request, obj=None):
-        """Todos os campos são readonly"""
-        return [f.name for f in self.model._meta.fields]
