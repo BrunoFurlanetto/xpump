@@ -32,17 +32,17 @@ export default function GroupsPage() {
     <GroupsLoadingProvider>
       <div className="space-y-6">
         {/* Header */}
-        {!isAdmin &&
+        {!isAdmin && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Grupos</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Conecte-se e treine com outros atletas. Compete em grupos e conquiste o topo!
-            </p>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Grupos</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">
+                Conecte-se e treine com outros atletas. Compete em grupos e conquiste o topo!
+              </p>
+            </div>
+            <CreateGroupModal />
           </div>
-          <CreateGroupModal />
-        </div>
-        }
+        )}
         <PendingInvites groups={groups} />
 
         {/* Barra de Pesquisa */}

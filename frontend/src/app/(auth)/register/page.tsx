@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import RegisterForm from "./form-register";
 
 const Page = () => {
@@ -9,7 +9,9 @@ const Page = () => {
         <p className="text-slate-300 text-sm">Preencha os dados para começar sua jornada</p>
       </div>
 
-      <RegisterForm />
+      <Suspense fallback={<div>Carregando...</div>}>
+        <RegisterForm />
+      </Suspense>
 
       {/* Links Adicionais Mobile */}
       <div className="mt-4 text-center space-y-2">

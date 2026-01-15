@@ -38,10 +38,7 @@ export default function SettingsPage() {
     );
   }
 
-  const sections = [
-    { id: "interface", label: "Interface", icon: Palette },
-    { id: "notifications", label: "Notificações", icon: Bell },
-  ];
+  const sections = [{ id: "interface", label: "Interface", icon: Palette }];
 
   return (
     <div className="space-y-6">
@@ -102,52 +99,6 @@ export default function SettingsPage() {
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <ThemeSelector />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Notificações */}
-      {activeSection === "notifications" && (
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-primary" />
-              Configurações de Notificações
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              {Object.entries(settings.notifications).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium capitalize">{key}</Label>
-                    <p className="text-xs text-muted-foreground">
-                      {key === "achievements" && "Receber notificações de novas conquistas"}
-                      {key === "reminders" && "Lembretes de treinos e refeições"}
-                      {key === "social" && "Curtidas, comentários e seguidas"}
-                      {key === "streaks" && "Alertas sobre sequências de treinos"}
-                      {key === "challenges" && "Novos desafios e competições"}
-                      {key === "email" && "Resumos semanais por e-mail"}
-                      {key === "push" && "Notificações no dispositivo"}
-                    </p>
-                  </div>
-                  <Button
-                    variant={value ? "default" : "outline"}
-                    size="sm"
-                    onClick={() =>
-                      updateSettings({
-                        notifications: {
-                          ...settings.notifications,
-                          [key]: !value,
-                        },
-                      })
-                    }
-                  >
-                    {value ? "Ativado" : "Desativado"}
-                  </Button>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>

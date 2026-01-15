@@ -40,7 +40,7 @@ class MealConfig(models.Model):
 
     @classmethod
     def all_meals_count(cls):
-        return cls.objects.count() - 1  # Exclude 'jejum' from the count
+        return cls.objects.count()
 
     class Meta:
         ordering = ['interval_start']
