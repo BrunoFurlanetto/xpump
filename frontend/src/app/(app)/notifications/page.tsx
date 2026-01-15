@@ -4,7 +4,19 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, BellOff, Check, CheckCheck, Trash2, Settings, Trophy, Flame, Clock, MessageSquare, Target } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  Check,
+  CheckCheck,
+  Trash2,
+  Settings,
+  Trophy,
+  Flame,
+  Clock,
+  MessageSquare,
+  Target,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function NotificationsPage() {
@@ -17,24 +29,23 @@ export default function NotificationsPage() {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    sendTestNotification
   } = useNotifications();
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'agora mesmo';
+
+    if (diffInMinutes < 1) return "agora mesmo";
     if (diffInMinutes < 60) return `${diffInMinutes}m atrás`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h atrás`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d atrás`;
-    
-    return date.toLocaleDateString('pt-BR');
+
+    return date.toLocaleDateString("pt-BR");
   };
 
   const getNotificationIcon = (type: string) => {
@@ -43,33 +54,33 @@ export default function NotificationsPage() {
       streak: Flame,
       reminder: Clock,
       social: MessageSquare,
-      challenge: Target
+      challenge: Target,
     };
-    
+
     const IconComponent = iconMap[type as keyof typeof iconMap] || Bell;
     return <IconComponent className="h-5 w-5" />;
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high':
-        return 'bg-red-500/10 border-red-500/20 text-red-400';
-      case 'medium':
-        return 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400';
-      case 'low':
-        return 'bg-blue-500/10 border-blue-500/20 text-blue-400';
+      case "high":
+        return "bg-red-500/10 border-red-500/20 text-red-400";
+      case "medium":
+        return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
+      case "low":
+        return "bg-blue-500/10 border-blue-500/20 text-blue-400";
       default:
-        return 'bg-muted border-muted-foreground/20 text-muted-foreground';
+        return "bg-muted border-muted-foreground/20 text-muted-foreground";
     }
   };
 
   const getTypeLabel = (type: string) => {
     const labels = {
-      achievement: 'Conquista',
-      streak: 'Sequência',
-      reminder: 'Lembrete',
-      social: 'Social',
-      challenge: 'Desafio'
+      achievement: "Conquista",
+      streak: "Sequência",
+      reminder: "Lembrete",
+      social: "Social",
+      challenge: "Desafio",
     };
     return labels[type as keyof typeof labels] || type;
   };
@@ -80,7 +91,7 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground tracking-tight">Notificações</h1>
         </div>
-        
+
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="bg-card border-border animate-pulse">
@@ -111,39 +122,22 @@ export default function NotificationsPage() {
           </p>
         </div>
       </div>
-        
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          {unreadCount > 0 && (
-            <Button
-              onClick={markAllAsRead}
-              variant="outline"
-              className="w-full sm:w-auto border-muted-foreground/20 hover:border-muted-foreground/40 text-foreground"
-            >
-              <CheckCheck className="h-4 w-4 mr-2" />
-              Marcar todas como lidas
-            </Button>
-          )}
+
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        {unreadCount > 0 && (
           <Button
-            onClick={sendTestNotification}
+            onClick={markAllAsRead}
             variant="outline"
             className="w-full sm:w-auto border-muted-foreground/20 hover:border-muted-foreground/40 text-foreground"
           >
-            <Bell className="h-4 w-4 mr-2" />
-            Teste
+            <CheckCheck className="h-4 w-4 mr-2" />
+            Marcar todas como lidas
           </Button>
-          <Button
-            asChild
-            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            <Link href="/settings">
-              <Settings className="h-4 w-4 mr-2" />
-              Configurações
-            </Link>
-          </Button>
-        </div>
+        )}
+      </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
@@ -174,24 +168,10 @@ export default function NotificationsPage() {
               <div>
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground">Conquistas</p>
                 <p className="text-xl sm:text-2xl font-bold text-yellow-400">
-                  {achievements.filter(a => a.isUnlocked).length}
+                  {achievements.filter((a) => a.isUnlocked).length}
                 </p>
               </div>
               <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Configurações</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-400">
-                  {Object.values(settings).filter(Boolean).length}
-                </p>
-              </div>
-              <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -225,7 +205,7 @@ export default function NotificationsPage() {
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-muted/50 transition-colors ${
-                    !notification.isRead ? 'bg-primary/5 border-l-4 border-l-primary' : ''
+                    !notification.isRead ? "bg-primary/5 border-l-4 border-l-primary" : ""
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -239,27 +219,23 @@ export default function NotificationsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className={`font-medium ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            <h3
+                              className={`font-medium ${
+                                !notification.isRead ? "text-foreground" : "text-muted-foreground"
+                              }`}
+                            >
                               {notification.title}
                             </h3>
                             <Badge variant="outline" className="text-xs">
                               {getTypeLabel(notification.type)}
                             </Badge>
-                            {!notification.isRead && (
-                              <div className="h-2 w-2 bg-primary rounded-full" />
-                            )}
+                            {!notification.isRead && <div className="h-2 w-2 bg-primary rounded-full" />}
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {notification.message}
-                          </p>
+                          <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>
-                              {formatTimeAgo(notification.createdAt)}
-                            </span>
+                            <span>{formatTimeAgo(notification.createdAt)}</span>
                             {notification.metadata?.points_earned && (
-                              <span className="text-yellow-400">
-                                +{notification.metadata.points_earned} pontos
-                              </span>
+                              <span className="text-yellow-400">+{notification.metadata.points_earned} pontos</span>
                             )}
                           </div>
                         </div>
@@ -296,9 +272,7 @@ export default function NotificationsPage() {
                             asChild
                             className="border-primary/20 text-primary hover:bg-primary/10"
                           >
-                            <Link href={notification.actionUrl}>
-                              Ver detalhes
-                            </Link>
+                            <Link href={notification.actionUrl}>Ver detalhes</Link>
                           </Button>
                         </div>
                       )}
