@@ -80,6 +80,7 @@ class WorkoutCheckin(models.Model):
 
         # Check if this workout is part of the current streak BEFORE deleting
         is_part_of_streak = False
+
         try:
             streak = WorkoutStreak.objects.get(user=user)
             if streak.current_streak > 0:
@@ -147,14 +148,8 @@ class WorkoutCheckin(models.Model):
             # The end date of the existing check-in is later than the start date of the new one
         ).exclude(id=self.id)
 
-        # For each existing check-in, verify if it overlaps with the new one
-        for workout in overlapping_workouts:
-            existing_end_time = workout.workout_date
-
-            if existing_end_time > self.workout_date - self.duration:
-                raise ValidationError(
-                    f"This check-in is overlapping an existing check-in (ID: {workout.id}) "
-                )
+        if overlapping_workouts.exists():
+            raise ValidationError("This workout overlaps with an existing check-in.")
 
 
 class WorkoutCheckinProof(models.Model):
@@ -202,7 +197,7 @@ class WorkoutStreak(models.Model):
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     last_workout_datetime = models.DateTimeField(null=True, blank=True)
-    frequency = models.IntegerField(default=3)
+    frequency = models.IntegerField(default=5)
 
     def __str__(self):
         return f"Streak of {self.user.username}: {self.current_streak} (Máx: {self.longest_streak})"
