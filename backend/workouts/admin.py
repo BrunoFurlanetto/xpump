@@ -75,10 +75,6 @@ class WorkoutCheckinAdmin(admin.ModelAdmin):
             messages.ERROR
         )
 
-    def has_delete_permission(self, request, obj=None):
-        """Remove delete button from interface"""
-        return False
-
 
 @admin.register(WorkoutCheckinProof)
 class WorkoutCheckinProofAdmin(admin.ModelAdmin):
@@ -127,7 +123,6 @@ class WorkoutStreakAdmin(admin.ModelAdmin):
     list_display = ('user', 'current_streak', 'longest_streak', 'frequency', 'last_workout_datetime', 'weekly_remaining')
     list_filter = ('frequency', 'current_streak')
     search_fields = ('user__username', 'user__email')
-    readonly_fields = ('user', 'current_streak', 'longest_streak', 'last_workout_datetime', 'frequency', 'weekly_remaining')
 
     fieldsets = (
         ('Informações do Streak (Somente Leitura)', {

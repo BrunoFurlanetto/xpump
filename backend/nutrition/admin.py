@@ -148,6 +148,7 @@ class MealProofAdmin(admin.ModelAdmin):
 
     def get_user(self, obj):
         return obj.checkin.user.username
+
     get_user.short_description = 'Usuário'
     get_user.admin_order_field = 'checkin__user__username'
 
@@ -186,7 +187,7 @@ class MealStreakAdmin(admin.ModelAdmin):
     list_display = ('user', 'current_streak', 'longest_streak', 'last_meal_datetime', 'weekly_remaining')
     list_filter = ('current_streak',)
     search_fields = ('user__username', 'user__email')
-    readonly_fields = ('user', 'current_streak', 'longest_streak', 'last_meal_datetime', 'weekly_remaining')
+    readonly_fields = ('user', )
 
     fieldsets = (
         ('Informações do Streak (Somente Leitura)', {
