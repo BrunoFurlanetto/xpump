@@ -389,6 +389,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
               members={group.members}
               currentUserId={Number(user?.id)}
               currentUserRole={currentUserRole}
+              clientCode={group.client_code}
               onMemberUpdate={async () => {
                 await fetchGroupData(period);
               }}

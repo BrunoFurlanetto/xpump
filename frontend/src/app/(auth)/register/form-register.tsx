@@ -6,7 +6,7 @@ import { ActionResponse, submitRegister } from "./actions";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { User, Lock, Mail, UserPlus, ArrowRight, Building2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const initialState: ActionResponse = {
   success: false,
@@ -16,6 +16,7 @@ const initialState: ActionResponse = {
 export default function RegisterForm() {
   const [state, action, isPending] = useActionState(submitRegister, initialState);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Estado para manter os valores do formulário
   const [formValues, setFormValues] = useState({
@@ -35,6 +36,17 @@ export default function RegisterForm() {
       [field]: value,
     }));
   };
+
+  // Preencher client_code da URL quando o componente montar
+  useEffect(() => {
+    const clientCodeFromUrl = searchParams.get("client_code");
+    if (clientCodeFromUrl) {
+      setFormValues((prev) => ({
+        ...prev,
+        client_code: clientCodeFromUrl,
+      }));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (state.message && !state.success) {

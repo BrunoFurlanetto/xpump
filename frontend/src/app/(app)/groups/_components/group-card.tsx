@@ -111,6 +111,7 @@ export function GroupCard({ group }: GroupCardProps) {
         close={() => setOpenInviteModal(false)}
         groupId={group.id}
         groupName={group.name}
+        clientCode={group.client_code}
       />
 
       <Card className="group hover:shadow-lg transition-all duration-200 bg-card border-border">

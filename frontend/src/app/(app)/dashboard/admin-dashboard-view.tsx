@@ -53,7 +53,7 @@ function StatCard({ title, value, subtitle, icon: Icon, color, bgColor }: StatCa
 
 export default function AdminDashboardView() {
   const { data: stats, isLoading: isLoadingStats } = useSystemStats();
-  const { data: clientsData, isLoading: isLoadingClients } = useAllClients(1, 5, "-last_activity");
+  const { data: clientsData, isLoading: isLoadingClients } = useAllClients(1, 5, "-created_at");
   const { data: groupsData, isLoading: isLoadingGroups } = useAllGroups(1, 5);
 
   // Dados para gráficos
@@ -432,7 +432,7 @@ export default function AdminDashboardView() {
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-foreground">Clientes Ativos Recentes</CardTitle>
-            <Link href="/admin/clients" className="text-sm text-primary hover:underline">
+            <Link href="/clients" className="text-sm text-primary hover:underline">
               Ver todos
             </Link>
           </CardHeader>
@@ -445,20 +445,24 @@ export default function AdminDashboardView() {
               </div>
             ) : (
               <div className="space-y-3">
-                {clientsData?.results.slice(0, 5).map((client) => (
+                {clientsData?.results?.slice(0, 5).map((client) => (
                   <div
                     key={client.id}
                     className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
                   >
                     <div className="flex-1">
-                      <p className="font-medium text-foreground">
-                        {client.first_name} {client.last_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">@{client.username}</p>
+                      <p className="font-medium text-foreground">{client.name}</p>
+                      <p className="text-xs text-muted-foreground">{client.cnpj}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-foreground">Nível {client.profile_level}</p>
-                      <p className="text-xs text-muted-foreground">{client.workout_count} treinos</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {client.is_active ? (
+                          <span className="text-green-500">Ativo</span>
+                        ) : (
+                          <span className="text-gray-500">Inativo</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{client.contact_email}</p>
                     </div>
                   </div>
                 ))}

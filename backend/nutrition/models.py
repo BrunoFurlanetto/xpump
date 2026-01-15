@@ -97,14 +97,14 @@ class Meal(models.Model):
         Gamification().remove_xp(user, meal_points)
 
     def clean(self):
-        if not MealConfig.objects.filter(
-            interval_start__lte=self.meal_time.astimezone().time(),
-            interval_end__gte=self.meal_time.astimezone().time()
-        ).exists():
-            raise ValidationError({"meal_time": "Meal time does not fall within any configured meal intervals."})
-
-        if not (self.meal_type.interval_start < self.meal_time.astimezone().time() < self.meal_type.interval_end):
-            raise ValidationError({"meal_time": "Meal time must be within the configured interval for this meal type."})
+        # if not MealConfig.objects.filter(
+        #     interval_start__lte=self.meal_time.astimezone().time(),
+        #     interval_end__gte=self.meal_time.astimezone().time()
+        # ).exists():
+        #     raise ValidationError({"meal_time": "Meal time does not fall within any configured meal intervals."})
+        #
+        # if not (self.meal_type.interval_start < self.meal_time.astimezone().time() < self.meal_type.interval_end):
+        #     raise ValidationError({"meal_time": "Meal time must be within the configured interval for this meal type."})
 
         if self.id is None:  # Only check for duplicates on creation
             if Meal.objects.filter(user=self.user, meal_type=self.meal_type, meal_time__date=self.meal_time.date()).exists():

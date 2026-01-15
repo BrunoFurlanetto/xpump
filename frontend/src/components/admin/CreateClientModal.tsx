@@ -52,7 +52,7 @@ export function CreateClientModal() {
         owner_last_name: "",
       });
       // Invalidar queries para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ["admin", "system", "clients"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "clients"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "system", "stats"] });
     },
     onError: (error: any) => {
