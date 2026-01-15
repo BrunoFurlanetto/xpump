@@ -40,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name', 'profile_id', 'client_code']
         extra_kwargs = {
             'email': {'required': True},  # Make email field required
-        } 
+        }
 
     def get_profile_id(self, obj):
         """
