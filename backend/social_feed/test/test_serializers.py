@@ -259,3 +259,43 @@ class SerializerTest(TestCase):
 
         self.assertIn('is_liked_by_user', data)
         self.assertFalse(data['is_liked_by_user'])  # Usuário não curtiu o próprio post
+
+    def test_is_superuser_post_flag(self):
+        """Garante que is_superuser_post aparece corretamente para posts de superuser e usuários normais."""
+        # Usuário normal
+        normal_user = User.objects.create_user(
+            username='normal',
+            email='normal@test.com',
+            password='testpass123'
+        )
+
+        post_normal = Post.objects.create(
+            user=normal_user,
+            content_type='social',
+            content_text=fake.text(),
+            visibility='global'
+        )
+
+        serializer_normal = PostSerializer(post_normal)
+        data_normal = serializer_normal.data
+        self.assertIn('is_superuser_post', data_normal)
+        self.assertFalse(data_normal['is_superuser_post'])
+
+        # Superuser
+        super_user = User.objects.create_superuser(
+            username='admin',
+            email='admin@test.com',
+            password='adminpass123'
+        )
+
+        post_super = Post.objects.create(
+            user=super_user,
+            content_type='social',
+            content_text=fake.text(),
+            visibility='global'
+        )
+
+        serializer_super = PostSerializer(post_super)
+        data_super = serializer_super.data
+        self.assertIn('is_superuser_post', data_super)
+        self.assertTrue(data_super['is_superuser_post'])

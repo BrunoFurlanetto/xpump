@@ -34,7 +34,7 @@ class WorkoutCheckin(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workouts')
     location = models.CharField(max_length=100, null=True, blank=True)
     comments = models.TextField(blank=True)
-    workout_date = models.DateTimeField()
+    workout_date = models.DateTimeField()  # This field represents the date and time for the END of the workout
     duration = models.DurationField()
     validation_status = models.ForeignKey(Status, on_delete=models.PROTECT, default=get_published_status_id)
     base_points = models.FloatField(null=True, blank=True, editable=False)
@@ -76,6 +76,23 @@ class WorkoutCheckin(models.Model):
     def delete(self, *args, **kwargs):
         workout_points = self.base_points
         user = self.user
+        workout_date = self.workout_date
+
+        # Check if this workout is part of the current streak BEFORE deleting
+        is_part_of_streak = False
+
+        try:
+            streak = WorkoutStreak.objects.get(user=user)
+            if streak.current_streak > 0:
+                # Get the last 'current_streak' workouts to check if this workout is part of it
+                last_n_workouts = WorkoutCheckin.objects.filter(
+                    user=user
+                ).order_by('-workout_date')[:streak.current_streak]
+
+                workout_dates = [w.workout_date for w in last_n_workouts]
+                is_part_of_streak = workout_date in workout_dates
+        except RelatedObjectDoesNotExist:
+            streak = None
 
         try:
             super().delete(*args, **kwargs)
@@ -83,6 +100,30 @@ class WorkoutCheckin(models.Model):
             raise e
 
         Gamification().remove_xp(user, workout_points)
+
+        # Update streak if the deleted workout was part of the current streak
+        if streak and is_part_of_streak:
+            self._update_streak_after_deletion(streak, user)
+
+    def _update_streak_after_deletion(self, streak, user):
+        """
+        Update the user's streak after a workout deletion.
+        Decrements the streak since we already confirmed the deleted workout was part of it.
+        """
+        # Decrement the streak
+        streak.current_streak = max(0, streak.current_streak - 1)
+
+        # Update last_workout_datetime to the most recent remaining workout
+        latest_workout = WorkoutCheckin.objects.filter(
+            user=user
+        ).order_by('-workout_date').first()
+
+        if latest_workout:
+            streak.last_workout_datetime = latest_workout.workout_date
+        else:
+            streak.last_workout_datetime = None
+
+        streak.save()
 
     def clean(self):
         """
@@ -98,22 +139,17 @@ class WorkoutCheckin(models.Model):
             raise ValidationError("Duration must be a positive value.")
 
         # Check if there is an overlapping check-in from the same user
-        workout_end_time = self.workout_date + self.duration
+        # workout_end_time = self.workout_date + self.duration
 
         overlapping_workouts = WorkoutCheckin.objects.filter(
             user=self.user,
-            workout_date__lt=workout_end_time,
+            workout_date__lte=self.workout_date,
+            workout_date__gte=self.workout_date - self.duration,
             # The end date of the existing check-in is later than the start date of the new one
         ).exclude(id=self.id)
 
-        # For each existing check-in, verify if it overlaps with the new one
-        for workout in overlapping_workouts:
-            existing_end_time = workout.workout_date + workout.duration
-
-            if existing_end_time > self.workout_date:
-                raise ValidationError(
-                    f"This check-in is overlapping an existing check-in (ID: {workout.id}) "
-                )
+        if overlapping_workouts.exists():
+            raise ValidationError("This workout overlaps with an existing check-in.")
 
 
 class WorkoutCheckinProof(models.Model):
@@ -153,7 +189,7 @@ class WorkoutPlan(models.Model):
 
 class WorkoutStreak(models.Model):
     """
-    odel representing a user's workout streak tracking system. Tracks current streak, longest streak achieved, last
+    Model representing a user's workout streak tracking system. Tracks current streak, longest streak achieved, last
     workout date, and frequency requirements. Automatically manages streak calculations based on weekly workout frequency
     goals.
     """
@@ -161,7 +197,7 @@ class WorkoutStreak(models.Model):
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     last_workout_datetime = models.DateTimeField(null=True, blank=True)
-    frequency = models.IntegerField(default=3)
+    frequency = models.IntegerField(default=5)
 
     def __str__(self):
         return f"Streak of {self.user.username}: {self.current_streak} (Máx: {self.longest_streak})"

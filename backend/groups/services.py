@@ -18,7 +18,8 @@ def create_group_for_client(
         description='',
         main=False,
         members_list=None,
-        add_creator=True
+        add_creator=True,
+        add_owner=False,
 ):
     """
     Create a Group and link it to the client:
@@ -48,6 +49,14 @@ def create_group_for_client(
         if add_creator and created_by:
             GroupMembers.objects.create(
                 member=created_by,
+                group=group,
+                is_admin=True,
+                pending=False
+            )
+
+        if add_owner:
+            GroupMembers.objects.create(
+                member=owner,
                 group=group,
                 is_admin=True,
                 pending=False

@@ -25,7 +25,6 @@ export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onD
 
     if (!mealTypeInfo) return null;
 
-    console.log(dayData, getMealTypeInfo(mealTypeId), mealTypeId);
     if (meal) {
       return <MealCard meal={meal} mealType={mealTypeInfo} onUpdateComments={onUpdateMeal} onDelete={onDeleteMeal} />;
     }
@@ -40,7 +39,6 @@ export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onD
             </div>
             <div>
               <h4 className="font-medium text-foreground">{mealTypeInfo.name}</h4>
-              <p className="text-xs text-muted-foreground">{mealTypeInfo.timeRange}</p>
             </div>
           </div>
 

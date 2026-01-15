@@ -80,7 +80,7 @@ async function proxyRequest(request: NextRequest, params: Promise<{ path: string
     let body: BodyInit | undefined;
     const contentType = request.headers.get("content-type");
 
-    if (method !== "GET" && method !== "HEAD") {
+    if (method !== "GET" && method !== "HEAD" && method !== "DELETE") {
       if (contentType?.includes("application/json")) {
         // For JSON requests
         headers["Content-Type"] = "application/json";
@@ -102,6 +102,7 @@ async function proxyRequest(request: NextRequest, params: Promise<{ path: string
       }
     }
 
+    console.log(body);
     const response = await fetchWithTokenRefresh(
       backendUrl,
       {

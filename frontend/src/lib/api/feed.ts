@@ -8,7 +8,7 @@ export interface User {
   email: string;
   profile_id: number;
   profile_score: number;
-  profile_level: number;
+  level: number;
 }
 
 export interface ContentFile {
@@ -65,6 +65,7 @@ export interface Meal {
   validation_status_name: string;
   created_at: string;
   proofs: ContentFile[];
+  fasting: boolean;
 }
 
 export interface Post {

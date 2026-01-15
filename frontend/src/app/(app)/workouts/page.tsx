@@ -129,13 +129,13 @@ export default function WorkoutsPage() {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Treinos realizados esta semana</span>
-                <span className="text-foreground font-medium">{stats.this_week_workouts}/3</span>
+                <span className="text-foreground font-medium">{stats.this_week_workouts}/5</span>
               </div>
-              <Progress value={(stats.this_week_workouts / 3) * 100} className="h-2" />
+              <Progress value={(stats.this_week_workouts / 5) * 100} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                {stats.this_week_workouts >= 3
+                {stats.this_week_workouts >= 5
                   ? "🎉 Parabéns! Meta semanal atingida!"
-                  : `Faltam ${3 - stats.this_week_workouts} treinos para completar sua meta`}
+                  : `Faltam ${5 - stats.this_week_workouts} treinos para completar sua meta`}
               </p>
             </div>
           </CardContent>
