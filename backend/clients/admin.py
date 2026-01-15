@@ -218,9 +218,12 @@ class ClientAdmin(admin.ModelAdmin):
 
         if main_group or groups_count > 0:
             self.message_user(
-                f'Não é possível deletar o cliente "{obj.name}" pois possui grupo principal ou {groups_count} grupo(s) associado(s). '
-                f'Remova as associações primeiro.',
-                f'Remove the associations first.',
+                request,
+                (
+                    f'Não é possível deletar o cliente "{obj.name}" pois possui grupo principal ou {groups_count} grupo(s) associado(s). '
+                    f'Remova as associações primeiro. '
+                    f'Remove the associations first.'
+                ),
                 messages.ERROR
             )
             return
