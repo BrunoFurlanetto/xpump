@@ -15,5 +15,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5433/xpump-dev-admin-stats</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="xpump_db@72.62.140.63" uuid="f4c9d29c-7f29-466a-876d-c1b66530d450">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://72.62.140.63:5432/xpump_db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
