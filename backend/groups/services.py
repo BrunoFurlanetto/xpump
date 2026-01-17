@@ -2,7 +2,7 @@
 from datetime import timedelta
 
 from django.apps import apps
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, FieldDoesNotExist
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Sum, Count, Q, FloatField, FilteredRelation, Prefetch, OuterRef, Value, Subquery, \
@@ -81,8 +81,20 @@ def compute_group_members_data(group, period):
     ordenados por pontos no período ('week' | 'month').
     """
     # obtém modelos (ajuste 'meals' e 'workouts' se seus app labels forem diferentes)
-    Meal = apps.get_model('meals', 'Meal')
-    Workout = apps.get_model('workouts', 'Workout')
+    Meal = apps.get_model('nutrition', 'Meal')
+    Workout = apps.get_model('workouts', 'WorkoutCheckin')
+
+    def _detect_fk(model):
+        for name in ('member', 'user'):
+            try:
+                model._meta.get_field(name)
+                return name
+            except FieldDoesNotExist:
+                continue
+        raise ValidationError(f"Model {model} must have a 'member' or 'user' FK")
+
+    meal_fk = _detect_fk(Meal)
+    workout_fk = _detect_fk(Workout)
 
     now = timezone.now()
     local_now = timezone.localtime(now)
@@ -102,29 +114,28 @@ def compute_group_members_data(group, period):
         .filter(pending=False)
     )
 
-    # subqueries por membro (retornam um único valor)
     meals_pts_sq = (
-        Meal.objects.filter(member=OuterRef('member'), meal_time__gte=start)
-        .values('member')
+        Meal.objects.filter(**{meal_fk: OuterRef('member'), 'meal_time__gte': start})
+        .values(meal_fk)
         .annotate(pts=Coalesce(Sum('base_points'), Value(0.0)))
         .values('pts')
     )
     meals_count_sq = (
-        Meal.objects.filter(member=OuterRef('member'), meal_time__gte=start)
-        .values('member')
+        Meal.objects.filter(**{meal_fk: OuterRef('member'), 'meal_time__gte': start})
+        .values(meal_fk)
         .annotate(cnt=Count('id'))
         .values('cnt')
     )
 
     workouts_pts_sq = (
-        Workout.objects.filter(member=OuterRef('member'), workout_date__gte=start)
-        .values('member')
+        Workout.objects.filter(**{workout_fk: OuterRef('member'), 'workout_date__gte': start})
+        .values(workout_fk)
         .annotate(pts=Coalesce(Sum('base_points'), Value(0.0)))
         .values('pts')
     )
     workouts_count_sq = (
-        Workout.objects.filter(member=OuterRef('member'), workout_date__gte=start)
-        .values('member')
+        Workout.objects.filter(**{workout_fk: OuterRef('member'), 'workout_date__gte': start})
+        .values(workout_fk)
         .annotate(cnt=Count('id'))
         .values('cnt')
     )
@@ -142,10 +153,8 @@ def compute_group_members_data(group, period):
     members = list(qs)
     members.sort(key=lambda m: (m.workout_points or 0) + (m.meal_points or 0), reverse=True)
 
-    # resto do código permanece igual...
     result = []
     pos = 1
-
     for m in members:
         score = (m.workout_points or 0) + (m.meal_points or 0)
         workouts = m.workouts_count or 0
@@ -168,13 +177,11 @@ def compute_group_members_data(group, period):
         })
         pos += 1
 
-    group_data = {
+    return {
         "id": group.id,
         "name": getattr(group, "name", None),
         "members": result,
     }
-
-    return group_data
     # now = timezone.now()
     # local_now = timezone.localtime(now)
     #
@@ -243,7 +250,6 @@ def compute_group_members_data(group, period):
     # return group_data
 
 
-# python
 def compute_another_groups(main_group):
     client = main_group.client.first()
     groups = list(client.groups.all())

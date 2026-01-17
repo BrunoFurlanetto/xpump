@@ -83,6 +83,7 @@ class GroupAPIView(RetrieveUpdateDestroyAPIView):
         - 'all': comportamento padrão do serializer.
         - 'week' / 'month': delega cálculo de ranking para compute_group_members_data.
         """
+
         group = self.get_object()
         period = request.GET.get('period', 'all').lower()
 
