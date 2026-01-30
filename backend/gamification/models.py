@@ -76,7 +76,8 @@ class GamificationSettings(models.Model):
     exponential_factor = models.FloatField(default=1.5, help_text="Fator exponencial para cálculo de XP")
     max_level = models.IntegerField(default=50, help_text="Nível máximo permitido")
     workout_minutes = models.IntegerField(default=50, help_text="Minutos de treino para recompensar o XP estipulado")
-    workout_xp = models.IntegerField(default=2, help_text="XP concedido por completar os minutos de treino treino")
+    workout_xp = models.IntegerField(default=2, help_text="XP concedido por completar exatos minutos de treino")
+    max_workout_xp = models.IntegerField(default=4, help_text="XP máximo concedido por treino e por dia")
     multiplier_workout_streak = models.JSONField(
         default=default_multiplier_workout_streak,
         help_text="Multiplicador de XP baseado na sequência de treinos"

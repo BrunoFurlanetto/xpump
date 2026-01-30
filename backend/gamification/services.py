@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from faulthandler import dump_traceback
 from math import floor
 
 from django.contrib.auth.models import User
+from django.db.models import Sum
 from django.utils.functional import cached_property
 
 from gamification.exceptions import NoSeasonFoundError
@@ -99,11 +101,32 @@ class WorkoutGamification(GamificationService):
             raise ValueError("WorkoutGamification.calculate expects exactly 1 extra argument: duration")
 
         duration = args[0]
+        duration_min = duration.total_seconds() / 60
         base_points = self.base_xp(user)
         workout_minutes_base = self.settings.workout_minutes
         multiplier = self.get_multiplier(user)
+        workout_xp_today = user.workouts.filter(workout_date__date=datetime.today().date()).aggregate(
+            total=Sum('base_points')
+        )['total'] or 0
 
-        return float(base_points * ((duration.total_seconds() / 60) / workout_minutes_base)) * multiplier
+        if workout_xp_today >= self.settings.max_workout_xp:
+            return 0
+        else:
+            last_points_today = self.settings.max_workout_xp - workout_xp_today
+
+            if duration_min < workout_minutes_base:
+                return min(float(base_points / 2) * multiplier, last_points_today)
+
+            if duration_min == workout_minutes_base:
+                return min(float(base_points) * multiplier, last_points_today)
+
+            if workout_minutes_base < duration_min < workout_minutes_base * 2:
+                return min(float(base_points * 1.5) * multiplier, last_points_today)
+
+            if duration_min >= workout_minutes_base * 2:
+                return min(float(base_points * 2) * multiplier, last_points_today)
+
+        raise ValueError("Invalid duration value.")
 
 
 class MealGamification(GamificationService):
