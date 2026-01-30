@@ -1,4 +1,4 @@
-const CACHE_NAME = "xpump-v2";
+const CACHE_NAME = "start-v2";
 const OFFLINE_URL = "/offline.html";
 
 // Assets para pré-cache (instalação do SW)
@@ -13,17 +13,17 @@ const PRECACHE_ASSETS = [
 // Configurações de cache por tipo
 const CACHE_CONFIG = {
   images: {
-    name: "xpump-images-v2",
+    name: "start-images-v2",
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
     maxEntries: 60,
   },
   api: {
-    name: "xpump-api-v2",
+    name: "start-api-v2",
     maxAge: 5 * 60 * 1000, // 5 minutos
     maxEntries: 50,
   },
   static: {
-    name: "xpump-static-v2",
+    name: "start-static-v2",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
     maxEntries: 100,
   },

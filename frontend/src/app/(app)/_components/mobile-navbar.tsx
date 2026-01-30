@@ -56,7 +56,7 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
       >
         <div className="flex h-14 items-center px-4">
           <Link href="/" className="flex items-center">
-            <Image src="/logo/simple.png" alt="XPump Logo" width={100} height={32} className="h-8" />
+            <Image src="/logo/simple.png" alt="Start Logo" width={100} height={32} className="h-8" />
           </Link>
 
           <div className="ml-auto flex items-center space-x-2">

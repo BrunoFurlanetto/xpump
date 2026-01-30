@@ -119,7 +119,7 @@ export function Sidebar({ className }: SidebarProps) {
           <Link href="/" className="flex items-center pl-3 mb-2">
             <Image
               src={actualTheme === "light" ? "/logo/dark_simple.png" : "/logo/simple.png"}
-              alt="XPump Logo"
+              alt="Start Logo"
               width={120}
               height={40}
               className="h-8"
