@@ -113,7 +113,7 @@ export function InstallPWA() {
 
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-primary text-sm mb-1">
-                Instalar X-Pump no iOS
+                Instalar Start no iOS
               </h3>
               <p className="text-xs text-muted-foreground mb-2">
                 Para instalar o app no seu iPhone/iPad:
@@ -171,7 +171,7 @@ export function InstallPWA() {
 
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-primary text-sm mb-1">
-            Instalar X-Pump
+            Instalar Start
           </h3>
           <p className="text-xs text-muted-foreground mb-3">
             Instale nosso app para acesso rápido e experiência completa, mesmo
