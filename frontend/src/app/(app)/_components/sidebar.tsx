@@ -17,7 +17,6 @@ import {
   MessageSquare,
   Utensils,
   Bell,
-  LayoutDashboard,
 } from "lucide-react";
 import { logout } from "@/app/(auth)/login/actions";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -118,7 +117,7 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="px-3 py-2">
           <Link href="/" className="flex items-center pl-3 mb-2">
             <Image
-              src={actualTheme === "light" ? "/logo/dark_simple.png" : "/logo/simple.png"}
+              src={actualTheme === "dark" ? "/logo/dark_simple.png" : "/logo/simple.png"}
               alt="Start Logo"
               width={120}
               height={40}
