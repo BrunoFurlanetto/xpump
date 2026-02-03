@@ -8,7 +8,7 @@ export default function LayoutAuth({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-6xl">
         <div className="flex flex-col lg:hidden space-y-8">
           <div className="text-center">
-            <Image src="/logo/logo.png" alt="XPump Logo" width={180} height={45} className="brightness-110 mx-auto" />
+            <Image src="/branding/start-dark.png" alt="Start Logo" width={300} height={80} className="brightness-110 mx-auto" />
           </div>
 
           <div className="w-full max-w-sm mx-auto">
@@ -66,7 +66,7 @@ export default function LayoutAuth({ children }: { children: React.ReactNode }) 
           <div className="text-left space-y-8">
             {/* Logo */}
             <div className="flex justify-start">
-              <Image src="/logo/logo.png" alt="XPump Logo" width={200} height={50} className="brightness-110" />
+              <Image src="/branding/start-dark.png" alt="Start Logo" width={400} height={80} className="brightness-110 " />
             </div>
 
             {/* Título Principal */}

@@ -18,14 +18,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "X-Pump - Gamificação para Academias",
+  title: "Start - Gamificação para Academias",
   description:
     "App de gamificação para academias com ranking, redes sociais e desafios. Registre treinos, acompanhe nutrição e compete com amigos.",
-  applicationName: "X-Pump",
+  applicationName: "Start",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "X-Pump",
+    title: "Start",
     startupImage: [
       {
         url: "/logo/x512x512.png",
@@ -39,21 +39,21 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
-    siteName: "X-Pump",
-    title: "X-Pump - Gamificação para Academias",
+    siteName: "Start",
+    title: "Start - Gamificação para Academias",
     description: "Transforme seus treinos em uma competição divertida",
     images: [
       {
         url: "/logo/x512x512.png",
         width: 512,
         height: 512,
-        alt: "X-Pump Logo",
+        alt: "Start Logo",
       },
     ],
   },
   twitter: {
     card: "summary",
-    title: "X-Pump",
+    title: "Start",
     description: "Gamificação para Academias",
     images: ["/logo/x512x512.png"],
   },
