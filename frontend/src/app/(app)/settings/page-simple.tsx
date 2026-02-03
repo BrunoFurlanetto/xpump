@@ -93,7 +93,7 @@ export default function SettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Configurações</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">Personalize sua experiência no XPump</p>
+          <p className="text-muted-foreground text-sm sm:text-base">Personalize sua experiência no Start</p>
         </div>
 
         <div className="flex items-center gap-2">

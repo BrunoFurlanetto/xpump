@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "X-Pump - Gamificação para Academias",
-    short_name: "X-Pump",
+    name: "Start - Gamificação para Academias",
+    short_name: "Start",
     description:
       "App de gamificação para academias com ranking, redes sociais e desafios. Registre treinos, acompanhe nutrição e compete com amigos.",
     start_url: "/",

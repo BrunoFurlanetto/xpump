@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useNavigation } from "@/context/navigationContext";
 import { Home, Dumbbell, Utensils, MoreHorizontal, MessageSquare } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useTheme } from "@/context/ThemeContext";
 
 interface MobileNavbarProps {
   className?: string;
@@ -44,6 +45,7 @@ const navigationItems: NavItem[] = [
 export function MobileNavbar({ className }: MobileNavbarProps) {
   const pathname = usePathname();
   const { toggleMobileMenu } = useNavigation();
+  const { actualTheme } = useTheme();
 
   return (
     <>
@@ -56,7 +58,7 @@ export function MobileNavbar({ className }: MobileNavbarProps) {
       >
         <div className="flex h-14 items-center px-4">
           <Link href="/" className="flex items-center">
-            <Image src="/logo/simple.png" alt="XPump Logo" width={100} height={32} className="h-8" />
+            <Image src={actualTheme === "dark" ? "/logo/dark_simple.png" :  "/logo/simple.png"} alt="Start Logo" width={100} height={32} className="h-8" />
           </Link>
 
           <div className="ml-auto flex items-center space-x-2">
