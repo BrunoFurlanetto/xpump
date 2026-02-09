@@ -1,6 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/django,pycharm,nextjs,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=django,pycharm,nextjs,visualstudiocode
 
+
+### mobile ###
+mobile/.expo/
+mobile/node_modules/
+mobile/expo-env.d.ts
+
 ### Django ###
 *.log
 *.pot

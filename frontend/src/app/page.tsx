@@ -11,5 +11,5 @@ export default async function Home() {
   }
 
   // Se tem sessão válida, redirecionar para dashboard
-  redirect("/dashboard");
+  redirect("/feed");
 }
