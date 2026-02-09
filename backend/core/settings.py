@@ -58,7 +58,7 @@ if 'SECRET_KEY' in os.environ:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '72.62.140.63']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', 'api.startbeneficios.com.br']
 CORS_ORIGIN_ALLOW_ALL = True  # TODO: Change to False in production
 
 # Application definition

@@ -74,7 +74,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
   {
     id: "first_workout",
     title: "Primeiro Treino",
-    description: "Complete seu primeiro treino no XPump",
+    description: "Complete seu primeiro treino no Start",
     icon: "🏋️",
     category: "workout",
     requirements: {

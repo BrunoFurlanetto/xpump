@@ -108,7 +108,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <Link href="/">
                 <Image
                   src={actualTheme === "light" ? "/logo/dark_simple.png" : "/logo/simple.png"}
-                  alt="XPump Logo"
+                  alt="Start Logo"
                   width={120}
                   height={40}
                   className="h-8"

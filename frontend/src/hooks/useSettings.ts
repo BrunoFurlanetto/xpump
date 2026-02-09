@@ -13,7 +13,7 @@ export interface UserSettings {
     email: boolean;
     push: boolean;
   };
-  
+
   // Preferências de exercícios
   workout: {
     defaultDuration: number; // em minutos
@@ -22,7 +22,7 @@ export interface UserSettings {
     autoReminders: boolean;
     reminderTime: string; // formato HH:MM
   };
-  
+
   // Preferências de alimentação
   nutrition: {
     dietaryRestrictions: string[];
@@ -31,7 +31,7 @@ export interface UserSettings {
     waterReminders: boolean;
     reminderInterval: number; // em horas
   };
-  
+
   // Interface
   interface: {
     theme: 'dark' | 'light' | 'system';
@@ -40,7 +40,7 @@ export interface UserSettings {
     animations: boolean;
     sounds: boolean;
   };
-  
+
   // Privacidade
   privacy: {
     profileVisibility: 'public' | 'friends' | 'private';
@@ -49,7 +49,7 @@ export interface UserSettings {
     shareAchievements: boolean;
     allowFriendRequests: boolean;
   };
-  
+
   // Metas e objetivos
   goals: {
     weeklyWorkouts: number;
@@ -126,7 +126,7 @@ export const useSettings = () => {
   useEffect(() => {
     const loadSettings = () => {
       try {
-        const savedSettings = localStorage.getItem('xpump-settings');
+        const savedSettings = localStorage.getItem('start-settings');
         if (savedSettings) {
           const parsed = JSON.parse(savedSettings);
           setSettings({ ...defaultSettings, ...parsed });
@@ -144,10 +144,10 @@ export const useSettings = () => {
   const updateSettings = (newSettings: Partial<UserSettings>) => {
     setSettings(prev => {
       const updated = { ...prev, ...newSettings };
-      
+
       // Fazer merge profundo para objetos aninhados
       Object.keys(newSettings).forEach(key => {
-        if (typeof newSettings[key as keyof UserSettings] === 'object' && 
+        if (typeof newSettings[key as keyof UserSettings] === 'object' &&
             newSettings[key as keyof UserSettings] !== null) {
           updated[key as keyof UserSettings] = {
             ...prev[key as keyof UserSettings],
@@ -165,10 +165,10 @@ export const useSettings = () => {
     try {
       // Simular API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      localStorage.setItem('xpump-settings', JSON.stringify(settings));
+
+      localStorage.setItem('start-settings', JSON.stringify(settings));
       setHasChanges(false);
-      
+
       return { success: true };
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
@@ -185,19 +185,19 @@ export const useSettings = () => {
     const dataStr = JSON.stringify(settings, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
-    
+
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'xpump-settings.json';
+    link.download = 'start-settings.json';
     link.click();
-    
+
     URL.revokeObjectURL(url);
   };
 
   const importSettings = (file: File): Promise<boolean> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = (e) => {
         try {
           const imported = JSON.parse(e.target?.result as string);
@@ -208,7 +208,7 @@ export const useSettings = () => {
           reject(new Error('Arquivo de configurações inválido'));
         }
       };
-      
+
       reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
       reader.readAsText(file);
     });
@@ -229,27 +229,27 @@ export const useSettings = () => {
 
   const shouldShowReminder = () => {
     if (!settings.workout.autoReminders) return false;
-    
+
     const now = new Date();
     const reminderTime = settings.workout.reminderTime.split(':');
     const reminderHour = parseInt(reminderTime[0]);
     const reminderMinute = parseInt(reminderTime[1]);
-    
+
     return now.getHours() === reminderHour && now.getMinutes() === reminderMinute;
   };
 
   const getHydrationReminder = () => {
     if (!settings.nutrition.waterReminders) return null;
-    
+
     const lastReminder = localStorage.getItem('last-hydration-reminder');
     const now = new Date().getTime();
     const interval = settings.nutrition.reminderInterval * 60 * 60 * 1000; // converter para ms
-    
+
     if (!lastReminder || (now - parseInt(lastReminder)) >= interval) {
       localStorage.setItem('last-hydration-reminder', now.toString());
       return true;
     }
-    
+
     return false;
   };
 
@@ -262,7 +262,7 @@ export const useSettings = () => {
     resetSettings,
     exportSettings,
     importSettings,
-    
+
     // Getters
     getNotificationSettings,
     getWorkoutSettings,
@@ -270,7 +270,7 @@ export const useSettings = () => {
     getInterfaceSettings,
     getPrivacySettings,
     getGoalsSettings,
-    
+
     // Utility functions
     isNotificationEnabled,
     shouldShowReminder,
