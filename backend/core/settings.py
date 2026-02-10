@@ -210,12 +210,12 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery Configuration
-CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_BROKER_URL = 'REDIS_URL', 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'REDIS_URL', 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'America/Sao_Paulo'
+CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 
@@ -224,13 +224,13 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [os.getenv('REDIS_URL', 'redis://localhost:6379/0')],
+            "hosts": [('127.0.0.1', 6379)],
         },
     },
 }
 
 # VAPID Configuration for Web Push
 # Generate keys with: python manage.py generate_vapid_keys
-VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
-VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
-VAPID_ADMIN_EMAIL = os.getenv('VAPID_ADMIN_EMAIL', 'admin@xpump.com')
+VAPID_PRIVATE_KEY = None
+VAPID_PUBLIC_KEY = None
+VAPID_ADMIN_EMAIL = 'admin@xpump.com'

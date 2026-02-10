@@ -185,6 +185,9 @@ class MealStreak(models.Model):
         return max(remaining, 0)
 
     def update_streak(self, meal_datetime):
+        # Store current streak before updating
+        old_streak = self.current_streak
+        
         if not self.last_meal_datetime:
             self.current_streak = 1
             self.longest_streak = 1
@@ -201,7 +204,47 @@ class MealStreak(models.Model):
 
         self.save()
 
+        # Check for streak milestones and send notifications
+        self._check_streak_milestone(old_streak, self.current_streak)
+
         return self.current_streak
+    
+    def _check_streak_milestone(self, old_streak, new_streak):
+        """
+        Check if a streak milestone was reached and send notification.
+        
+        Args:
+            old_streak: Previous streak count
+            new_streak: Current streak count
+        """
+        # Define milestones
+        milestones = [7, 14, 30, 60, 100]
+        
+        # Check if a milestone was crossed
+        for milestone in milestones:
+            if old_streak < milestone <= new_streak:
+                # Milestone reached! Send notification
+                try:
+                    from notifications.services import NotificationService, NotificationTemplates
+                    
+                    notification_data = NotificationTemplates.for_streak(
+                        days=milestone,
+                        streak_type='meal'
+                    )
+                    
+                    NotificationService.create_notification(
+                        user=self.user,
+                        notification_type='streak',
+                        **notification_data
+                    )
+                except Exception as e:
+                    # Don't fail the meal save if notification fails
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f'Failed to create streak milestone notification: {e}')
+                
+                # Only notify for the first milestone reached
+                break
 
     def check_streak_ended(self, meal_datetime):
         # Cache date conversions to avoid repeated calls
