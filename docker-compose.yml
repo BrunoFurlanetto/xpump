@@ -40,6 +40,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      GIT_BRANCH: develop
       DB_NAME: xpump_db
       DB_USER: xpump_user
       DB_PASSWORD: xpump_password
@@ -62,6 +63,7 @@ services:
     volumes:
       - ./backend:/app
     environment:
+      GIT_BRANCH: develop
       DB_NAME: xpump_db
       DB_USER: xpump_user
       DB_PASSWORD: xpump_password
@@ -84,6 +86,7 @@ services:
     volumes:
       - ./backend:/app
     environment:
+      GIT_BRANCH: develop
       DB_NAME: xpump_db
       DB_USER: xpump_user
       DB_PASSWORD: xpump_password
