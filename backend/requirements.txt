@@ -34,3 +34,12 @@ tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 whitenoise==6.11.0
+
+# Notifications system dependencies
+celery==5.3.6
+redis==5.0.1
+channels==4.0.0
+channels-redis==4.1.0
+pywebpush==1.14.0
+daphne==4.0.0
+py-vapid==1.9.1

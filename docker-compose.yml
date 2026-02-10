@@ -18,6 +18,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: xpump_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -34,9 +45,56 @@ services:
       DB_PASSWORD: xpump_password
       DB_HOST: postgres
       DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
       SECRET_KEY: dev-secret-key-change-in-production
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: xpump_celery_worker
+    command: celery -A core worker -l info
+    volumes:
+      - ./backend:/app
+    environment:
+      DB_NAME: xpump_db
+      DB_USER: xpump_user
+      DB_PASSWORD: xpump_password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: dev-secret-key-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: xpump_celery_beat
+    command: celery -A core beat -l info
+    volumes:
+      - ./backend:/app
+    environment:
+      DB_NAME: xpump_db
+      DB_USER: xpump_user
+      DB_PASSWORD: xpump_password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: dev-secret-key-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:
