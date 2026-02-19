@@ -325,14 +325,26 @@ export function WorkoutCheckinModal({ isOpen, onClose, onSubmit, isLoading = fal
           </div>
 
           {/* Info sobre pontos */}
-          {/* <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
-            <h4 className="text-sm font-medium text-foreground">💡 Como funciona a pontuação?</h4>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Pontos base calculados pela duração do treino</li>
-              <li>• Multiplicador baseado na sua sequência de treinos</li>
-              <li>• Quanto mais consistente, mais pontos você ganha!</li>
+          <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+            <h4 className="text-sm font-medium text-foreground">💡 Como funcionam os pontos?</h4>
+            <ul className="text-xs text-muted-foreground space-y-1.5">
+              <li>
+                <span className="text-foreground font-medium">Treinos de 1h:</span> Valem 2 XP
+              </li>
+              <li>
+                <span className="text-foreground font-medium">Treinos com menos de 1h:</span> Valem 1 XP
+              </li>
+              <li>
+                <span className="text-foreground font-medium">Treinos com mais de 1h:</span> Valem 3 XP
+              </li>
+              <li>
+                <span className="text-foreground font-medium">Treinos de 2h ou mais:</span> Valem 4 XP
+              </li>
+              <li>
+                <span className="text-foreground font-medium">Limite diário:</span> 4 XP
+              </li>
             </ul>
-          </div> */}
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-2 pt-4">
             <Button
