@@ -16,6 +16,7 @@ interface UserAuthContext {
   };
   roles: string[];
   isFetching: boolean;
+  isAdmin: boolean;
 }
 
 export const UserAuthContext = createContext<UserAuthContext | undefined>(undefined);
@@ -69,7 +70,15 @@ export function UserAuthProvider({ children }: { readonly children: React.ReactN
     getUser();
   }, []);
 
-  return <UserAuthContext value={{ user, roles, isFetching }}>{children}</UserAuthContext>;
+  const isAdmin = roles.some((role) => role.toLowerCase() === "admin");
+
+  const objectReturn = {
+    user,
+    roles,
+    isFetching,
+    isAdmin,
+  };
+  return <UserAuthContext value={objectReturn}>{children}</UserAuthContext>;
 }
 
 export function useUserAuth() {

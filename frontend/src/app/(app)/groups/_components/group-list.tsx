@@ -18,7 +18,7 @@ const GroupList = ({ groups }: { groups: Group[] }) => {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Grupos</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Empresa</h2>
             <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
               Oficial
             </Badge>
@@ -37,7 +37,7 @@ const GroupList = ({ groups }: { groups: Group[] }) => {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Meus Grupos</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Outros</h2>
             <Badge variant="outline" className="border-blue-500/30 text-blue-400">
               {otherGroups.length}
             </Badge>
