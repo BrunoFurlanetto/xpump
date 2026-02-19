@@ -1,5 +1,4 @@
 import ProfileCardHeader from "./profile-card-header";
-import CardProgressLevel from "./card-progress-level";
 import CardStreakWorkout from "./card-streak-workout";
 import CardStreakMeal from "./card-streak-meal";
 import GroupListCard from "../group-list-card";
@@ -38,11 +37,11 @@ export default function PageProfileContent({ profile, isOwnProfile = false }: Pa
       />
 
       {/* Progresso de Level */}
-      <CardProgressLevel
-        level={profile.level}
-        points_to_next_level={profile.points_to_next_level}
-        score={profile.score}
-      />
+      {/* <CardProgressLevel */}
+      {/*   level={profile.level} */}
+      {/*   points_to_next_level={profile.points_to_next_level} */}
+      {/*   score={profile.score} */}
+      {/* /> */}
 
       {/* Sequências (Streaks) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
