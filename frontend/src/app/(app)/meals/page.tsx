@@ -20,7 +20,7 @@ export default function MealsPage() {
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return today.toISOString().split('T')[0];
+    return today.toISOString().split("T")[0];
   });
   const [visibleDays, setVisibleDays] = useState(7);
 
@@ -54,7 +54,7 @@ export default function MealsPage() {
   const handleDateChange = (days: number) => {
     const currentDate = new Date(selectedDate);
     currentDate.setDate(currentDate.getDate() + days);
-    setSelectedDate(currentDate.toISOString().split('T')[0]);
+    setSelectedDate(currentDate.toISOString().split("T")[0]);
   };
 
   const isToday = () => {
@@ -70,7 +70,7 @@ export default function MealsPage() {
     const compareDate = new Date(date);
     compareDate.setHours(0, 0, 0, 0);
 
-    return compareDate.getTime() === today.getTime()
+    return compareDate.getTime() === today.getTime();
   };
 
   const filteredDailyMeals = dailyMeals.filter((day) => {
@@ -153,7 +153,7 @@ export default function MealsPage() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
+                max={new Date().toISOString().split("T")[0]}
                 className="flex-1 bg-background border-border text-center justify-center text-foreground [&::-webkit-calendar-picker-indicator]:dark:invert"
               />
             </div>
@@ -162,15 +162,14 @@ export default function MealsPage() {
               variant="outline"
               size="icon"
               onClick={() => handleDateChange(1)}
+              disabled={isToday()}
               className="border-border text-foreground hover:bg-muted disabled:opacity-50"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
           {!isToday() && (
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              Você só pode adicionar refeições para hoje
-            </p>
+            <p className="text-xs text-muted-foreground text-center mt-2">Você só pode adicionar refeições para hoje</p>
           )}
         </CardContent>
       </Card>
@@ -229,24 +228,27 @@ export default function MealsPage() {
           <div className="space-y-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground capitalize">
-                  {formatDateTitle(selectedDate)}
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground capitalize">{formatDateTitle(selectedDate)}</h3>
               </div>
 
               <DailyMealCard
-                dayData={filteredDailyMeals.slice().reverse().map((day) => ({
-                  ...day,
-                  meals: Object.fromEntries(
-                    mealTypes.map((type) => {
-                      const meal = Object.values(day.meals).find((m) => m && m.meal_type.toString() === type.id);
-                      return [type.id, meal || null];
-                    })
-                  ),
-                }))[0] || {
-                  date: selectedDate,
-                  meals: Object.fromEntries(mealTypes.map((type) => [type.id, null])),
-                }}
+                dayData={
+                  filteredDailyMeals
+                    .slice()
+                    .reverse()
+                    .map((day) => ({
+                      ...day,
+                      meals: Object.fromEntries(
+                        mealTypes.map((type) => {
+                          const meal = Object.values(day.meals).find((m) => m && m.meal_type.toString() === type.id);
+                          return [type.id, meal || null];
+                        }),
+                      ),
+                    }))[0] || {
+                    date: selectedDate,
+                    meals: Object.fromEntries(mealTypes.map((type) => [type.id, null])),
+                  }
+                }
                 mealTypes={mealTypes}
                 onAddMeal={() => setShowLogModal(true)}
                 onUpdateMeal={async (id, comments) => {

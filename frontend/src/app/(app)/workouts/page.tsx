@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dumbbell, Plus, Calendar, Target } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dumbbell, Plus, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useWorkoutsQuery, useCreateWorkout, useUpdateWorkout, useDeleteWorkout } from "@/hooks/useWorkoutsQuery";
 import { WorkoutCheckinModal } from "@/components/workouts/workout-checkin-modal";
-import { WorkoutCard } from "@/components/workouts/workout-card";
-import { WorkoutStats } from "@/components/workouts/workout-stats";
+import { DailyWorkoutCard } from "@/components/workouts/daily-workout-card";
 import { useUserAuth } from "@/context/userAuthContext";
+
+const MAX_DAILY_WORKOUTS = 4;
 
 export default function WorkoutsPage() {
   const { user } = useUserAuth();
@@ -22,23 +23,13 @@ export default function WorkoutsPage() {
   const deleteWorkout = useDeleteWorkout(userId!);
 
   const [showCheckinModal, setShowCheckinModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today.toISOString().split("T")[0];
+  });
 
   const workouts = data?.workouts || [];
-  const stats = data?.stats || null;
-  const streak = data?.streak || null;
-
-  const handleCreateWorkout = async (workoutData: any) => {
-    await createWorkout.mutateAsync(workoutData);
-    setShowCheckinModal(false);
-  };
-
-  const handleUpdateWorkout = async (id: number, comments: string) => {
-    await updateWorkout.mutateAsync({ workoutId: id, comments });
-  };
-
-  const handleDeleteWorkout = async (id: number) => {
-    await deleteWorkout.mutateAsync(id);
-  };
 
   const formatDuration = (duration: string) => {
     const [hours, minutes] = duration.split(":");
@@ -59,6 +50,72 @@ export default function WorkoutsPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const formatDateTitle = (dateString: string) => {
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+
+    if (compareDate.getTime() === today.getTime()) {
+      return "Hoje";
+    } else if (compareDate.getTime() === yesterday.getTime()) {
+      return "Ontem";
+    } else {
+      return date.toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+      });
+    }
+  };
+
+  const handleDateChange = (days: number) => {
+    const [year, month, day] = selectedDate.split("-").map(Number);
+    const current = new Date(year, month - 1, day);
+    current.setDate(current.getDate() + days);
+    setSelectedDate(current.toISOString().split("T")[0]);
+  };
+
+  const isToday = () => {
+    const [year, month, day] = selectedDate.split("-").map(Number);
+    const compareDate = new Date(year, month - 1, day);
+    compareDate.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return compareDate.getTime() === today.getTime();
+  };
+
+  const filteredWorkouts = workouts
+    .filter((workout) => {
+      const workoutDate = workout.workout_date.split("T")[0];
+      return workoutDate === selectedDate;
+    })
+    .slice(0, MAX_DAILY_WORKOUTS);
+
+  const canAddWorkout = isToday() && filteredWorkouts.length < MAX_DAILY_WORKOUTS;
+
+  const handleCreateWorkout = async (workoutData: any) => {
+    await createWorkout.mutateAsync(workoutData);
+    setShowCheckinModal(false);
+  };
+
+  const handleUpdateWorkout = async (id: number, comments: string) => {
+    await updateWorkout.mutateAsync({ workoutId: id, comments });
+  };
+
+  const handleDeleteWorkout = async (id: number) => {
+    await deleteWorkout.mutateAsync(id);
   };
 
   if (isLoading) {
@@ -106,77 +163,76 @@ export default function WorkoutsPage() {
 
         <Button
           onClick={() => setShowCheckinModal(true)}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          disabled={!canAddWorkout}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
         >
           <Plus className="h-4 w-4 mr-2" />
           Novo Treino
         </Button>
       </div>
 
-      {/* Estatísticas */}
-      {stats && <WorkoutStats stats={stats} streak={streak} />}
+      {/* Calendário de Navegação */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDateChange(-1)}
+              className="border-border text-foreground hover:bg-muted"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
 
-      {/* Progresso Semanal */}
-      {stats && (
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <Target className="h-5 w-5 text-primary" />
-              Meta Semanal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Treinos realizados esta semana</span>
-                <span className="text-foreground font-medium">{stats.this_week_workouts}/5</span>
-              </div>
-              <Progress value={(stats.this_week_workouts / 5) * 100} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {stats.this_week_workouts >= 5
-                  ? "🎉 Parabéns! Meta semanal atingida!"
-                  : `Faltam ${5 - stats.this_week_workouts} treinos para completar sua meta`}
-              </p>
+            <div className="flex-1 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                max={new Date().toISOString().split("T")[0]}
+                className="flex-1 bg-background border-border text-center justify-center text-foreground [&::-webkit-calendar-picker-indicator]:dark:invert"
+              />
             </div>
-          </CardContent>
-        </Card>
-      )}
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDateChange(1)}
+              disabled={isToday()}
+              className="border-border text-foreground hover:bg-muted disabled:opacity-50"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Histórico de Treinos */}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <Calendar className="h-5 w-5 text-primary" />
-            Histórico de Treinos
+            <span className="capitalize">{formatDateTitle(selectedDate)}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {workouts.length === 0 ? (
+          {filteredWorkouts.length === 0 && !isToday() ? (
             <div className="text-center py-8">
               <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-medium text-foreground mb-2">Nenhum treino registrado</h3>
-              <p className="text-muted-foreground mb-4">Comece registrando seu primeiro treino!</p>
-              <Button
-                onClick={() => setShowCheckinModal(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Registrar Primeiro Treino
-              </Button>
+              <p className="text-muted-foreground">Nenhum treino foi registrado neste dia.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {workouts.map((workout) => (
-                <WorkoutCard
-                  key={workout.id}
-                  workout={workout}
-                  onUpdateComments={handleUpdateWorkout}
-                  onDelete={handleDeleteWorkout}
-                  formatDate={formatDate}
-                  formatDuration={formatDuration}
-                />
-              ))}
-            </div>
+            <DailyWorkoutCard
+              workouts={filteredWorkouts}
+              onAddWorkout={() => setShowCheckinModal(true)}
+              onUpdateComments={handleUpdateWorkout}
+              onDelete={handleDeleteWorkout}
+              formatDate={formatDate}
+              formatDuration={formatDuration}
+              enabled={isToday()}
+            />
           )}
         </CardContent>
       </Card>
