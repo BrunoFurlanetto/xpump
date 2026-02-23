@@ -86,6 +86,8 @@ INSTALLED_APPS = [
     'nutrition.apps.NutritionConfig',
     'social_feed.apps.SocialFeedConfig',
     'analytics.apps.AnalyticsConfig',
+    'notifications.apps.NotificationsConfig',
+    'django_apscheduler',
 ]
 
 MIDDLEWARE = [
@@ -205,3 +207,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ---------------------------------------------------------------------------- #
+# Web Push (VAPID) - chaves definidas em local_settings.py ou env vars          #
+# ---------------------------------------------------------------------------- #
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', globals().get('VAPID_PRIVATE_KEY', ''))
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', globals().get('VAPID_PUBLIC_KEY', ''))
+VAPID_ADMIN_EMAIL = os.getenv('VAPID_ADMIN_EMAIL', globals().get('VAPID_ADMIN_EMAIL', 'admin@xpump.com'))
+
+# ---------------------------------------------------------------------------- #
+# APScheduler                                                                    #
+# ---------------------------------------------------------------------------- #
+APSCHEDULER_DATETIME_FORMAT = 'N j, Y, f:s a'
+APSCHEDULER_RUN_NOW_TIMEOUT = 25  # segundos
+
+# Horários (24h) em que o lembrete de refeição será enviado (horário de Brasília)
+MEAL_REMINDER_HOURS = [11, 17]
