@@ -67,9 +67,9 @@ const ProfileCardHeader = ({
               </Avatar>
 
               {/* Level Badge on Avatar */}
-              <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-full p-2 shadow-lg ring-4 ring-background">
-                <Crown className="h-4 w-4 sm:h-5 sm:w-5" />
-              </div>
+              {/* <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-full p-2 shadow-lg ring-4 ring-background"> */}
+              {/*   <Crown className="h-4 w-4 sm:h-5 sm:w-5" /> */}
+              {/* </div> */}
             </div>
 
             {/* Info Principal - Now clearly below the gradient on desktop */}
@@ -77,13 +77,13 @@ const ProfileCardHeader = ({
               <div className="space-y-2">
                 <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3">
                   <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{name}</h1>
-                  <Badge
-                    variant="secondary"
-                    className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30 whitespace-nowrap"
-                  >
-                    <Crown className="h-3 w-3 mr-1" />
-                    Nível {level}
-                  </Badge>
+                  {/* <Badge */}
+                  {/*   variant="secondary" */}
+                  {/*   className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30 whitespace-nowrap" */}
+                  {/* > */}
+                  {/*   <Crown className="h-3 w-3 mr-1" /> */}
+                  {/*   Nível {level} */}
+                  {/* </Badge> */}
                 </div>
                 <p className="text-sm text-muted-foreground">{email}</p>
               </div>
@@ -99,10 +99,10 @@ const ProfileCardHeader = ({
                 </div>
 
                 {/* Level Progress Indicator */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                  <Zap className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-medium text-blue-400">Em progresso</span>
-                </div>
+                {/* <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20"> */}
+                {/*   <Zap className="h-4 w-4 text-blue-500" /> */}
+                {/*   <span className="text-sm font-medium text-blue-400">Em progresso</span> */}
+                {/* </div> */}
               </div>
             </div>
           </div>

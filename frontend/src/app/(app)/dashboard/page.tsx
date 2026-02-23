@@ -36,11 +36,8 @@ interface NavigationAction {
 }
 
 export default function DashboardPage() {
-  const { user, roles } = useUserAuth();
+  const { user, isAdmin } = useUserAuth();
   const userId = user?.id ? parseInt(user.id) : null;
-
-  // Verifica se o usuário é administrador (Personal Trainer)
-  const isAdmin = roles.some((role) => role.toLowerCase() === "admin");
 
   // Se for admin, mostra o dashboard administrativo
   if (isAdmin) {

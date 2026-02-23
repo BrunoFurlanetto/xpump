@@ -294,16 +294,17 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
           </div>
 
           {/* Info sobre pontos */}
-          {/* <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
-            <h4 className="text-sm font-medium text-foreground">🍎 Sistema de Pontuação</h4>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Café da Manhã: 25 pontos</li>
-              <li>• Almoço: 30 pontos</li>
-              <li>• Lanche: 20 pontos</li>
-              <li>• Jantar: 35 pontos</li>
-              <li>• Bônus por completar todas as refeições do dia!</li>
+          <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+            <h4 className="text-sm font-medium text-foreground">💡 Como funcionam os pontos?</h4>
+            <ul className="text-xs text-muted-foreground space-y-1.5">
+              <li>
+                <span className="text-foreground font-medium">1 XP</span> por refeição registrada.
+              </li>
+              <li className="pt-0.5">
+                <span className="text-foreground font-medium">Limite dirario de 5 refeições</span>
+              </li>
             </ul>
-          </div> */}
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-2 pt-4">
             <Button

@@ -24,7 +24,7 @@ export default function GroupsPage() {
     const searchLower = searchTerm.toLowerCase();
     return groups.filter(
       (group) =>
-        group.name.toLowerCase().includes(searchLower) || group.description?.toLowerCase().includes(searchLower)
+        group.name.toLowerCase().includes(searchLower) || group.description?.toLowerCase().includes(searchLower),
     );
   }, [groups, searchTerm]);
 
@@ -35,7 +35,7 @@ export default function GroupsPage() {
         {!isAdmin && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Grupos</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Rankings</h1>
               <p className="text-muted-foreground text-sm sm:text-base">
                 Conecte-se e treine com outros atletas. Compete em grupos e conquiste o topo!
               </p>
@@ -49,7 +49,7 @@ export default function GroupsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar grupos por nome ou descrição..."
+            placeholder="Buscar nome ou descrição..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
@@ -70,7 +70,7 @@ export default function GroupsPage() {
               )}
             </>
           )}
-          <GroupTips />
+          {/* <GroupTips /> */}
         </div>
       </div>
     </GroupsLoadingProvider>

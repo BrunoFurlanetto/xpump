@@ -7,17 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserAuth } from "@/context/userAuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import {
-  Home,
-  Dumbbell,
-  Users,
-  User,
-  Settings,
-  LogOut,
-  MessageSquare,
-  Utensils,
-  Bell,
-} from "lucide-react";
+import { Home, Dumbbell, User, Settings, LogOut, MessageSquare, Utensils, Bell, Trophy } from "lucide-react";
 import { logout } from "@/app/(auth)/login/actions";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -54,9 +44,9 @@ const navigationItems: NavItem[] = [
     icon: Utensils,
   },
   {
-    title: "Grupos",
+    title: "Rankings",
     href: "/groups",
-    icon: Users,
+    icon: Trophy,
   },
   // {
   //   title: "Conquistas",
@@ -105,11 +95,12 @@ export function Sidebar({ className }: SidebarProps) {
   const { actualTheme } = useTheme();
   const { unreadCount } = useNotifications();
 
-  const { user } = useUserAuth();
+  const { user, isAdmin } = useUserAuth();
   async function handleLogout() {
     await logout();
   }
 
+  // Verifica se o usuário é administrador (Personal Trainer)
   return (
     <div className={cn("pb-12 h-full", className)}>
       <div className="space-y-4 py-4 h-full flex flex-col">
@@ -132,13 +123,16 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="space-y-1">
               {navigationItems.map((item) => {
                 const isActive = pathname === item.href;
+                if (isAdmin && item.title === "Rankings") {
+                  item.title = "Empresas";
+                }
                 return (
                   <Button
                     key={item.href}
                     variant={isActive ? "secondary" : "ghost"}
                     className={cn(
                       "w-full justify-start text-sidebarlink h-10",
-                      isActive && "bg-muted font-medium text-foreground"
+                      isActive && "bg-muted font-medium text-foreground",
                     )}
                     asChild
                   >
@@ -173,7 +167,7 @@ export function Sidebar({ className }: SidebarProps) {
                     variant={isActive ? "secondary" : "ghost"}
                     className={cn(
                       "w-full justify-start text-sidebarlink h-10",
-                      isActive && "bg-muted font-medium text-foreground"
+                      isActive && "bg-muted font-medium text-foreground",
                     )}
                     asChild
                   >

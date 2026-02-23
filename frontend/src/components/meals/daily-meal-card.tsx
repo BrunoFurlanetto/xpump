@@ -12,12 +12,15 @@ interface DailyMealCardProps {
   onAddMeal: () => void;
   onUpdateMeal: (id: number, comments: string) => Promise<void>;
   onDeleteMeal: (id: number) => Promise<void>;
+  enabled?: boolean;
 }
 
-export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onDeleteMeal }: DailyMealCardProps) {
+export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onDeleteMeal, enabled = true }: DailyMealCardProps) {
   const getMealTypeInfo = (mealTypeId: string) => {
     return mealTypes.find((type) => type.id === mealTypeId);
   };
+
+
 
   const renderMealSlot = (mealTypeId: string) => {
     const mealTypeInfo = getMealTypeInfo(mealTypeId);
@@ -45,6 +48,7 @@ export function DailyMealCard({ dayData, mealTypes, onAddMeal, onUpdateMeal, onD
           <Button
             variant="ghost"
             size="sm"
+            disabled={!enabled}
             onClick={onAddMeal}
             className="text-muted-foreground hover:text-foreground hover:bg-muted"
           >
