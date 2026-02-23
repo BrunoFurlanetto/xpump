@@ -7,20 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Utensils, Camera, Upload, X, Clock, Share2, Coffee } from "lucide-react";
-import { CreateMealData, MealType } from "@/hooks/useMealsQuery";
+import { CreateMealData, MealType, useCreateMeal, useMealsQuery } from "@/hooks/useMealsQuery";
 
 interface MealLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateMealData) => Promise<void>;
-  mealTypes: MealType[];
-  isLoading?: boolean;
+  mealType?: MealType;
 }
 
-export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading = false }: MealLogModalProps) {
+export function MealLogModal({ isOpen, onClose, mealType }: MealLogModalProps) {
+  const { mealTypes } = useMealsQuery();
+  const createMealMutation = useCreateMeal();
+  const isLoading = createMealMutation.isPending;
   // Inicializa com horário atual
   const [formData, setFormData] = useState({
-    meal_type: "",
+    meal_type: mealType?.id || "",
     meal_date: getCurrentDateTime(),
     comments: "",
   });
@@ -72,7 +73,7 @@ export function MealLogModal({ isOpen, onClose, onSubmit, mealTypes, isLoading =
         fasting: fasting,
       };
 
-      await onSubmit(submitData);
+      await createMealMutation.mutateAsync(submitData);
       handleClose();
     } catch (error) {
       console.error("Erro ao submeter refeição:", error);

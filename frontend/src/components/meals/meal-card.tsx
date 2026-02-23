@@ -25,18 +25,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee } from "lucide-react";
 import { Meal } from "@/lib/api/nutrition";
-import { MealType } from "@/hooks/useMealsQuery";
+import { MealType, useDeleteMeal, useUpdateMeal } from "@/hooks/useMealsQuery";
 import { ImageModal } from "@/components/ui/image-modal";
 import { useImageModal } from "@/hooks/useImageModal";
 
 interface MealCardProps {
   meal: Meal;
   mealType: MealType;
-  onUpdateComments: (id: number, comments: string) => Promise<void>;
-  onDelete: (id: number) => Promise<void>;
 }
 
-export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCardProps) {
+export function MealCard({ meal, mealType }: MealCardProps) {
+  const updateMealMutation = useUpdateMeal();
+  const deleteMealMutation = useDeleteMeal();
   const [isEditing, setIsEditing] = useState(false);
   const [editedComments, setEditedComments] = useState(meal.comments || "");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -47,7 +47,7 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
   const handleSaveComments = async () => {
     try {
       setIsUpdating(true);
-      await onUpdateComments(meal.id, editedComments);
+      await updateMealMutation.mutateAsync({ id: meal.id, comments: editedComments });
       setIsEditing(false);
     } catch {
       setEditedComments(meal.comments || ""); // Revert on error
@@ -64,7 +64,7 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await onDelete(meal.id);
+      await deleteMealMutation.mutateAsync(meal.id);
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -179,7 +179,7 @@ export function MealCard({ meal, mealType, onUpdateComments, onDelete }: MealCar
                   onClick={() =>
                     imageModal.openModal(
                       meal.proofs.map((p) => p.file),
-                      index
+                      index,
                     )
                   }
                 >
