@@ -14,6 +14,7 @@ from django.core.management.base import BaseCommand
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from django_apscheduler.jobstores import DjangoJobStore
 from django_apscheduler.models import DjangoJobExecution
 from django_apscheduler import util
@@ -35,21 +36,17 @@ class Command(BaseCommand):
         scheduler.add_jobstore(DjangoJobStore(), 'default')
 
         # ------------------------------------------------------------------ #
-        # Job: lembrete de refeição                                            #
-        # Horários configuráveis via settings.MEAL_REMINDER_HOURS             #
+        # Job: lembrete de refeição — roda a cada 5 minutos                   #
+        # Verifica os MealConfig e envia push para usuários sem foto no dia.  #
         # ------------------------------------------------------------------ #
-        reminder_hours = getattr(settings, 'MEAL_REMINDER_HOURS', [11, 17])
-
-        for hour in reminder_hours:
-            job_id = f'meal_reminder_{hour}h'
-            scheduler.add_job(
-                'notifications.services:send_meal_reminders',
-                trigger=CronTrigger(hour=str(hour), minute='0'),
-                id=job_id,
-                max_instances=1,
-                replace_existing=True,
-            )
-            logger.info("Job registrado: '%s' (todo dia às %dh).", job_id, hour)
+        scheduler.add_job(
+            'notifications.services:send_meal_reminders',
+            trigger=IntervalTrigger(minutes=5),
+            id='meal_reminder_check',
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info("Job registrado: 'meal_reminder_check' (a cada 5 minutos).")
 
         # ------------------------------------------------------------------ #
         # Job: limpeza semanal do histórico de execuções                      #

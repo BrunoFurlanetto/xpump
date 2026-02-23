@@ -123,47 +123,151 @@ def broadcast_to_employer(employer, notification_type: str, title: str, body: st
 
 
 # ---------------------------------------------------------------------------- #
-# Job agendado — lembrete de refeição                                            #
+# Job agendado — lembrete de refeição (executa a cada 5 minutos)                #
 # ---------------------------------------------------------------------------- #
 
 def send_meal_reminders():
     """
-    Envia lembretes para usuários que ainda não registraram refeição nas
-    últimas 4 horas. Esta função é executada pelo APScheduler (runapscheduler).
+    Executa a cada 5 minutos e verifica se há algum intervalo de MealConfig
+    atingindo um ponto de lembrete:
+
+      • Meio do intervalo  →  start + (end − start) / 2
+      • 30 minutos antes do fim →  end − 30 min
+
+    Tolerância de ±2 min 30 s (metade do intervalo de execução) para absorver
+    pequenas variações no disparo do scheduler.
+
+    Envia notificação somente para usuários que ainda NÃO registraram nenhuma
+    Meal do tipo correspondente no dia atual. Isso cobre:
+      - Registro normal (com ou sem foto)
+      - Registro de jejum (fasting=True, sem MealProof)
     """
     from django_apscheduler import util as apscheduler_util
 
     @apscheduler_util.close_old_connections
     def _inner():
-        from nutrition.models import Meal
+        from datetime import time as dtime, timedelta as td
+        from nutrition.models import MealConfig
 
-        cutoff = timezone.now() - timezone.timedelta(hours=4)
-        # Usuários que têm pelo menos um meal registrado (activos na plataforma)
-        active_user_ids = Meal.objects.values_list('user_id', flat=True).distinct()
-        # Desses, quais não registraram nenhuma refeição nas últimas 4h
-        recent_user_ids = Meal.objects.filter(
-            meal_time__gte=cutoff
-        ).values_list('user_id', flat=True).distinct()
+        TOLERANCE = td(minutes=2, seconds=30)
 
-        users_to_remind = User.objects.filter(
-            id__in=active_user_ids
-        ).exclude(
-            id__in=recent_user_ids
-        )
+        # ------------------------------------------------------------------ #
+        # Helpers de tempo                                                     #
+        # ------------------------------------------------------------------ #
 
-        count = 0
-        for user in users_to_remind:
-            try:
-                notify_user(
-                    user=user,
-                    notification_type='meal_reminder',
-                    title='Hora de registrar sua refeição! 🍽️',
-                    body='Não se esqueça de registrar sua refeição para manter sua sequência.',
-                )
-                count += 1
-            except Exception as exc:  # noqa: BLE001
-                logger.error('Erro ao enviar lembrete para user id=%s: %s', user.pk, exc)
+        def to_td(t: dtime) -> td:
+            """Converte time → timedelta (segundos desde meia-noite)."""
+            return td(hours=t.hour, minutes=t.minute, seconds=t.second)
 
-        logger.info('Lembretes de refeição enviados para %d usuários.', count)
+        def to_time(delta: td) -> dtime:
+            """Converte timedelta (segundos desde meia-noite) → time, com wrap em 24h."""
+            total = int(delta.total_seconds()) % 86400
+            h, rem = divmod(total, 3600)
+            m, s = divmod(rem, 60)
+            return dtime(h, m, s)
+
+        def is_near(target: dtime, current: dtime, tolerance: td) -> bool:
+            """True se |current - target| ≤ tolerance, tratando wrap em meia-noite."""
+            diff = abs(to_td(current) - to_td(target))
+            if diff > td(hours=12):        # wrap (ex: 23:58 vs 00:02)
+                diff = td(hours=24) - diff
+            return diff <= tolerance
+
+        # ------------------------------------------------------------------ #
+        # Horário local e configs                                              #
+        # ------------------------------------------------------------------ #
+
+        now_local = timezone.localtime(timezone.now())
+        today = now_local.date()
+        current_time = now_local.time()
+
+        configs = MealConfig.objects.all()
+        triggered: list[tuple] = []   # [(config, trigger_label), ...]
+
+        for config in configs:
+            start_td = to_td(config.interval_start)
+            end_td = to_td(config.interval_end)
+
+            # Trata intervalos que cruzam meia-noite (ex: jantar 23h–00h30)
+            if end_td <= start_td:
+                end_td += td(hours=24)
+
+            # meio do intervalo: start + (start + end) / 2
+            half_duration = (start_td + end_td) / 2
+            midpoint = to_time(start_td + half_duration)
+            thirty_before_end = to_time(end_td - td(minutes=30))
+
+            if is_near(midpoint, current_time, TOLERANCE):
+                triggered.append((config, 'meio do intervalo'))
+            elif is_near(thirty_before_end, current_time, TOLERANCE):
+                triggered.append((config, '30 min antes do fim'))
+
+        if not triggered:
+            return
+
+        # ------------------------------------------------------------------ #
+        # Para cada config disparada, notifica usuários sem foto              #
+        # ------------------------------------------------------------------ #
+
+        for config, trigger_label in triggered:
+            logger.info(
+                'Lembrete disparado para "%s" (%s) às %s.',
+                config.meal_name, trigger_label, current_time.strftime('%H:%M'),
+            )
+
+            # IDs de usuários que JÁ registraram qualquer Meal desse tipo hoje
+            # (cobre registro normal com foto, jejum sem foto ou registro sem prova)
+            users_already_registered_ids = set(
+                User.objects.filter(
+                    meals__meal_type=config,
+                    meals__meal_time__date=today,
+                ).distinct().values_list('pk', flat=True)
+            )
+
+            # Usuários ativos (com perfil) que ainda não registraram nada
+            users_to_remind = (
+                User.objects
+                .filter(profile__isnull=False)
+                .exclude(pk__in=users_already_registered_ids)
+                .select_related('profile')
+            )
+
+            count = 0
+            for user in users_to_remind:
+                try:
+                    notify_user(
+                        user=user,
+                        notification_type='meal_reminder',
+                        title=f'Hora do(a) {config.get_meal_name_display()}! 🍽️',
+                        body=(
+                            f'Faltam 30 minutos para encerrar o horário de '
+                            f'{config.get_meal_name_display()} '
+                            f'({config.interval_start.strftime("%H:%M")}–'
+                            f'{config.interval_end.strftime("%H:%M")}). '
+                            f'Não esqueça de registrar sua refeição!'
+                            if trigger_label == '30 min antes do fim'
+                            else
+                            f'Está na hora do(a) {config.get_meal_name_display()}! '
+                            f'Registre sua refeição '
+                            f'({config.interval_start.strftime("%H:%M")}–'
+                            f'{config.interval_end.strftime("%H:%M")}).'
+                        ),
+                        data={
+                            'meal_config_id': config.pk,
+                            'meal_name': config.meal_name,
+                            'trigger': trigger_label,
+                        },
+                    )
+                    count += 1
+                except Exception as exc:  # noqa: BLE001
+                    logger.error(
+                        'Erro ao enviar lembrete de "%s" para user id=%s: %s',
+                        config.meal_name, user.pk, exc,
+                    )
+
+            logger.info(
+                'Lembretes de "%s" (%s) enviados para %d usuários.',
+                config.meal_name, trigger_label, count,
+            )
 
     _inner()

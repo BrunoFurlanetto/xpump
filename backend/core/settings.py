@@ -220,6 +220,3 @@ VAPID_ADMIN_EMAIL = os.getenv('VAPID_ADMIN_EMAIL', globals().get('VAPID_ADMIN_EM
 # ---------------------------------------------------------------------------- #
 APSCHEDULER_DATETIME_FORMAT = 'N j, Y, f:s a'
 APSCHEDULER_RUN_NOW_TIMEOUT = 25  # segundos
-
-# Horários (24h) em que o lembrete de refeição será enviado (horário de Brasília)
-MEAL_REMINDER_HOURS = [11, 17]
