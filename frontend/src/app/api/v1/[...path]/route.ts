@@ -110,7 +110,7 @@ async function proxyRequest(request: NextRequest, params: Promise<{ path: string
         headers,
         body,
       },
-      session
+      session,
     );
 
     if (!response.ok) {
@@ -133,7 +133,7 @@ async function proxyRequest(request: NextRequest, params: Promise<{ path: string
     console.error("❌ Proxy error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
