@@ -1,6 +1,6 @@
 "use client";
 
-import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications, type NotificationType } from "@/hooks/useNotifications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,21 +10,19 @@ import {
   Check,
   CheckCheck,
   Trash2,
-  Settings,
-  Trophy,
-  Flame,
-  Clock,
   MessageSquare,
-  Target,
+  Clock,
+  Megaphone,
+  Utensils,
+  Heart,
 } from "lucide-react";
 import Link from "next/link";
+import { PushNotificationManager } from "@/components/pwa/push-notification";
 
 export default function NotificationsPage() {
   const {
     notifications,
     unreadCount,
-    achievements,
-    settings,
     isLoading,
     markAsRead,
     markAllAsRead,
@@ -48,41 +46,44 @@ export default function NotificationsPage() {
     return date.toLocaleDateString("pt-BR");
   };
 
-  const getNotificationIcon = (type: string) => {
-    const iconMap = {
-      achievement: Trophy,
-      streak: Flame,
-      reminder: Clock,
-      social: MessageSquare,
-      challenge: Target,
+  const getNotificationIcon = (type: NotificationType) => {
+    const iconMap: Record<NotificationType, React.ElementType> = {
+      social_like: Heart,
+      social_comment: MessageSquare,
+      nutrition_plan_updated: Utensils,
+      meal_reminder: Clock,
+      broadcast: Megaphone,
     };
-
-    const IconComponent = iconMap[type as keyof typeof iconMap] || Bell;
+    const IconComponent = iconMap[type] ?? Bell;
     return <IconComponent className="h-5 w-5" />;
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-500/10 border-red-500/20 text-red-400";
-      case "medium":
-        return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
-      case "low":
+  const getTypeLabel = (type: NotificationType) => {
+    const labels: Record<NotificationType, string> = {
+      social_like: "Curtida",
+      social_comment: "Comentário",
+      nutrition_plan_updated: "Nutrição",
+      meal_reminder: "Lembrete",
+      broadcast: "Aviso",
+    };
+    return labels[type] ?? type;
+  };
+
+  const getTypeColor = (type: NotificationType) => {
+    switch (type) {
+      case "social_like":
+        return "bg-pink-500/10 border-pink-500/20 text-pink-400";
+      case "social_comment":
         return "bg-blue-500/10 border-blue-500/20 text-blue-400";
+      case "nutrition_plan_updated":
+        return "bg-green-500/10 border-green-500/20 text-green-400";
+      case "meal_reminder":
+        return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
+      case "broadcast":
+        return "bg-purple-500/10 border-purple-500/20 text-purple-400";
       default:
         return "bg-muted border-muted-foreground/20 text-muted-foreground";
     }
-  };
-
-  const getTypeLabel = (type: string) => {
-    const labels = {
-      achievement: "Conquista",
-      streak: "Sequência",
-      reminder: "Lembrete",
-      social: "Social",
-      challenge: "Desafio",
-    };
-    return labels[type as keyof typeof labels] || type;
   };
 
   if (isLoading) {
@@ -91,7 +92,6 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground tracking-tight">Notificações</h1>
         </div>
-
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="bg-card border-border animate-pulse">
@@ -118,7 +118,7 @@ export default function NotificationsPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Notificações</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Acompanhe suas conquistas, lembretes e atualizações
+            Acompanhe seus lembretes e atualizações
           </p>
         </div>
       </div>
@@ -134,10 +134,11 @@ export default function NotificationsPage() {
             Marcar todas como lidas
           </Button>
         )}
+        <PushNotificationManager />
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
@@ -158,20 +159,6 @@ export default function NotificationsPage() {
                 <p className="text-xl sm:text-2xl font-bold text-blue-400">{notifications.length}</p>
               </div>
               <BellOff className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Conquistas</p>
-                <p className="text-xl sm:text-2xl font-bold text-yellow-400">
-                  {achievements.filter((a) => a.isUnlocked).length}
-                </p>
-              </div>
-              <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
@@ -210,7 +197,7 @@ export default function NotificationsPage() {
                 >
                   <div className="flex items-start gap-3">
                     {/* Icon */}
-                    <div className={`p-2 rounded-full ${getPriorityColor(notification.priority)}`}>
+                    <div className={`p-2 rounded-full ${getTypeColor(notification.type)}`}>
                       {getNotificationIcon(notification.type)}
                     </div>
 
@@ -232,12 +219,9 @@ export default function NotificationsPage() {
                             {!notification.isRead && <div className="h-2 w-2 bg-primary rounded-full" />}
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>{formatTimeAgo(notification.createdAt)}</span>
-                            {notification.metadata?.points_earned && (
-                              <span className="text-yellow-400">+{notification.metadata.points_earned} pontos</span>
-                            )}
-                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatTimeAgo(notification.createdAt)}
+                          </span>
                         </div>
 
                         {/* Actions */}
@@ -262,20 +246,6 @@ export default function NotificationsPage() {
                           </Button>
                         </div>
                       </div>
-
-                      {/* Action Button */}
-                      {notification.actionUrl && (
-                        <div className="mt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            asChild
-                            className="border-primary/20 text-primary hover:bg-primary/10"
-                          >
-                            <Link href={notification.actionUrl}>Ver detalhes</Link>
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
