@@ -1,51 +1,34 @@
 'use server'
-import webpush from 'web-push'
-const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-const privateKey = process.env.VAPID_PRIVATE_KEY
 
-if (!publicKey || !privateKey) {
-  throw new Error('VAPID keys are not set in environment variables')
-}
+// O envio de push notifications é gerenciado pelo backend Django (pywebpush).
+// O registro e remoção de subscriptions é feito diretamente pelo componente
+// PushNotificationManager via fetch para /api/v1/notifications/subscribe/.
+//
+// Este arquivo é mantido por compatibilidade caso seja necessário disparar
+// notificações a partir de Server Actions no futuro.
 
-webpush.setVapidDetails(
-  'mailto:matheus.henrique4245@gmail.com',
-  publicKey,
-  privateKey
-)
+export async function sendBroadcastNotification(title: string, body: string, data: Record<string, unknown> = {}) {
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  const token = cookieStore.get('access_token')?.value
 
-let subscription: webpush.PushSubscription | null = null
-
-export async function subscribeUser(sub: webpush.PushSubscription) {
-  subscription = sub
-  // In a production environment, you would want to store the subscription in a database
-  // For example: await db.subscriptions.create({ data: sub })
-  return { success: true }
-}
-
-export async function unsubscribeUser() {
-  subscription = null
-  // In a production environment, you would want to remove the subscription from the database
-  // For example: await db.subscriptions.delete({ where: { ... } })
-  return { success: true }
-}
-
-export async function sendNotification(message: string) {
-  if (!subscription) {
-    throw new Error('No subscription available')
+  if (!token) {
+    return { success: false, error: 'Não autenticado' }
   }
 
-  try {
-    await webpush.sendNotification(
-      subscription,
-      JSON.stringify({
-        title: 'Test Notification',
-        body: message,
-        icon: '/icon.png',
-      })
-    )
-    return { success: true }
-  } catch (error) {
-    console.error('Error sending push notification:', error)
-    return { success: false, error: 'Failed to send notification' }
+  const res = await fetch(`${process.env.BACKEND_URL}/notifications/broadcast/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ title, body, data }),
+  })
+
+  if (!res.ok) {
+    return { success: false, error: `HTTP ${res.status}` }
   }
+
+  const result = await res.json()
+  return { success: true, sent_to: result.sent_to }
 }

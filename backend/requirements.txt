@@ -34,3 +34,7 @@ tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 whitenoise==6.11.0
+pywebpush==2.0.0
+django-apscheduler==0.7.0
+apscheduler==3.10.4
+cryptography>=3.4.8

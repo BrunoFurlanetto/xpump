@@ -42,5 +42,6 @@ urlpatterns = [
     path('api/v1/clients/', include('clients.urls')),
     path('api/v1/social-feed/', include('social_feed.urls')),
     path('api/v1/analytics/', include('analytics.urls')),
+    path('api/v1/notifications/', include('notifications.urls')),
     path('admin/', admin.site.urls),
 ]
