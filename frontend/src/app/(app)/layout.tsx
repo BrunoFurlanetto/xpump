@@ -1,6 +1,7 @@
 import { UserAuthProvider } from "@/context/userAuthContext";
 import { NavigationProvider } from "@/context/navigationContext";
 import { AppNavigation } from "./_components/app-navigation";
+import { PushNotificationPrompt } from "@/components/pwa/push-notification-prompt";
 
 export default function AppLayout({
   children,
@@ -12,6 +13,7 @@ export default function AppLayout({
       <UserAuthProvider>
         <NavigationProvider>
           <AppNavigation>{children}</AppNavigation>
+          <PushNotificationPrompt />
         </NavigationProvider>
       </UserAuthProvider>
     </div>
