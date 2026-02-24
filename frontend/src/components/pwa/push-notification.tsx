@@ -21,7 +21,7 @@ async function getVapidPublicKey(): Promise<string> {
   if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
     return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   }
-  const res = await fetch("/api/v1/notifications/vapid-public-key/");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/vapid-public-key/`);
   const data = await res.json();
   return data.vapid_public_key;
 }
@@ -48,7 +48,7 @@ export function PushNotificationManager() {
       if (!browserSub) return;
 
       // Verificar se o backend conhece esta subscription
-      const res = await fetch("/api/v1/notifications/subscribe/");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/subscribe/`);
       if (!res.ok) return;
       const list = await res.json();
       const existing = (list.results ?? list).find(
@@ -73,14 +73,18 @@ export function PushNotificationManager() {
         return;
       }
 
+      // antes de chamar subscribe, logue para depurar
       const vapidKey = await getVapidPublicKey();
+      console.log('VAPID PUBLIC KEY:', vapidKey);
+      const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+      // ...existing code...
       const browserSub = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-      });
-
+          userVisibleOnly: true,
+          applicationServerKey,
+      })
+      
       const subJson = browserSub.toJSON();
-      const res = await fetch("/api/v1/notifications/subscribe/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/subscribe/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -111,7 +115,7 @@ export function PushNotificationManager() {
       await browserSub?.unsubscribe();
 
       if (subscriptionId) {
-        await fetch(`/api/v1/notifications/subscribe/${subscriptionId}/`, {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/subscribe/${subscriptionId}/`, {
           method: "DELETE",
         });
       }
@@ -150,5 +154,5 @@ export function PushNotificationManager() {
         </>
       )}
     </Button>
-  );
+  );  
 }
