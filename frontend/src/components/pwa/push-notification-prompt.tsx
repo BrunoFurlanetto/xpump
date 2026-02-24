@@ -25,7 +25,7 @@ async function getVapidPublicKey(): Promise<string> {
     return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   }
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/vapid-public-key/`
+    `/api/v1/notifications/vapid-public-key/`
   );
   const data = await res.json();
   return data.vapid_public_key;
@@ -87,7 +87,7 @@ export function PushNotificationPrompt() {
 
       const subJson = browserSub.toJSON();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/notifications/subscribe/`,
+        `/api/v1/notifications/subscribe/`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
