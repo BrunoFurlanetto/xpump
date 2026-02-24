@@ -49,7 +49,7 @@ const menuItems: NavItem[] = [
   //   icon: Trophy,
   //   description: "Suas conquistas e progresso",
   // },
-  
+
   // {
   //   title: "Estatísticas",
   //   href: "/stats",

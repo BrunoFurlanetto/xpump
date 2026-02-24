@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useUserAuth } from "@/context/userAuthContext";
-import { NutritionAPI, Meal, MealConfig, MealStats, DailyMeals, CreateMealData } from "@/lib/api/nutrition";
+import { NutritionAPI, MealStats, DailyMeals, CreateMealData } from "@/lib/api/nutrition";
 import { profilesKeys } from "./useProfilesQuery";
 
 export interface MealType {

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Flame, Settings, User, Crown, Zap } from "lucide-react";
+import { Flame, Settings, User, Crown, Zap, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EditProfileModal } from "@/components/profile/edit-profile-modal";
+import { logout } from "@/app/(auth)/login/actions";
 
 const ProfileCardHeader = ({
   name,
@@ -31,6 +32,9 @@ const ProfileCardHeader = ({
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  const handleLogout = async () => {
+    await logout();
+  };
   return (
     <>
       <Card className="border-border overflow-hidden">
@@ -109,17 +113,26 @@ const ProfileCardHeader = ({
 
           {/* Mobile Action Button */}
           {showEditButton && (
-            <div className="sm:hidden flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 w-full max-w-xs"
-                onClick={() => setIsEditModalOpen(true)}
-              >
-                <Settings className="h-4 w-4" />
-                Editar Perfil
-              </Button>
-            </div>
+            <>
+              <div className="sm:hidden flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 w-full max-w-xs"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                  Editar Perfil
+                </Button>
+              </div>
+
+              <div className="sm:hidden flex justify-center">
+                <Button variant="outline" size="sm" className="gap-2 w-full max-w-xs" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  Sair da conta
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

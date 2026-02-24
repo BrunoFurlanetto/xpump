@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useCreateWorkout } from "@/hooks/useWorkoutsQuery";
 import { CreateWorkoutData } from "@/lib/api/workouts";
-import { CreateMealData } from "@/lib/api/nutrition";
-import { useMealsQuery, useCreateMeal } from "@/hooks/useMealsQuery";
 import { useUserAuth } from "@/context/userAuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, Dumbbell, Utensils, Users, User } from "lucide-react";
@@ -46,9 +44,6 @@ export default function DashboardPage() {
 
   // Dashboard normal do cliente
   const createWorkoutMutation = useCreateWorkout(userId!);
-  const createMealMutation = useCreateMeal();
-  const { mealTypes } = useMealsQuery(userId!);
-
   // Estados para controlar os modais
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
@@ -106,11 +101,6 @@ export default function DashboardPage() {
   const handleWorkoutSubmit = async (data: CreateWorkoutData) => {
     await createWorkoutMutation.mutateAsync(data);
     setIsWorkoutModalOpen(false);
-  };
-
-  const handleMealSubmit = async (data: CreateMealData) => {
-    await createMealMutation.mutateAsync(data);
-    setIsMealModalOpen(false);
   };
 
   return (
@@ -230,12 +220,7 @@ export default function DashboardPage() {
         onSubmit={handleWorkoutSubmit}
       />
 
-      <MealLogModal
-        isOpen={isMealModalOpen}
-        onClose={() => setIsMealModalOpen(false)}
-        onSubmit={handleMealSubmit}
-        mealTypes={mealTypes}
-      />
+      <MealLogModal isOpen={isMealModalOpen} onClose={() => setIsMealModalOpen(false)} />
     </div>
   );
 }

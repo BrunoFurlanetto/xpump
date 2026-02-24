@@ -5,24 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Plus, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { useMealsQuery, useCreateMeal, useUpdateMeal, useDeleteMeal } from "@/hooks/useMealsQuery";
-import { MealLogModal } from "@/components/meals/meal-log-modal";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useMealsQuery } from "@/hooks/useMealsQuery";
 import { DailyMealCard } from "@/components/meals/daily-meal-card";
+import { ButtonCreateMeal } from "@/components/meals/button-create-meal";
 
 export default function MealsPage() {
   const { dailyMeals, mealTypes, isLoading } = useMealsQuery();
-  const createMealMutation = useCreateMeal();
-  const updateMealMutation = useUpdateMeal();
-  const deleteMealMutation = useDeleteMeal();
 
-  const [showLogModal, setShowLogModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return today.toISOString().split("T")[0];
   });
-  const [visibleDays, setVisibleDays] = useState(7);
+  const visibleDays = 7;
 
   const formatDateTitle = (dateString: string) => {
     // Parse the date string as local date to avoid timezone issues
@@ -125,13 +121,7 @@ export default function MealsPage() {
           <p className="text-muted-foreground">Registre suas refeições e mantenha uma alimentação equilibrada</p>
         </div>
 
-        <Button
-          onClick={() => setShowLogModal(true)}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Refeição
-        </Button>
+        <ButtonCreateMeal />
       </div>
 
       {/* Calendário de Navegação */}
@@ -174,48 +164,6 @@ export default function MealsPage() {
         </CardContent>
       </Card>
 
-      {/* Estatísticas */}
-      {/* {stats && <MealStats stats={stats} />} */}
-
-      {/* Progresso Diário */}
-      {/* {stats && ( */}
-      {/*   <Card className="bg-card border-border"> */}
-      {/*     <CardHeader> */}
-      {/*       <CardTitle className="flex items-center gap-2 text-foreground"> */}
-      {/*         <Target className="h-5 w-5 text-primary" /> */}
-      {/*         Meta Diária */}
-      {/*       </CardTitle> */}
-      {/*     </CardHeader> */}
-      {/*     <CardContent> */}
-      {/*       <div className="space-y-3"> */}
-      {/*         <div className="flex justify-between text-sm"> */}
-      {/*           <span className="text-muted-foreground">Refeições registradas {isToday() ? 'hoje' : 'no dia'}</span> */}
-      {/*           <span className="text-foreground font-medium"> */}
-      {/*             {filteredDailyMeals[filteredDailyMeals.length - 1]?.meals ? Object.values(filteredDailyMeals[filteredDailyMeals.length - 1].meals).filter((m) => m !== null).length : 0}/ */}
-      {/*             {mealTypes.length} */}
-      {/*           </span> */}
-      {/*         </div> */}
-      {/*         <Progress value={filteredDailyMeals[filteredDailyMeals.length - 1]?.completion_percentage || 0} className="h-2" /> */}
-      {/*         <div className="flex items-center justify-between text-xs"> */}
-      {/*           <span className="text-muted-foreground"> */}
-      {/*             {filteredDailyMeals[filteredDailyMeals.length - 1]?.completion_percentage === 100 */}
-      {/*               ? "🎉 Parabéns! Todas as refeições do dia registradas!" */}
-      {/*               : `${ */}
-      {/*                   mealTypes.length - */}
-      {/*                   (filteredDailyMeals[filteredDailyMeals.length - 1]?.meals ? Object.values(filteredDailyMeals[filteredDailyMeals.length - 1].meals).filter((m) => m !== null).length : 0) */}
-      {/*                 } refeições restantes`} */}
-      {/*           </span> */}
-      {/*         </div> */}
-      {/*         {filteredDailyMeals[filteredDailyMeals.length - 1]?.total_points && ( */}
-      {/*           <Badge variant="secondary" className="text-xs"> */}
-      {/*             {filteredDailyMeals[filteredDailyMeals.length - 1].total_points} pontos {isToday() ? 'hoje' : 'no dia'} */}
-      {/*           </Badge> */}
-      {/*         )} */}
-      {/*       </div> */}
-      {/*     </CardContent> */}
-      {/*   </Card> */}
-      {/* )} */}
-
       {/* Refeições por Dia */}
       <Card className="bg-card border-border">
         <CardHeader>
@@ -249,32 +197,12 @@ export default function MealsPage() {
                     meals: Object.fromEntries(mealTypes.map((type) => [type.id, null])),
                   }
                 }
-                mealTypes={mealTypes}
-                onAddMeal={() => setShowLogModal(true)}
-                onUpdateMeal={async (id, comments) => {
-                  await updateMealMutation.mutateAsync({ id, comments });
-                }}
-                onDeleteMeal={async (id) => {
-                  await deleteMealMutation.mutateAsync(id);
-                }}
                 enabled={isToday()}
               />
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Modal de Registro */}
-      <MealLogModal
-        isOpen={showLogModal}
-        onClose={() => setShowLogModal(false)}
-        onSubmit={async (data) => {
-          await createMealMutation.mutateAsync(data);
-          setShowLogModal(false);
-        }}
-        mealTypes={mealTypes}
-        isLoading={createMealMutation.isPending}
-      />
     </div>
   );
 }
