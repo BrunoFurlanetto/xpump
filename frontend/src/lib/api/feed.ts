@@ -119,6 +119,14 @@ export interface CreatePostData {
   allow_comments?: boolean;
 }
 
+export interface UpdatePostData {
+  content_text?: string;
+  visibility?: "global" | "group" | "private";
+  allow_comments?: boolean;
+  files?: File[];
+  remove_files?: number[];
+}
+
 export interface CreateCommentData {
   post: number;
   text: string;
@@ -148,7 +156,7 @@ export class FeedAPI {
     page: number = 1,
     visibility?: "global" | "group" | "private",
     contentType?: "workout" | "meal" | "social" | "achievement",
-    userId?: number
+    userId?: number,
   ): Promise<PaginatedPosts> {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -213,6 +221,51 @@ export class FeedAPI {
   }
 
   /**
+   * Update a post (partial update)
+   */
+  static async updatePost(postId: number, data: UpdatePostData): Promise<Post> {
+    const hasFiles = (data.files && data.files.length > 0) || (data.remove_files && data.remove_files.length > 0);
+
+    if (hasFiles) {
+      const formData = new FormData();
+      if (data.content_text !== undefined) formData.append("content_text", data.content_text);
+      if (data.visibility) formData.append("visibility", data.visibility);
+      if (data.allow_comments !== undefined) formData.append("allow_comments", data.allow_comments.toString());
+      data.files?.forEach((file) => formData.append("files", file));
+      data.remove_files?.forEach((id) => formData.append("remove_files", id.toString()));
+
+      const response = await fetch(`/api/v1/social-feed/posts/${postId}/`, {
+        method: "PATCH",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Erro ao atualizar post");
+      }
+
+      return response.json();
+    }
+
+    const response = await fetch(`/api/v1/social-feed/posts/${postId}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content_text: data.content_text,
+        visibility: data.visibility,
+        allow_comments: data.allow_comments,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || "Erro ao atualizar post");
+    }
+
+    return response.json();
+  }
+
+  /**
    * Delete a post
    */
   static async deletePost(postId: number): Promise<void> {
@@ -245,7 +298,7 @@ export class FeedAPI {
    */
   static async getPostComments(
     postId: number,
-    page: number = 1
+    page: number = 1,
   ): Promise<{
     count: number;
     next: string | null;
