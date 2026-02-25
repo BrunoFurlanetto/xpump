@@ -18,34 +18,6 @@ export default function MealsPage() {
     today.setHours(0, 0, 0, 0);
     return today.toISOString().split("T")[0];
   });
-  const visibleDays = 7;
-
-  const formatDateTitle = (dateString: string) => {
-    // Parse the date string as local date to avoid timezone issues
-    const [year, month, day] = dateString.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
-
-    if (compareDate.getTime() === today.getTime()) {
-      return "Hoje";
-    } else if (compareDate.getTime() === yesterday.getTime()) {
-      return "Ontem";
-    } else {
-      return date.toLocaleDateString("pt-BR", {
-        weekday: "long",
-        day: "2-digit",
-        month: "2-digit",
-      });
-    }
-  };
 
   const handleDateChange = (days: number) => {
     const currentDate = new Date(selectedDate);
@@ -70,12 +42,8 @@ export default function MealsPage() {
   };
 
   const filteredDailyMeals = dailyMeals.filter((day) => {
-    const dayDate = new Date(day.date);
-    const endDate = new Date(selectedDate);
-    const startDate = new Date(selectedDate);
-    startDate.setDate(startDate.getDate() - (visibleDays - 1));
-
-    return dayDate >= startDate && dayDate <= endDate;
+    const mealDate = day.date.split("T")[0];
+    return mealDate === selectedDate;
   });
 
   if (isLoading) {
@@ -206,3 +174,30 @@ export default function MealsPage() {
     </div>
   );
 }
+
+const formatDateTitle = (dateString: string) => {
+  // Parse the date string as local date to avoid timezone issues
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  const compareDate = new Date(date);
+  compareDate.setHours(0, 0, 0, 0);
+
+  if (compareDate.getTime() === today.getTime()) {
+    return "Hoje";
+  } else if (compareDate.getTime() === yesterday.getTime()) {
+    return "Ontem";
+  } else {
+    return date.toLocaleDateString("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
+    });
+  }
+};
