@@ -33,13 +33,25 @@ def delete_old_job_executions(max_age: int = 604_800):
 class Command(BaseCommand):
     help = 'Inicia o APScheduler para tarefas agendadas de notificações.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--run-now',
+            action='store_true',
+            help='Executa send_meal_reminders imediatamente ao iniciar (útil para testes).',
+        )
+
     def handle(self, *args, **options):
+        from django_apscheduler.models import DjangoJob
+
         scheduler = BlockingScheduler(timezone=settings.TIME_ZONE)
         scheduler.add_jobstore(DjangoJobStore(), 'default')
 
+        # Limpa entradas antigas do job no banco para evitar conflito de
+        # referência entre versões anteriores (ex: job armazenado como string)
+        DjangoJob.objects.filter(id='meal_reminder_check').delete()
+
         # ------------------------------------------------------------------ #
         # Job: lembrete de refeição — roda a cada 10 minutos                  #
-        # Verifica os MealConfig e envia push para usuários sem registro.     #
         # ------------------------------------------------------------------ #
         scheduler.add_job(
             send_meal_reminders,
@@ -47,8 +59,11 @@ class Command(BaseCommand):
             id='meal_reminder_check',
             max_instances=1,
             replace_existing=True,
+            coalesce=True,               # se atrasou, roda 1x apenas (não recupera)
+            misfire_grace_time=60 * 5,   # tolerância de 5 min para execuções atrasadas
         )
         logger.info("Job registrado: 'meal_reminder_check' (a cada 10 minutos).")
+        self.stdout.write(f"  → meal_reminder_check: a cada 10 minutos")
 
         # ------------------------------------------------------------------ #
         # Job: limpeza semanal do histórico de execuções                      #
@@ -61,6 +76,15 @@ class Command(BaseCommand):
             replace_existing=True,
         )
         logger.info("Job registrado: 'delete_old_job_executions' (toda segunda às 00h).")
+
+        # Executa imediatamente se --run-now foi passado (útil para testes)
+        if options.get('run_now'):
+            self.stdout.write(self.style.WARNING('--run-now: executando send_meal_reminders agora...'))
+            try:
+                send_meal_reminders()
+                self.stdout.write(self.style.SUCCESS('--run-now: concluído.'))
+            except Exception as exc:
+                self.stdout.write(self.style.ERROR(f'--run-now: erro — {exc}'))
 
         try:
             self.stdout.write(self.style.SUCCESS('Iniciando APScheduler...'))
