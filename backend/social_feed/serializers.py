@@ -68,7 +68,7 @@ class PostSerializer(serializers.ModelSerializer):
     likes = PostLikeSerializer(many=True, read_only=True)
     workout_checkin = WorkoutCheckinSerializer(read_only=True)
     meal = MealSerializer(read_only=True)
-    content_files = ContentFilePostSerializer(many=True, read_only=True)
+    content_files = ContentFilePostSerializer(many=True)
     is_liked_by_user = serializers.SerializerMethodField()
     is_superuser_post = serializers.SerializerMethodField()
 
