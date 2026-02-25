@@ -43,6 +43,25 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         from django_apscheduler.models import DjangoJob
 
+        # Para o BackgroundScheduler iniciado pelo AppConfig.ready() se estiver rodando,
+        # pois este command assume controle exclusivo do scheduler.
+        try:
+            from notifications.scheduler import scheduler as bg_scheduler
+            if bg_scheduler.running:
+                bg_scheduler.shutdown(wait=False)
+                logger.info('BackgroundScheduler parado para ceder lugar ao BlockingScheduler.')
+        except Exception:
+            pass
+
+        # Executa imediatamente se --run-now foi passado
+        if options.get('run_now'):
+            self.stdout.write(self.style.WARNING('--run-now: executando send_meal_reminders...'))
+            try:
+                send_meal_reminders()
+                self.stdout.write(self.style.SUCCESS('--run-now: concluído.'))
+            except Exception as exc:
+                self.stdout.write(self.style.ERROR(f'--run-now: erro — {exc}'))
+
         scheduler = BlockingScheduler(timezone=settings.TIME_ZONE)
         scheduler.add_jobstore(DjangoJobStore(), 'default')
 
@@ -77,17 +96,8 @@ class Command(BaseCommand):
         )
         logger.info("Job registrado: 'delete_old_job_executions' (toda segunda às 00h).")
 
-        # Executa imediatamente se --run-now foi passado (útil para testes)
-        if options.get('run_now'):
-            self.stdout.write(self.style.WARNING('--run-now: executando send_meal_reminders agora...'))
-            try:
-                send_meal_reminders()
-                self.stdout.write(self.style.SUCCESS('--run-now: concluído.'))
-            except Exception as exc:
-                self.stdout.write(self.style.ERROR(f'--run-now: erro — {exc}'))
-
         try:
-            self.stdout.write(self.style.SUCCESS('Iniciando APScheduler...'))
+            self.stdout.write(self.style.SUCCESS('Iniciando APScheduler (processo dedicado)...'))
             scheduler.start()
         except KeyboardInterrupt:
             logger.info('Encerrando APScheduler...')
