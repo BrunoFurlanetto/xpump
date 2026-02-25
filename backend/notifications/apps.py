@@ -22,7 +22,17 @@ class NotificationsConfig(AppConfig):
         if sys.argv[1:2] and sys.argv[1] in SKIP_COMMANDS:
             return
 
+        # Permite desabilitar o scheduler via variável de ambiente.
+        # Em produção/Docker, use SCHEDULER_ENABLED=false no server principal
+        # e rode um processo dedicado com `python manage.py runapscheduler`.
+        if os.environ.get('SCHEDULER_ENABLED', 'true').lower() == 'false':
+            return
+
         # O guard RUN_MAIN evita duplo start no autoreloader do runserver.
-        if os.environ.get('RUN_MAIN') != 'true':
+        # RUN_MAIN=true significa que estamos no processo filho (Django real),
+        # não no processo pai (autoreloader). Iniciamos APENAS no filho.
+        # Sem RUN_MAIN (produção/Docker sem autoreload), iniciamos normalmente.
+        run_main = os.environ.get('RUN_MAIN')
+        if run_main is None or run_main == 'true':
             from notifications.scheduler import start
             start()
