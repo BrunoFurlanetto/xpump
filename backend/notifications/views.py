@@ -71,6 +71,14 @@ class PushSubscriptionViewSet(
         tags=['Notificações'],
         summary='Lista as notificações do usuário autenticado',
     ),
+    destroy=extend_schema(
+        tags=['Notificações'],
+        summary='Deleta uma notificação',
+    ),
+    delete_all=extend_schema(
+        tags=['Notificações'],
+        summary='Deleta todas as notificações do usuário',
+    ),
     mark_read=extend_schema(
         tags=['Notificações'],
         summary='Marca uma notificação como lida',
@@ -86,6 +94,7 @@ class PushSubscriptionViewSet(
 )
 class NotificationViewSet(
     mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
     GenericViewSet,
 ):
     """
@@ -110,6 +119,11 @@ class NotificationViewSet(
             user=request.user, is_read=False
         ).update(is_read=True)
         return Response({'updated': updated})
+
+    @action(detail=False, methods=['delete'], url_path='delete-all')
+    def delete_all(self, request):
+        deleted, _ = Notification.objects.filter(user=request.user).delete()
+        return Response({'deleted': deleted}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='unread-count')
     def unread_count(self, request):
