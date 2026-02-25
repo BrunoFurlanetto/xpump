@@ -182,21 +182,14 @@ class PostCreateSerializer(serializers.ModelSerializer):
 class PostUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer para PATCH de posts.
-    - add_files: novos arquivos a incluir no post
-    - remove_file_ids: IDs de ContentFilePost a remover
+    - files: substitui TODAS as imagens existentes pelas novas enviadas.
+             Se não enviado, as imagens existentes são mantidas.
     """
-    add_files = serializers.ListField(
+    files = serializers.ListField(
         child=serializers.FileField(),
         write_only=True,
         required=False,
         allow_empty=True,
-    )
-    remove_file_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        write_only=True,
-        required=False,
-        allow_empty=True,
-        help_text='IDs de ContentFilePost a remover',
     )
     content_files = ContentFilePostSerializer(many=True, read_only=True)
 
@@ -204,29 +197,17 @@ class PostUpdateSerializer(serializers.ModelSerializer):
         model = Post
         fields = [
             'content_text', 'visibility', 'allow_comments',
-            'add_files', 'remove_file_ids', 'content_files',
+            'files', 'content_files',
         ]
 
     def validate(self, data):
         instance = self.instance
-        remove_ids = data.get('remove_file_ids', [])
 
-        if remove_ids:
-            existing_ids = set(
-                instance.content_files.filter(id__in=remove_ids).values_list('id', flat=True)
-            )
-            invalid = set(remove_ids) - existing_ids
-            if invalid:
-                raise serializers.ValidationError(
-                    {'remove_file_ids': f'IDs n\u00e3o encontrados neste post: {list(invalid)}'}
-                )
-
-        # Posts do tipo social precisam de ao menos texto ou arquivo ap\u00f3s a edi\u00e7\u00e3o
         if instance.content_type == 'social':
             new_text = data.get('content_text', instance.content_text)
-            remaining_files = instance.content_files.exclude(id__in=remove_ids).count()
-            new_files = len(data.get('add_files', []))
-            if not new_text and (remaining_files + new_files) == 0:
+            new_files = data.get('files')  # None = não enviado, [] = enviado vazio
+            remaining_files = len(new_files) if new_files is not None else instance.content_files.count()
+            if not new_text and remaining_files == 0:
                 raise serializers.ValidationError(
                     'Posts sociais precisam de texto ou ao menos uma imagem.'
                 )
@@ -234,19 +215,15 @@ class PostUpdateSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        add_files = validated_data.pop('add_files', [])
-        remove_ids = validated_data.pop('remove_file_ids', [])
+        new_files = validated_data.pop('files', None)
 
-        # Atualiza campos simples
         instance = super().update(instance, validated_data)
 
-        # Remove arquivos solicitados (verifica que pertencem ao post)
-        if remove_ids:
-            ContentFilePost.objects.filter(id__in=remove_ids, post=instance).delete()
-
-        # Adiciona novos arquivos
-        for f in add_files:
-            ContentFilePost.objects.create(post=instance, file=f)
+        # Se files foi enviado (mesmo vazio), substitui todas as imagens existentes
+        if new_files is not None:
+            instance.content_files.all().delete()
+            for f in new_files:
+                ContentFilePost.objects.create(post=instance, file=f)
 
         return instance
 
