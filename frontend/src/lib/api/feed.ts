@@ -124,7 +124,6 @@ export interface UpdatePostData {
   visibility?: "global" | "group" | "private";
   allow_comments?: boolean;
   files?: File[];
-  remove_files?: number[];
 }
 
 export interface CreateCommentData {
@@ -224,7 +223,7 @@ export class FeedAPI {
    * Update a post (partial update)
    */
   static async updatePost(postId: number, data: UpdatePostData): Promise<Post> {
-    const hasFiles = (data.files && data.files.length > 0) || (data.remove_files && data.remove_files.length > 0);
+    const hasFiles = data.files && data.files.length > 0;
 
     if (hasFiles) {
       const formData = new FormData();
@@ -232,7 +231,6 @@ export class FeedAPI {
       if (data.visibility) formData.append("visibility", data.visibility);
       if (data.allow_comments !== undefined) formData.append("allow_comments", data.allow_comments.toString());
       data.files?.forEach((file) => formData.append("files", file));
-      data.remove_files?.forEach((id) => formData.append("remove_files", id.toString()));
 
       const response = await fetch(`/api/v1/social-feed/posts/${postId}/`, {
         method: "PATCH",
