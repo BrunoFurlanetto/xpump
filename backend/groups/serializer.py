@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
-from django.db.models import Window, F, Count, OuterRef, Subquery, IntegerField
-from django.db.models.functions import Rank
+from django.db.models import FloatField, Sum, Value, Window, F, Count, OuterRef, Subquery, IntegerField
+from django.db.models.functions import Coalesce, Rank
 from rest_framework import serializers
 from urllib3 import request
 
@@ -206,19 +206,40 @@ class GroupDetailSerializer(serializers.ModelSerializer):
     def get_members(self, obj):
         """
         Retrieve and serialize the members of the group.
-        Uses GroupMemberSerializer to represent each member.
+        Uses Subquery aggregations to avoid Cartesian product when annotating
+        multiple Sum across different reverse FK relations.
         """
-        members = obj.groupmembers_set.select_related('member', 'member__profile').filter(pending=False).annotate(
-            score=F('member__profile__score'),
-            position=Window(
-                expression=Rank(),
-                order_by=F('member__profile__score').desc(),
+        workouts_subq = Subquery(
+            WorkoutCheckin.objects.filter(user=OuterRef('member'))
+            .values('user')
+            .annotate(total=Sum('base_points', output_field=FloatField()))
+            .values('total')[:1],
+            output_field=FloatField(),
+        )
+        meals_subq = Subquery(
+            Meal.objects.filter(user=OuterRef('member'))
+            .values('user')
+            .annotate(total=Sum('base_points', output_field=FloatField()))
+            .values('total')[:1],
+            output_field=FloatField(),
+        )
+
+        members = (
+            obj.groupmembers_set
+            .select_related('member', 'member__profile')
+            .filter(pending=False)
+            .annotate(
+                score=F('member__profile__score'),
+                workouts_points=Coalesce(workouts_subq, Value(0.0), output_field=FloatField()),
+                meals_points=Coalesce(meals_subq, Value(0.0), output_field=FloatField()),
+                position=Window(
+                    expression=Rank(),
+                    order_by=F('member__profile__score').desc(),
+                ),
             )
-        ).order_by('position')
-
-        self._members_cache = members
-        self._members_count_cache = len(members)
-
+            .order_by('position')
+        )        
+        
         return [{
                 "id": member.member.id,
                 "username": member.member.username,
@@ -231,8 +252,8 @@ class GroupDetailSerializer(serializers.ModelSerializer):
                 "pending": member.pending,
                 "position": int(member.position) if not member.pending else None,
                 "score": member.score if not member.pending else None,
-                "workouts": member.member.workouts.count(),
-                "meals": member.member.meals.count(),
+                "workouts": int(member.workouts_points) if not member.pending else None,
+                "meals": int(member.meals_points) if not member.pending else None,
             }
             for member in members
         ]
@@ -267,57 +288,57 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         """
         from django.db.models import Sum, Avg
 
-        if hasattr(self, '_members_cache'):
-            members = self._members_cache
-            members = list(members) if not isinstance(members, list) else members
-            total_members = getattr(self, '_members_count_cache', len(members))
+        # if hasattr(self, '_members_cache'):
+        #     members = self._members_cache
+        #     members = list(members) if not isinstance(members, list) else members
+        #     total_members = getattr(self, '_members_count_cache', len(members))
 
-            total_points = 0
-            total_workouts = 0
-            total_meals = 0
-            workout_streaks = []
-            meal_streaks = []
+        #     total_points = 0
+        #     total_workouts = 0
+        #     total_meals = 0
+        #     workout_streaks = []
+        #     meal_streaks = []
 
-            for gm in members:
-                # pontos (anotação 'score' ou fallback para profile.score)
-                score = getattr(gm, 'score', None)
-                if score is None:
-                    score = getattr(getattr(gm, 'member', None), 'profile', None)
-                    score = getattr(score, 'score', 0) if score is not None else 0
+        #     for gm in members:
+        #         # pontos (anotação 'score' ou fallback para profile.score)
+        #         score = getattr(gm, 'score', None)
+        #         if score is None:
+        #             score = getattr(getattr(gm, 'member', None), 'profile', None)
+        #             score = getattr(score, 'score', 0) if score is not None else 0
 
-                total_points += score or 0
+        #         total_points += score or 0
 
-                # contagens (usa .count() para evitar carregar objetos)
-                member_obj = getattr(gm, 'member', None)
+        #         # contagens (usa .count() para evitar carregar objetos)
+        #         member_obj = getattr(gm, 'member', None)
 
-                if member_obj is not None:
+        #         if member_obj is not None:
 
-                    try:
-                        total_workouts += member_obj.workouts.count()
-                    except Exception:
-                        pass
-                    try:
-                        total_meals += member_obj.meals.count()
-                    except Exception:
-                        pass
+        #             try:
+        #                 total_workouts += member_obj.workouts.count()
+        #             except Exception:
+        #                 pass
+        #             try:
+        #                 total_meals += member_obj.meals.count()
+        #             except Exception:
+        #                 pass
 
-                    if getattr(member_obj, 'workout_streak', None) is not None:
-                        workout_streaks.append(member_obj.workout_streak.current_streak)
-                    if getattr(member_obj, 'meal_streak', None) is not None:
-                        meal_streaks.append(member_obj.meal_streak.current_streak)
+        #             if getattr(member_obj, 'workout_streak', None) is not None:
+        #                 workout_streaks.append(member_obj.workout_streak.current_streak)
+        #             if getattr(member_obj, 'meal_streak', None) is not None:
+        #                 meal_streaks.append(member_obj.meal_streak.current_streak)
 
-            mean_workout_streak = (sum(workout_streaks) / len(workout_streaks)) if workout_streaks else None
-            mean_meal_streak = (sum(meal_streaks) / len(meal_streaks)) if meal_streaks else None
+        #     mean_workout_streak = (sum(workout_streaks) / len(workout_streaks)) if workout_streaks else None
+        #     mean_meal_streak = (sum(meal_streaks) / len(meal_streaks)) if meal_streaks else None
 
-            return {
-                "total_members": total_members,
-                "total_points": total_points,
-                "total_workouts": total_workouts,
-                "total_meals": total_meals,
-                "mean_streak": ((mean_workout_streak + mean_meal_streak) / 2) if (mean_workout_streak is not None and mean_meal_streak is not None) else None,
-                "mean_workout_streak": mean_workout_streak,
-                "mean_meal_streak": mean_meal_streak,
-            }
+        #     return {
+        #         "total_members": total_members,
+        #         "total_points": total_points,
+        #         "total_workouts": total_workouts,
+        #         "total_meals": total_meals,
+        #         "mean_streak": ((mean_workout_streak + mean_meal_streak) / 2) if (mean_workout_streak is not None and mean_meal_streak is not None) else None,
+        #         "mean_workout_streak": mean_workout_streak,
+        #         "mean_meal_streak": mean_meal_streak,
+        #     }
 
         workouts_subq = WorkoutCheckin.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values('cnt')
         meals_subq = Meal.objects.filter(user=OuterRef('member')).values('user').annotate(cnt=Count('id')).values('cnt')
