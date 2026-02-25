@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+from datetime import timedelta
 import os
 from pathlib import Path
 
@@ -172,6 +173,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build')
+
+SIMPLE_JWT = {
+    # Tempo de vida do token de refresh (padrão: 1 dia)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
