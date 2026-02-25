@@ -31,7 +31,7 @@ def on_post_like(sender, instance, created, **kwargs):
             notification_type='social_like',
             title='Alguém curtiu seu post! ❤️',
             body=f'{instance.user.get_full_name() or instance.user.username} curtiu seu post.',
-            data={'post_id': post.pk, 'liker_id': instance.user.pk},
+            data={'post_id': post.pk, 'liker_id': instance.user.pk, 'url': f'/feed/post/{post.pk}'},
         )
     except Exception as exc:  # noqa: BLE001
         logger.error('Erro ao notificar curtida (post_id=%s): %s', post.pk, exc)
@@ -58,7 +58,7 @@ def on_comment_created(sender, instance, created, **kwargs):
             notification_type='social_comment',
             title='Novo comentário no seu post! 💬',
             body=f'{instance.user.get_full_name() or instance.user.username} comentou: "{instance.text[:80]}"',
-            data={'post_id': post.pk, 'comment_id': instance.pk, 'commenter_id': instance.user.pk},
+            data={'post_id': post.pk, 'comment_id': instance.pk, 'commenter_id': instance.user.pk, 'url': f'/feed/post/{post.pk}'},
         )
     except Exception as exc:  # noqa: BLE001
         logger.error('Erro ao notificar comentário (post_id=%s): %s', post.pk, exc)
@@ -87,7 +87,7 @@ def on_nutrition_plan_saved(sender, instance, created, **kwargs):
     # try:
     #     from django.contrib.auth.models import User
     #     from .services import notify_user
-    #
+    
     #     users = User.objects.filter(profile__nutrition_plan=instance)
     #     action = 'criado' if created else 'atualizado'
     #     for user in users:
@@ -100,4 +100,3 @@ def on_nutrition_plan_saved(sender, instance, created, **kwargs):
     #         )
     # except Exception as exc:
     #     logger.error('Erro ao notificar atualização do plano id=%s: %s', instance.pk, exc)
-    pass

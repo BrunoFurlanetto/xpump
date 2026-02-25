@@ -93,11 +93,13 @@ def notify_user(user: User, notification_type: str, title: str, body: str,
         data=data or {},
     )
 
+    _data = data or {}
     payload = {
         'title': title,
         'body': body,
         'type': notification_type,
-        'data': data or {},
+        'url': _data.get('url', '/'),      # usado pelo service worker para navigate
+        'data': _data,
         'notification_id': notification.pk,
     }
 
@@ -256,6 +258,7 @@ def send_meal_reminders():
                             'meal_config_id': config.pk,
                             'meal_name': config.meal_name,
                             'trigger': trigger_label,
+                            'url': '/meals',
                         },
                     )
                     count += 1
