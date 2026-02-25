@@ -7,7 +7,7 @@ import { GroupDetailsSkeleton } from "@/app/(app)/groups/_components/group-detai
 
 export default function SingleGroupPage({ params }: { params: Promise<{ id: string }> }) {
   const [groupId, setGroupId] = useState<number | null>(null);
-  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
+  const [period, setPeriod] = useState<"week" | "month" | "all">("all");
 
   useEffect(() => {
     params.then(({ id }) => {

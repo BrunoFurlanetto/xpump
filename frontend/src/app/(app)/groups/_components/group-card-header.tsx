@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Settings, Crown, Star, Target, Utensils, Flame } from "lucide-react";
+import { Users, Settings, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,32 +129,32 @@ const GroupCardHeader = ({
                 </div>
 
                 {/* Total Workouts */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                  <Target className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-medium text-blue-400">{stats?.total_workouts} treinos</span>
-                </div>
+                {/* <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20"> */}
+                {/*   <Target className="h-4 w-4 text-blue-500" /> */}
+                {/*   <span className="text-sm font-medium text-blue-400">{stats?.total_workouts} treinos</span> */}
+                {/* </div> */}
 
                 {/* Total Meals */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20">
-                  <Utensils className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-medium text-purple-400">{stats?.total_meals} refeições</span>
-                </div>
+                {/* <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20"> */}
+                {/*   <Utensils className="h-4 w-4 text-purple-500" /> */}
+                {/*   <span className="text-sm font-medium text-purple-400">{stats?.total_meals} refeições</span> */}
+                {/* </div> */}
 
                 {/* Mean Streak */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
-                  <Flame className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm font-medium text-orange-400">
-                    {stats?.mean_streak?.toFixed(1)} dias média
-                  </span>
-                </div>
+                {/* <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20"> */}
+                {/*   <Flame className="h-4 w-4 text-orange-500" /> */}
+                {/*   <span className="text-sm font-medium text-orange-400"> */}
+                {/*     {stats?.mean_streak?.toFixed(1)} dias média */}
+                {/*   </span> */}
+                {/* </div> */}
 
                 {/* Total Points */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20">
-                  <Star className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm font-medium text-yellow-400">
-                    {stats?.total_points?.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} pts
-                  </span>
-                </div>
+                {/* <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20"> */}
+                {/*   <Star className="h-4 w-4 text-yellow-500" /> */}
+                {/*   <span className="text-sm font-medium text-yellow-400"> */}
+                {/*     {stats?.total_points?.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} pts */}
+                {/*   </span> */}
+                {/* </div> */}
               </div>
             </div>
           </div>
