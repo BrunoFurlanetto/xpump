@@ -128,13 +128,13 @@ def broadcast_to_employer(employer, notification_type: str, title: str, body: st
 
 def send_meal_reminders():
     """
-    Executa a cada 5 minutos e verifica se há algum intervalo de MealConfig
+    Executa a cada 10 minutos e verifica se há algum intervalo de MealConfig
     atingindo um ponto de lembrete:
 
       • Meio do intervalo  →  start + (end − start) / 2
       • 30 minutos antes do fim →  end − 30 min
 
-    Tolerância de ±2 min 30 s (metade do intervalo de execução) para absorver
+    Tolerância de ±5 min (metade do intervalo de execução) para absorver
     pequenas variações no disparo do scheduler.
 
     Envia notificação somente para usuários que ainda NÃO registraram nenhuma
@@ -149,7 +149,7 @@ def send_meal_reminders():
         from datetime import time as dtime, timedelta as td
         from nutrition.models import MealConfig
 
-        TOLERANCE = td(minutes=2, seconds=30)
+        TOLERANCE = td(minutes=5)  # metade do intervalo de execução (10 min)
 
         # ------------------------------------------------------------------ #
         # Helpers de tempo                                                     #
@@ -192,10 +192,20 @@ def send_meal_reminders():
             if end_td <= start_td:
                 end_td += td(hours=24)
 
-            # meio do intervalo: start + (start + end) / 2
+            # meio do intervalo: start + (end + start) / 2
             half_duration = (start_td + end_td) / 2
             midpoint = to_time(start_td + half_duration)
             thirty_before_end = to_time(end_td - td(minutes=30))
+
+            logger.debug(
+                'MealConfig "%s": start=%s end=%s midpoint=%s 30_before_end=%s agora=%s',
+                config.meal_name,
+                config.interval_start.strftime('%H:%M'),
+                config.interval_end.strftime('%H:%M'),
+                midpoint.strftime('%H:%M:%S'),
+                thirty_before_end.strftime('%H:%M:%S'),
+                current_time.strftime('%H:%M:%S'),
+            )
 
             if is_near(midpoint, current_time, TOLERANCE):
                 triggered.append((config, 'meio do intervalo'))

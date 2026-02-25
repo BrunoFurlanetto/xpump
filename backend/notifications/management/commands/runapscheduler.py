@@ -19,6 +19,8 @@ from django_apscheduler.jobstores import DjangoJobStore
 from django_apscheduler.models import DjangoJobExecution
 from django_apscheduler import util
 
+from notifications.services import send_meal_reminders
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,17 +38,17 @@ class Command(BaseCommand):
         scheduler.add_jobstore(DjangoJobStore(), 'default')
 
         # ------------------------------------------------------------------ #
-        # Job: lembrete de refeição — roda a cada 5 minutos                   #
-        # Verifica os MealConfig e envia push para usuários sem foto no dia.  #
+        # Job: lembrete de refeição — roda a cada 10 minutos                  #
+        # Verifica os MealConfig e envia push para usuários sem registro.     #
         # ------------------------------------------------------------------ #
         scheduler.add_job(
-            'notifications.services:send_meal_reminders',
-            trigger=IntervalTrigger(minutes=5),
+            send_meal_reminders,
+            trigger=IntervalTrigger(minutes=10),
             id='meal_reminder_check',
             max_instances=1,
             replace_existing=True,
         )
-        logger.info("Job registrado: 'meal_reminder_check' (a cada 5 minutos).")
+        logger.info("Job registrado: 'meal_reminder_check' (a cada 10 minutos).")
 
         # ------------------------------------------------------------------ #
         # Job: limpeza semanal do histórico de execuções                      #
