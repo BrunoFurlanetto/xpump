@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Utensils } from "lucide-react";
 import { useMealsQuery } from "@/hooks/useMealsQuery";
 import { DailyMealCard } from "@/components/meals/daily-meal-card";
 import { ButtonCreateMeal } from "@/components/meals/button-create-meal";
@@ -147,12 +147,16 @@ export default function MealsPage() {
                 <h3 className="text-lg font-semibold text-foreground capitalize">{formatDateTitle(selectedDate)}</h3>
               </div>
 
-              <DailyMealCard
-                dayData={
-                  filteredDailyMeals
-                    .slice()
-                    .reverse()
-                    .map((day) => ({
+              {filteredDailyMeals.length === 0 && !isToday() ? (
+                <div className="text-center py-8">
+                  <Utensils className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Nenhum registro</h3>
+                  <p className="text-muted-foreground">Nenhum registro neste dia.</p>
+                </div>
+              ) : (
+                <DailyMealCard
+                  dayData={
+                    filteredDailyMeals.map((day) => ({
                       ...day,
                       meals: Object.fromEntries(
                         mealTypes.map((type) => {
@@ -161,12 +165,13 @@ export default function MealsPage() {
                         }),
                       ),
                     }))[0] || {
-                    date: selectedDate,
-                    meals: Object.fromEntries(mealTypes.map((type) => [type.id, null])),
+                      date: selectedDate,
+                      meals: Object.fromEntries(mealTypes.map((type) => [type.id, null])),
+                    }
                   }
-                }
-                enabled={isToday()}
-              />
+                  enabled={isToday()}
+                />
+              )}
             </div>
           </div>
         </CardContent>

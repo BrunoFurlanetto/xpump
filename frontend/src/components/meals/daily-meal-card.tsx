@@ -26,6 +26,8 @@ function MealSlot({ mealTypeInfo, meal, enabled }: MealSlotProps) {
     return <MealCard meal={meal} mealType={mealTypeInfo} />;
   }
 
+  if (!enabled) return;
+
   return (
     <>
       <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary/50 transition-colors">

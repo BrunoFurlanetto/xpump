@@ -52,6 +52,8 @@ export function DailyWorkoutCard({
               );
             }
 
+            if (!enabled) return;
+
             return (
               <div
                 key={index}
@@ -85,18 +87,14 @@ export function DailyWorkoutCard({
           })}
         </div>
 
-        {!enabled && (
-          <p className="text-xs text-muted-foreground text-center pt-1">
-            Você só pode adicionar treinos para hoje
-          </p>
-        )}
+        {/* {!enabled && ( */}
+        {/*   <p className="text-xs text-muted-foreground text-center pt-1">Você só pode adicionar treinos para hoje</p> */}
+        {/* )} */}
 
         {enabled && !canAddMore && (
           <div className="flex items-center gap-2 justify-center pt-1">
             <Dumbbell className="h-4 w-4 text-primary" />
-            <p className="text-xs text-primary font-medium">
-              Limite de {MAX_DAILY_WORKOUTS} treinos por dia atingido!
-            </p>
+            <p className="text-xs text-primary font-medium">Limite de {MAX_DAILY_WORKOUTS} treinos por dia atingido!</p>
           </div>
         )}
       </CardContent>
