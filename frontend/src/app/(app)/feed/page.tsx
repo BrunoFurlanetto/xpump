@@ -190,6 +190,7 @@ export default function FeedPage() {
                 value={newPostContent}
                 onChange={(e) => setNewPostContent(e.target.value)}
                 className="min-h-[80px] resize-none"
+                disabled={createPostMutation.isPending}
               />
               {selectedImages.length > 0 && (
                 <div className="flex gap-2 flex-wrap">
@@ -211,6 +212,7 @@ export default function FeedPage() {
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
                   className="text-muted-foreground"
+                  disabled={createPostMutation.isPending}
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Foto/Vídeo
@@ -253,7 +255,8 @@ export default function FeedPage() {
             onLike={handleLikePost}
             onDelete={handleDeletePost}
             onUpdate={handleUpdatePost}
-            isUpdating={updatePostMutation.isPending}
+            isUpdating={updatePostMutation.isPending && updatePostMutation.variables?.postId === post.id}
+            isCommentSubmitting={addCommentMutation.isPending && addCommentMutation.variables?.postId === post.id}
             onToggleComments={toggleComments}
             isExpanded={expandedPosts.has(post.id)}
             commentText={commentTexts[post.id] || ""}
@@ -296,6 +299,7 @@ function PostCard({
   onDelete,
   onUpdate,
   isUpdating,
+  isCommentSubmitting,
   onToggleComments,
   isExpanded,
   commentText,
@@ -310,6 +314,7 @@ function PostCard({
   onDelete: (postId: number) => void;
   onUpdate: (postId: number, content_text: string, files?: File[]) => void;
   isUpdating: boolean;
+  isCommentSubmitting: boolean;
   onToggleComments: (postId: number) => void;
   isExpanded: boolean;
   commentText: string;
@@ -339,6 +344,11 @@ function PostCard({
 
   return (
     <Card className="bg-card border-border relative">
+      {isUpdating && (
+        <div className="absolute inset-0 bg-background/60 rounded-lg flex items-center justify-center z-10">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      )}
       <div className="absolute right-2 top-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -545,6 +555,7 @@ function PostCard({
               variant="ghost"
               size="sm"
               onClick={() => onLike(post.id)}
+              disabled={isUpdating}
               className={`gap-2 ${post.is_liked_by_user ? "text-red-500" : "text-muted-foreground"}`}
             >
               <Heart className={`h-4 w-4 ${post.is_liked_by_user ? "fill-current" : ""}`} />
@@ -555,6 +566,7 @@ function PostCard({
               variant="ghost"
               size="sm"
               onClick={() => onToggleComments(post.id)}
+              disabled={isUpdating}
               className="gap-2 text-muted-foreground"
             >
               <MessageCircle className="h-4 w-4" />
@@ -583,9 +595,14 @@ function PostCard({
                   value={commentText}
                   onChange={(e) => onCommentTextChange(e.target.value)}
                   className="min-h-[60px] text-sm"
+                  disabled={isCommentSubmitting}
                 />
-                <Button size="sm" onClick={() => onAddComment(post.id)} disabled={!commentText.trim()}>
-                  <Send className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  onClick={() => onAddComment(post.id)}
+                  disabled={!commentText.trim() || isCommentSubmitting}
+                >
+                  {isCommentSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
