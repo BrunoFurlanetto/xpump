@@ -127,7 +127,13 @@ async function proxyRequest(request: NextRequest, params: Promise<{ path: string
       return NextResponse.json(error, { status: response.status });
     }
 
+    if (response.status === 204) {
+      // No content to return
+      return new NextResponse(null, { status: 204 });
+    }
+
     const data = await response.json();
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("❌ Proxy error:", error);

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { GroupMember } from "@/lib/api/groups";
 import { useUpdateMember, useRemoveMember } from "@/hooks/useGroupsQuery";
+import { useUserAuth } from "@/context/userAuthContext";
 
 interface GroupMembersManagerProps {
   groupId: number;
@@ -49,6 +50,7 @@ export function GroupMembersManager({
   clientCode,
   onMemberUpdate,
 }: GroupMembersManagerProps) {
+  const { isAdmin } = useUserAuth();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "owner" | "admin" | "member">("all");
@@ -118,17 +120,19 @@ export function GroupMembersManager({
   };
 
   const canManageMember = (member: GroupMember) => {
-    if (member.id === currentUserId) return false; // Não pode gerenciar a si mesmo
-
-    const memberRole = getMemberRole(member);
-
-    if (isOwner) {
-      return true; // Owner pode gerenciar todos
-    } else if (currentUserRole === "admin") {
-      return memberRole === "member"; // Admin só pode gerenciar membros
-    }
+    if (isAdmin) return true;
 
     return false;
+
+    // const memberRole = getMemberRole(member);
+    //
+    // if (isOwner) {
+    //   return true; // Owner pode gerenciar todos
+    // } else if (currentUserRole === "admin") {
+    //   return memberRole === "member"; // Admin só pode gerenciar membros
+    // }
+    //
+    // return false;
   };
 
   return (
@@ -253,7 +257,7 @@ export function GroupMembersManager({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {member.is_admin
-                                ? isOwner && (
+                                ? isAdmin && (
                                     <DropdownMenuItem
                                       onClick={() => handleDemoteAdmin(member.id)}
                                       className="text-orange-600"
@@ -262,7 +266,7 @@ export function GroupMembersManager({
                                       Remover Admin
                                     </DropdownMenuItem>
                                   )
-                                : isOwner && (
+                                : isAdmin && (
                                     <DropdownMenuItem
                                       onClick={() => handlePromoteToAdmin(member.id)}
                                       className="text-blue-600"

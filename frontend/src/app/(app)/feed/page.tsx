@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Heart,
   MessageCircle,
-  Share2,
   Camera,
   Trophy,
   Dumbbell,
@@ -22,16 +21,19 @@ import {
   Flag,
   Loader2,
   Coffee,
+  Pencil,
+  X,
+  Check,
 } from "lucide-react";
 import { useUserAuth } from "@/context/userAuthContext";
 import Image from "next/image";
-import { VideoPlayer } from "@/components/VideoPlayer";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import {
   useFeedQuery,
   useCreatePost,
   useDeletePost,
+  useUpdatePost,
   useTogglePostLike,
   useAddComment,
   useToggleCommentLike,
@@ -70,7 +72,7 @@ export default function FeedPage() {
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observer.observe(loadMoreRef.current);
@@ -81,6 +83,7 @@ export default function FeedPage() {
   // Mutations
   const createPostMutation = useCreatePost();
   const deletePostMutation = useDeletePost();
+  const updatePostMutation = useUpdatePost();
   const togglePostLikeMutation = useTogglePostLike();
   const addCommentMutation = useAddComment();
   const toggleCommentLikeMutation = useToggleCommentLike();
@@ -125,6 +128,15 @@ export default function FeedPage() {
     if (confirm("Tem certeza que deseja deletar este post?")) {
       deletePostMutation.mutate(postId);
     }
+  };
+
+  const handleUpdatePost = (postId: number, content_text: string, files?: File[]) => {
+    updatePostMutation.mutate({
+      postId, data: {
+        content_text,
+        files: files && files.length > 0 ? files : undefined,
+      }
+    });
   };
 
   const toggleComments = (postId: number) => {
@@ -178,6 +190,7 @@ export default function FeedPage() {
                 value={newPostContent}
                 onChange={(e) => setNewPostContent(e.target.value)}
                 className="min-h-[80px] resize-none"
+                disabled={createPostMutation.isPending}
               />
               {selectedImages.length > 0 && (
                 <div className="flex gap-2 flex-wrap">
@@ -199,6 +212,7 @@ export default function FeedPage() {
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
                   className="text-muted-foreground"
+                  disabled={createPostMutation.isPending}
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Foto/Vídeo
@@ -237,9 +251,12 @@ export default function FeedPage() {
           <PostCard
             key={post.id}
             post={post}
-            currentUserId={user?.id ? parseInt(user.id) : 0}
+            currentUsername={user?.username ?? ""}
             onLike={handleLikePost}
             onDelete={handleDeletePost}
+            onUpdate={handleUpdatePost}
+            isUpdating={updatePostMutation.isPending && updatePostMutation.variables?.postId === post.id}
+            isCommentSubmitting={addCommentMutation.isPending && addCommentMutation.variables?.postId === post.id}
             onToggleComments={toggleComments}
             isExpanded={expandedPosts.has(post.id)}
             commentText={commentTexts[post.id] || ""}
@@ -277,9 +294,12 @@ export default function FeedPage() {
 // Post Card Component
 function PostCard({
   post,
-  currentUserId,
+  currentUsername,
   onLike,
   onDelete,
+  onUpdate,
+  isUpdating,
+  isCommentSubmitting,
   onToggleComments,
   isExpanded,
   commentText,
@@ -289,9 +309,12 @@ function PostCard({
   onDeleteComment,
 }: {
   post: PostList;
-  currentUserId: number;
+  currentUsername: string;
   onLike: (postId: number) => void;
   onDelete: (postId: number) => void;
+  onUpdate: (postId: number, content_text: string, files?: File[]) => void;
+  isUpdating: boolean;
+  isCommentSubmitting: boolean;
   onToggleComments: (postId: number) => void;
   isExpanded: boolean;
   commentText: string;
@@ -300,6 +323,10 @@ function PostCard({
   onLikeComment: (commentId: number) => void;
   onDeleteComment: (commentId: number) => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(post.content_text || "");
+  const [editFile, setEditFile] = useState<File[]>([]);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const { data: postWithComments } = usePostCommentsQuery(isExpanded ? post.id : 0);
 
   const formatTimeAgo = (date: string) => {
@@ -313,10 +340,15 @@ function PostCard({
     }
   };
 
-  const isOwnPost = post.user.id === currentUserId;
+  const isOwnPost = post.user.username === currentUsername;
 
   return (
     <Card className="bg-card border-border relative">
+      {isUpdating && (
+        <div className="absolute inset-0 bg-background/60 rounded-lg flex items-center justify-center z-10">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      )}
       <div className="absolute right-2 top-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -326,10 +358,21 @@ function PostCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {isOwnPost && (
-              <DropdownMenuItem onClick={() => onDelete(post.id)} className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Deletar
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditText(post.content_text || "");
+                    setIsEditing(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDelete(post.id)} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Deletar
+                </DropdownMenuItem>
+              </>
             )}
             <DropdownMenuItem>
               <Flag className="h-4 w-4 mr-2" />
@@ -349,9 +392,6 @@ function PostCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <p className="font-semibold truncate text-xs">{post.user.full_name}</p>
-                <span className="truncate text-xs text-foreground px-1 bg-border rounded-full">
-                  Nível {post.user.level}
-                </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="truncate text-xs">@{post.user.username}</span>
@@ -368,10 +408,94 @@ function PostCard({
         <div>{getContentTypeBadge(post.content_type)}</div>
 
         {/* Conteúdo de texto */}
-        {post.content_text && <p className="text-sm leading-relaxed">{post.content_text}</p>}
+        {isEditing ? (
+          <div className="space-y-3">
+            <Textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="min-h-[80px] resize-none text-sm"
+              autoFocus
+            />
+
+            {post.content_files.length > 0 && editFile.length === 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Imagens atuais</p>
+                <div className="flex gap-2 flex-wrap">
+                  {post.content_files.map((file) => (
+                    <div key={file.id} className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted group">
+                      <Image src={file.file} alt="Imagem do post" fill className="object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {editFile.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {editFile.map((file, index) => (
+                  <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted">
+                    <Image src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} fill className="object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              {post.content_type === "social" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => editFileInputRef.current?.click()}
+                  className="text-muted-foreground"
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  foto/vídeo
+                </Button>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditFile([]);
+                  }}
+                  disabled={isUpdating}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    onUpdate(post.id, editText, editFile);
+                    setIsEditing(false);
+                  }}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
+                  Salvar
+                </Button>
+              </div>
+            </div>
+            <input
+              ref={editFileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setEditFile(Array.from(e.target.files));
+                }
+              }}
+            />
+          </div>
+        ) : (
+          post.content_text && <p className="text-sm leading-relaxed">{post.content_text}</p>
+        )}
 
         {/* Mídia */}
-        <MediaContent content={post.content_files} />
+        {!isEditing && <MediaContent content={post.content_files} />}
         <MediaContent content={post?.workout_checkin?.proofs ?? []} />
         <MediaContent content={post?.meal?.proofs ?? []} />
 
@@ -395,9 +519,8 @@ function PostCard({
         {/* Meal Data */}
         {post.meal && (
           <div
-            className={`p-3 rounded-lg border ${
-              post.meal.fasting ? "bg-amber-500/10 border-amber-500/30" : "bg-orange-500/10 border-orange-500/20"
-            }`}
+            className={`p-3 rounded-lg border ${post.meal.fasting ? "bg-amber-500/10 border-amber-500/30" : "bg-orange-500/10 border-orange-500/20"
+              }`}
           >
             <div className="flex items-center gap-2 mb-2">
               {post.meal.fasting ? (
@@ -432,6 +555,7 @@ function PostCard({
               variant="ghost"
               size="sm"
               onClick={() => onLike(post.id)}
+              disabled={isUpdating}
               className={`gap-2 ${post.is_liked_by_user ? "text-red-500" : "text-muted-foreground"}`}
             >
               <Heart className={`h-4 w-4 ${post.is_liked_by_user ? "fill-current" : ""}`} />
@@ -442,6 +566,7 @@ function PostCard({
               variant="ghost"
               size="sm"
               onClick={() => onToggleComments(post.id)}
+              disabled={isUpdating}
               className="gap-2 text-muted-foreground"
             >
               <MessageCircle className="h-4 w-4" />
@@ -470,9 +595,14 @@ function PostCard({
                   value={commentText}
                   onChange={(e) => onCommentTextChange(e.target.value)}
                   className="min-h-[60px] text-sm"
+                  disabled={isCommentSubmitting}
                 />
-                <Button size="sm" onClick={() => onAddComment(post.id)} disabled={!commentText.trim()}>
-                  <Send className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  onClick={() => onAddComment(post.id)}
+                  disabled={!commentText.trim() || isCommentSubmitting}
+                >
+                  {isCommentSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -496,14 +626,13 @@ function PostCard({
                       variant="ghost"
                       size="sm"
                       onClick={() => onLikeComment(comment.id)}
-                      className={`h-6 gap-1 text-xs ${
-                        comment.is_liked_by_user ? "text-red-500" : "text-muted-foreground"
-                      }`}
+                      className={`h-6 gap-1 text-xs ${comment.is_liked_by_user ? "text-red-500" : "text-muted-foreground"
+                        }`}
                     >
                       <Heart className={`h-3 w-3 ${comment.is_liked_by_user ? "fill-current" : ""}`} />
                       {comment.likes_count > 0 && <span>{comment.likes_count}</span>}
                     </Button>
-                    {comment.user.id === currentUserId && (
+                    {comment.user.username === currentUsername && (
                       <Button
                         variant="ghost"
                         size="sm"

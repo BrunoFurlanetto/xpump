@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-import { FeedAPI, CreatePostData, CreateReportData } from "@/lib/api/feed";
+import { FeedAPI, CreatePostData, UpdatePostData, CreateReportData } from "@/lib/api/feed";
 import { toast } from "sonner";
 
 // Query Keys
@@ -91,6 +91,22 @@ export function useCreatePost() {
     onError: (error: any) => {
       console.error("Erro ao criar post:", error);
       toast.error(error.message || "Erro ao criar post");
+    },
+  });
+}
+
+// Hook para atualizar um post
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, data }: { postId: number; data: UpdatePostData }) => FeedAPI.updatePost(postId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: feedKeys.lists() });
+      toast.success("Post atualizado com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao atualizar post");
     },
   });
 }

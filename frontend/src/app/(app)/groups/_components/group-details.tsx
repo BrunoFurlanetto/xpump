@@ -3,20 +3,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, Crown, Users, ArrowLeft, UserCog, Loader2, Calendar, Users2, Search, Star } from "lucide-react";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group, GroupsAPI } from "@/lib/api/groups";
-import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import GroupCardHeader from "./group-card-header";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CreateGroupModal } from "./create-group-modal";
+import { useUserAuth } from "@/context/userAuthContext";
 
 interface GroupDetailsProps {
   group: Group;
@@ -27,9 +26,9 @@ interface GroupDetailsProps {
 export function GroupDetails({ group: initialGroup, period: externalPeriod, onPeriodChange }: GroupDetailsProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("ranking");
-  const { user, hasRole } = useAuth();
+  const { user, isAdmin } = useUserAuth();
   const [group, setGroup] = useState(initialGroup);
-  const [period, setPeriod] = useState<"week" | "month" | "all">(externalPeriod || "week");
+  const [period, setPeriod] = useState<"week" | "month" | "all">(externalPeriod || "all");
   const [isLoading, setIsLoading] = useState(false);
   const [groupSearchTerm, setGroupSearchTerm] = useState("");
 
@@ -63,7 +62,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
         setIsLoading(false);
       }
     },
-    [initialGroup.id]
+    [initialGroup.id],
   );
 
   // Fetch group data when period changes
@@ -74,7 +73,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
   const currentUserMember = group.members.find((m) => m.id === Number(user?.id));
   const currentUserRole = group.owner === Number(user?.id) ? "owner" : currentUserMember?.is_admin ? "admin" : "member";
 
-  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin" || hasRole("Admin");
+  const canManageMembers = currentUserRole === "owner" || currentUserRole === "admin" || isAdmin;
 
   const getPositionIcon = (position: number) => {
     switch (position) {
@@ -103,9 +102,9 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
   };
 
   const periodLabels = {
+    all: "Geral",
     week: "Semana",
     month: "Mês",
-    all: "Geral",
   };
 
   // Ordenar membros por posição
@@ -115,7 +114,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
 
   const topThree = rankedMembers.slice(0, 3);
 
-  const canSeeGroupsTab = group.main && hasRole("Admin");
+  const canSeeGroupsTab = group.main && isAdmin;
 
   let tabs = 1;
   if (canManageMembers) tabs += 1;
@@ -125,7 +124,7 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
   const filteredGroups = (group.other_groups || []).filter(
     (otherGroup) =>
       otherGroup.name.toLowerCase().includes(groupSearchTerm.toLowerCase()) ||
-      otherGroup.owner.toLowerCase().includes(groupSearchTerm.toLowerCase())
+      otherGroup.owner.toLowerCase().includes(groupSearchTerm.toLowerCase()),
   );
 
   return (

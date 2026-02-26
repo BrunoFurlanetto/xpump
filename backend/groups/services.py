@@ -154,12 +154,13 @@ def compute_group_members_data(group, period):
     members.sort(key=lambda m: (m.workout_points or 0) + (m.meal_points or 0), reverse=True)
 
     result = []
-    pos = 1
-    for m in members:
+    prev_score = None
+    rank = 0
+    for idx, m in enumerate(members):
         score = (m.workout_points or 0) + (m.meal_points or 0)
-        workouts = m.workouts_count or 0
-        meals = m.meals_count or 0
-
+        if score != prev_score:
+            rank = idx + 1
+            prev_score = score
         result.append({
             "id": m.member.id,
             "username": m.member.username,
@@ -169,13 +170,12 @@ def compute_group_members_data(group, period):
             "is_admin": m.is_admin,
             "joined_at": m.joined_at,
             "pending": m.pending,
-            "position": pos,
+            "position": rank,
             "score": score,
-            "workouts": workouts,
-            "meals": meals,
+            "workouts": m.workout_points or 0,
+            "meals": m.meal_points or 0,
             "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
         })
-        pos += 1
 
     return {
         "id": group.id,

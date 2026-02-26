@@ -179,6 +179,55 @@ class PostCreateSerializer(serializers.ModelSerializer):
         return post
 
 
+class PostUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer para PATCH de posts.
+    - files: substitui TODAS as imagens existentes pelas novas enviadas.
+             Se não enviado, as imagens existentes são mantidas.
+    """
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False,
+        allow_empty=True,
+    )
+    content_files = ContentFilePostSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            'content_text', 'visibility', 'allow_comments',
+            'files', 'content_files',
+        ]
+
+    def validate(self, data):
+        instance = self.instance
+
+        if instance.content_type == 'social':
+            new_text = data.get('content_text', instance.content_text)
+            new_files = data.get('files')  # None = não enviado, [] = enviado vazio
+            remaining_files = len(new_files) if new_files is not None else instance.content_files.count()
+            if not new_text and remaining_files == 0:
+                raise serializers.ValidationError(
+                    'Posts sociais precisam de texto ou ao menos uma imagem.'
+                )
+
+        return data
+
+    def update(self, instance, validated_data):
+        new_files = validated_data.pop('files', None)
+
+        instance = super().update(instance, validated_data)
+
+        # Se files foi enviado (mesmo vazio), substitui todas as imagens existentes
+        if new_files is not None:
+            instance.content_files.all().delete()
+            for f in new_files:
+                ContentFilePost.objects.create(post=instance, file=f)
+
+        return instance
+
+
 class ReportSerializer(serializers.ModelSerializer):
     # reported_by = ProfilesSerialializer(read_only=True)
     # post = PostListSerializer(read_only=True)

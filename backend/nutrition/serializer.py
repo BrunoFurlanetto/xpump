@@ -72,6 +72,8 @@ class MealSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Only comments can be updated."
                 )
+            
+            return attrs
 
         # Create operation: require proof files unless fasting
         files = attrs.get('proof_files', [])

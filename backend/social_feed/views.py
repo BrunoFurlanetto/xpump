@@ -7,8 +7,8 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from .models import Post, Comment, Report, PostLike, CommentLike
 from .serializers import (
-    PostSerializer, PostListSerializer, PostCreateSerializer, CommentSerializer,
-    ReportSerializer, ReportCreateSerializer, CommentCreateSerializer
+    PostSerializer, PostListSerializer, PostCreateSerializer, PostUpdateSerializer,
+    CommentSerializer, ReportSerializer, ReportCreateSerializer, CommentCreateSerializer
 )
 from .pagination import PostsPagination, CommentsPagination
 
@@ -24,8 +24,15 @@ class PostViewSet(ModelViewSet):
             return PostListSerializer
         if self.action == 'create':
             return PostCreateSerializer
-
+        if self.action in ('update', 'partial_update'):
+            return PostUpdateSerializer
         return PostSerializer
+
+    def perform_update(self, serializer):
+        """Apenas o dono do post pode editar."""
+        if serializer.instance.user != self.request.user:
+            raise PermissionDenied('Voc\u00ea s\u00f3 pode editar seus pr\u00f3prios posts.')
+        serializer.save()
 
     def get_queryset(self):
         """Filter posts based on visibility and user permissions."""
