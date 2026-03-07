@@ -218,9 +218,6 @@ export class GroupsAPI {
   static async inviteUser(groupId: number, username: string): Promise<InviteResponse> {
     const response = await fetch(`/api/v1/groups/${groupId}/invite/${username}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     if (!response.ok) {

@@ -43,7 +43,7 @@ const navigationItems: NavItem[] = [
     icon: Trophy,
   },
   {
-    title: "Legado",
+    title: "Perfil",
     href: "/profile",
     icon: User,
   },

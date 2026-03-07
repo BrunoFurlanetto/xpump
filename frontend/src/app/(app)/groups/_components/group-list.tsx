@@ -1,7 +1,6 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Crown } from "lucide-react";
+import { Users } from "lucide-react";
 import { GroupCard } from "@/app/(app)/groups/_components/group-card";
 import { Group } from "@/lib/api/groups";
 import { CreateGroupModal } from "@/app/(app)/groups/_components/create-group-modal";
@@ -16,14 +15,6 @@ const GroupList = ({ groups }: { groups: Group[] }) => {
       {/* Grupo da Empresa */}
       {companyGroup && (
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Empresa</h2>
-            <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-              Oficial
-            </Badge>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {companyGroup.map((group) => (
               <GroupCard key={group.id} group={group} />
@@ -35,14 +26,6 @@ const GroupList = ({ groups }: { groups: Group[] }) => {
       {/* Meus Grupos */}
       {otherGroups.length > 0 && (
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground">Outros</h2>
-            <Badge variant="outline" className="border-blue-500/30 text-blue-400">
-              {otherGroups.length}
-            </Badge>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {otherGroups.map((group) => (
               <GroupCard key={group.id} group={group} />
