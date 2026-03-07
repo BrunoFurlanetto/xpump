@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+import calendar
 from faulthandler import dump_traceback
 from math import floor
 
@@ -59,15 +60,29 @@ class GamificationService(ABC):
         return max(candidates, key=lambda t: t[0])[1]
 
     def base_xp(self, user):
-        actual_season = Season.get_user_active_season(user)
+        # actual_season = Season.get_user_active_season(user)
 
-        if not actual_season:
-            raise NoSeasonFoundError(f'No active season found for {user.profile.employer.name}.')
+        # if not actual_season:
+        #     raise NoSeasonFoundError(f'No active season found for {user.profile.employer.name}.')
 
-        months_to_end_season = (actual_season.end_date - datetime.today().date()).days / 30
+        # months_to_end_season = (actual_season.end_date - datetime.today().date()).days / 30
+        # Ultimo dia do mês atual
+        last_day_of_month = calendar.monthrange(datetime.today().year, datetime.today().month)[1]
+        days_to_end_month = last_day_of_month - datetime.today().day
+        print(f"Days to end of month: {days_to_end_month}")
         xp = self.get_xp_settings()
 
-        if months_to_end_season < self.settings.months_to_end_season:
+        # if months_to_end_season < self.settings.months_to_end_season:
+        #     try:
+        #         main_user_group = user.profile.groups.get(main=True)
+        #     except Group.MultipleObjectsReturned:
+        #         raise MultipleGroupMembersError("User is member of multiple main groups.")
+
+        #     bonus_percentage = self.settings.season_bonus_percentage / 100
+        #     if user.profile.score < main_user_group.points_first_place() * bonus_percentage:
+        #         xp += xp * (self.settings.season_bonus_percentage / 100)
+        
+        if days_to_end_month < self.settings.days_to_end_month:
             try:
                 main_user_group = user.profile.groups.get(main=True)
             except Group.MultipleObjectsReturned:
