@@ -93,7 +93,7 @@ class CreateClientWithOwnerAPIView(APIView):
                 client = Client.objects.create(**client_data)
 
                 # Create Parent Group
-                create_group_for_client(
+                new_group =create_group_for_client(
                     client=client,
                     name=client.name,
                     owner=owner,
@@ -102,8 +102,8 @@ class CreateClientWithOwnerAPIView(APIView):
                 )
 
                 # Create profile for the owner
-                Profile.objects.create(user=owner, employer=client)
-
+                owner_profile = Profile.objects.create(user=owner, employer=client)
+                owner_profile.groups.add(new_group)
                 # Return data from the created customer
                 serializer = ClientSerializer(client)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
