@@ -87,9 +87,13 @@ class GamificationSettings(models.Model):
         default=default_multiplier_meal_streak,
         help_text="Multiplicador de XP baseado na sequência de dias de registro de refeições completo"
     )
-    months_to_end_season = models.IntegerField(
-        default=2,
-        help_text="Número de meses para finalizar a temporada, para concesão de bônus para usuários abaixo no ranking"
+    # months_to_end_season = models.IntegerField(
+    #     default=2,
+    #     help_text="Número de meses para finalizar a temporada, para concesão de bônus para usuários abaixo no ranking"
+    # )
+    days_to_end_month = models.IntegerField(
+        default=10,
+        help_text="Número de dias para finalizar o mês, para concesão de bônus para usuários abaixo no ranking"
     )
     season_bonus_percentage = models.FloatField(
         default=50.0,

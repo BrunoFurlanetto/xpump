@@ -1,12 +1,7 @@
-# python
-from datetime import timedelta
-
 from django.apps import apps
-from django.core.exceptions import ValidationError, FieldDoesNotExist
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, FloatField, FilteredRelation, Prefetch, OuterRef, Value, Subquery, \
-    IntegerField
+from django.db.models import Sum, Count, FloatField, OuterRef, Value, Subquery, IntegerField
 from django.db.models.functions import Coalesce
 
 from groups.models import GroupMembers, Group
@@ -75,79 +70,82 @@ def create_group_for_client(
         return group
 
 
-def compute_group_members_data(group, period):
+def compute_group_members_data(group):
     """
-    Retorna dict com dados do grupo e lista de membros (somente pending=False)
-    ordenados por pontos no período ('week' | 'month').
+    Retorna membros ativos do grupo com pontuação do mês atual,
+    filtrada apenas por registros (WorkoutCheckin / Meal) vinculados
+    ao grupo via M2M. Também retorna estatísticas agregadas.
+
+    Retorno:
+        {
+            "members": [ ... ],
+            "stats": { ... },
+        }
     """
-    # obtém modelos (ajuste 'meals' e 'workouts' se seus app labels forem diferentes)
     Meal = apps.get_model('nutrition', 'Meal')
     Workout = apps.get_model('workouts', 'WorkoutCheckin')
 
-    def _detect_fk(model):
-        for name in ('member', 'user'):
-            try:
-                model._meta.get_field(name)
-                return name
-            except FieldDoesNotExist:
-                continue
-        raise ValidationError(f"Model {model} must have a 'member' or 'user' FK")
-
-    meal_fk = _detect_fk(Meal)
-    workout_fk = _detect_fk(Workout)
-
-    now = timezone.now()
-    local_now = timezone.localtime(now)
-
-    if period == 'week':
-        days_to_subtract = (local_now.weekday() + 1) % 7
-        start_dt = (local_now - timedelta(days=days_to_subtract)).replace(hour=0, minute=0, second=0, microsecond=0)
-        start = start_dt
-    elif period == 'month':
-        start = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    else:
-        raise ValidationError('Period must be "week" or "month"')
+    month_start = timezone.localtime(timezone.now()).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0,
+    )
 
     base_qs = (
         group.groupmembers_set
-        .select_related('member', 'member__profile')
+        .select_related('member', 'member__profile',
+                        'member__workout_streak', 'member__meal_streak')
         .filter(pending=False)
     )
 
-    meals_pts_sq = (
-        Meal.objects.filter(**{meal_fk: OuterRef('member'), 'meal_time__gte': start})
-        .values(meal_fk)
-        .annotate(pts=Coalesce(Sum('base_points'), Value(0.0)))
-        .values('pts')
-    )
-    meals_count_sq = (
-        Meal.objects.filter(**{meal_fk: OuterRef('member'), 'meal_time__gte': start})
-        .values(meal_fk)
-        .annotate(cnt=Count('id'))
-        .values('cnt')
-    )
-
+    # Subqueries: pontos e contagens do mês atual, filtrados pelo grupo
     workouts_pts_sq = (
-        Workout.objects.filter(**{workout_fk: OuterRef('member'), 'workout_date__gte': start})
-        .values(workout_fk)
+        Workout.objects.filter(
+            user=OuterRef('member'),
+            groups=group,
+            workout_date__gte=month_start,
+        )
+        .values('user')
         .annotate(pts=Coalesce(Sum('base_points'), Value(0.0)))
         .values('pts')
     )
+
     workouts_count_sq = (
-        Workout.objects.filter(**{workout_fk: OuterRef('member'), 'workout_date__gte': start})
-        .values(workout_fk)
+        Workout.objects.filter(
+            user=OuterRef('member'),
+            groups=group,
+            workout_date__gte=month_start,
+        )
+        .values('user')
         .annotate(cnt=Count('id'))
         .values('cnt')
     )
 
-    qs = (
-        base_qs
-        .annotate(
-            meal_points=Coalesce(Subquery(meals_pts_sq, output_field=FloatField()), 0.0),
-            meals_count=Coalesce(Subquery(meals_count_sq, output_field=IntegerField()), 0),
-            workout_points=Coalesce(Subquery(workouts_pts_sq, output_field=FloatField()), 0.0),
-            workouts_count=Coalesce(Subquery(workouts_count_sq, output_field=IntegerField()), 0),
+    meals_pts_sq = (
+        Meal.objects.filter(
+            user=OuterRef('member'),
+            groups=group,
+            meal_time__gte=month_start,
         )
+        .values('user')
+        .annotate(pts=Coalesce(Sum('base_points'), Value(0.0)))
+        .values('pts')
+    )
+
+    meals_count_sq = (
+        Meal.objects.filter(
+            user=OuterRef('member'),
+            groups=group,
+            meal_time__gte=month_start,
+        )
+        .values('user')
+        .annotate(cnt=Count('id'))
+        .values('cnt')
+    )
+
+    qs = base_qs.annotate(
+        workout_points=Coalesce(Subquery(workouts_pts_sq, output_field=FloatField()), 0.0),
+        meal_points=Coalesce(Subquery(meals_pts_sq, output_field=FloatField()), 0.0),
+        workouts_count=Coalesce(Subquery(workouts_count_sq, output_field=IntegerField()), 0),
+        meals_count=Coalesce(Subquery(meals_count_sq, output_field=IntegerField()), 0),
     )
 
     members = list(qs)
@@ -156,15 +154,35 @@ def compute_group_members_data(group, period):
     result = []
     prev_score = None
     rank = 0
+    total_points = 0
+    total_workouts = 0
+    total_meals = 0
+    workout_streaks = []
+    meal_streaks = []
+
     for idx, m in enumerate(members):
         score = (m.workout_points or 0) + (m.meal_points or 0)
         if score != prev_score:
             rank = idx + 1
             prev_score = score
+
+        total_points += score
+        total_workouts += m.workouts_count or 0
+        total_meals += m.meals_count or 0
+
+        ws = getattr(m.member, 'workout_streak', None)
+        ms = getattr(m.member, 'meal_streak', None)
+        if ws is not None:
+            workout_streaks.append(ws.current_streak)
+        if ms is not None:
+            meal_streaks.append(ms.current_streak)
+
         result.append({
             "id": m.member.id,
             "username": m.member.username,
-            "photo": m.member.profile.photo.url if hasattr(m.member, 'profile') and m.member.profile.photo else None,
+            "photo": (m.member.profile.photo.url
+                      if hasattr(m.member, 'profile') and m.member.profile.photo
+                      else None),
             "full_name": m.member.get_full_name(),
             "email": m.member.email,
             "is_admin": m.is_admin,
@@ -177,77 +195,23 @@ def compute_group_members_data(group, period):
             "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
         })
 
-    return {
-        "id": group.id,
-        "name": getattr(group, "name", None),
-        "members": result,
+    mw = (sum(workout_streaks) / len(workout_streaks)) if workout_streaks else 0
+    mm = (sum(meal_streaks) / len(meal_streaks)) if meal_streaks else 0
+
+    stats = {
+        "total_members": len(members),
+        "total_points": total_points,
+        "total_workouts": total_workouts,
+        "total_meals": total_meals,
+        "mean_streak": (mw + mm) / 2 if (mw or mm) else 0,
+        "mean_workout_streak": mw,
+        "mean_meal_streak": mm,
     }
-    # now = timezone.now()
-    # local_now = timezone.localtime(now)
-    #
-    # if period == 'week':
-    #     days_to_subtract = (local_now.weekday() + 1) % 7
-    #     start_dt = (local_now - timedelta(days=days_to_subtract)).replace(hour=0, minute=0, second=0, microsecond=0)
-    #     start = start_dt
-    # elif period == 'month':
-    #     start = local_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    # else:
-    #     raise ValidationError('Period must be "week" or "month"')
-    #
-    # base_qs = (
-    #     group.groupmembers_set
-    #     .select_related('member', 'member__profile')
-    #     .filter(pending=False)
-    # )
-    #
-    # qs = (
-    #     base_qs
-    #     .annotate(
-    #         meals_rel=FilteredRelation('member__meals', condition=Q(member__meals__meal_time__gte=start)),
-    #         workouts_rel=FilteredRelation('member__workouts', condition=Q(member__workouts__workout_date__gte=start)),
-    #     )
-    #     .annotate(
-    #         meal_points=Coalesce(Sum('meals_rel__base_points'), 0.0, output_field=FloatField()),
-    #         workout_points=Coalesce(Sum('workouts_rel__base_points'), 0.0, output_field=FloatField()),
-    #         meals_count=Count('meals_rel'),
-    #         workouts_count=Count('workouts_rel'),
-    #     )
-    # )
-    # members = list(qs)
-    # members.sort(key=lambda m: (m.workout_points or 0) + (m.meal_points or 0), reverse=True)
-    #
-    # result = []
-    # pos = 1
-    #
-    # for m in members:
-    #     score = (m.workout_points or 0) + (m.meal_points or 0)
-    #     workouts = m.workouts_count or 0
-    #     meals = m.meals_count or 0
-    #
-    #     result.append({
-    #         "id": m.member.id,
-    #         "username": m.member.username,
-    #         "photo": m.member.profile.photo.url if hasattr(m.member, 'profile') and m.member.profile.photo else None,
-    #         "full_name": m.member.get_full_name(),
-    #         "email": m.member.email,
-    #         "is_admin": m.is_admin,
-    #         "joined_at": m.joined_at,
-    #         "pending": m.pending,
-    #         "position": pos,
-    #         "score": score,
-    #         "workouts": workouts,
-    #         "meals": meals,
-    #         "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
-    #     })
-    #     pos += 1
-    #
-    # group_data = {
-    #     "id": group.id,
-    #     "name": getattr(group, "name", None),
-    #     "members": result,
-    # }
-    #
-    # return group_data
+
+    return {
+        "members": result,
+        "stats": stats,
+    }
 
 
 def compute_another_groups(main_group):

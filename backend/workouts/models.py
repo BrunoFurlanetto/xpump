@@ -39,6 +39,7 @@ class WorkoutCheckin(models.Model):
     validation_status = models.ForeignKey(Status, on_delete=models.PROTECT, default=get_published_status_id)
     base_points = models.FloatField(null=True, blank=True, editable=False)
     multiplier = models.FloatField(default=1.0)
+    groups = models.ManyToManyField('groups.Group', blank=True)
 
     def __str__(self):
         return f'Workout check-in for {self.user}'
@@ -69,6 +70,8 @@ class WorkoutCheckin(models.Model):
         self.base_points = Gamification.Workout.calculate(self.user, self.duration)
 
         super().save(*args, **kwargs)
+
+        self.groups.set([group.id for group in self.user.profile.groups.all()])
 
         # Update the user's profile with the new points
         Gamification().add_xp(self.user, self.base_points)

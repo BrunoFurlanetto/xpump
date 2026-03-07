@@ -55,6 +55,7 @@ class Meal(models.Model):
     base_points = models.FloatField(null=True, blank=True, editable=False)
     fasting = models.BooleanField(default=False)
     multiplier = models.FloatField(default=1.0)
+    groups = models.ManyToManyField('groups.Group', blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.meal_type.meal_name} at {self.meal_time.strftime('%Y-%m-%d %H:%M')}"
@@ -84,6 +85,8 @@ class Meal(models.Model):
         self.base_points = Gamification.Meal.calculate(self.user)
 
         super().save(*args, **kwargs)
+
+        self.groups.set([group.id for group in self.user.profile.groups.all()])
 
         # Update the user's profile with the new points
         Gamification().add_xp(self.user, self.base_points)
