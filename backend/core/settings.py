@@ -226,3 +226,184 @@ VAPID_ADMIN_EMAIL = os.getenv('VAPID_ADMIN_EMAIL', globals().get('VAPID_ADMIN_EM
 # ---------------------------------------------------------------------------- #
 APSCHEDULER_DATETIME_FORMAT = 'N j, Y, f:s a'
 APSCHEDULER_RUN_NOW_TIMEOUT = 25  # segundos
+
+# ---------------------------------------------------------------------------- #
+# Logging                                                                        #
+# ---------------------------------------------------------------------------- #
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {module}.{funcName}:{lineno} — {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'simple': {
+            'format': '[{asctime}] {levelname} — {message}',
+            'style': '{',
+            'datefmt': '%H:%M:%S',
+        },
+    },
+
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
+
+    'handlers': {
+        # Console — tudo em dev, WARNING+ em prod
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+
+        # Arquivo geral (rotação diária, mantém 30 dias)
+        'file_general': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(LOG_DIR / 'general.log'),
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 30,
+            'encoding': 'utf-8',
+            'formatter': 'verbose',
+        },
+
+        # Arquivo de erros (rotação diária, mantém 90 dias)
+        'file_errors': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(LOG_DIR / 'errors.log'),
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 90,
+            'encoding': 'utf-8',
+            'formatter': 'verbose',
+        },
+
+        # Arquivo de SQL queries (só em DEBUG)
+        'file_sql': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(LOG_DIR / 'sql.log'),
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 7,
+            'encoding': 'utf-8',
+            'formatter': 'verbose',
+        },
+
+        # Arquivo de requests (rotação diária, mantém 30 dias)
+        'file_requests': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(LOG_DIR / 'requests.log'),
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 30,
+            'encoding': 'utf-8',
+            'formatter': 'verbose',
+        },
+    },
+
+    'loggers': {
+        # Logger raiz do Django
+        'django': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+
+        # Requests HTTP (4xx, 5xx)
+        'django.request': {
+            'handlers': ['file_requests', 'file_errors'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+
+        # Server (runserver output)
+        'django.server': {
+            'handlers': ['console', 'file_requests'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+
+        # SQL queries (só ativado em DEBUG)
+        'django.db.backends': {
+            'handlers': ['file_sql'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+
+        # Security (CSRF, etc.)
+        'django.security': {
+            'handlers': ['file_errors', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+
+        # ---- Loggers dos apps do projeto ---- #
+        'authentication': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'profiles': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'groups': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'workouts': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'nutrition': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'gamification': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'clients': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'social_feed': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'analytics': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'notifications': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
