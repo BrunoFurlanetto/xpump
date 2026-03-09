@@ -3,6 +3,7 @@
 import { Sidebar } from "./sidebar";
 import { MobileNavbar } from "./mobile-navbar";
 import { MobileMenu } from "./mobile-menu";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 
 interface AppNavigationProps {
   children: React.ReactNode;
@@ -22,9 +23,11 @@ export function AppNavigation({ children }: AppNavigationProps) {
       </div>
 
       {/* Mobile Layout */}
-      <div className="md:hidden">
+      <div className="md:hidden flex flex-col h-screen">
         <MobileNavbar />
-        <main className="pt-4 pb-20 px-2">{children}</main>
+        <PullToRefresh>
+          <main className="pt-4 pb-20 px-2">{children}</main>
+        </PullToRefresh>
         <MobileMenu />
       </div>
     </>
