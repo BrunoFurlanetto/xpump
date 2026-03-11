@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee } from "lucide-react";
+import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee, Flag } from "lucide-react";
 import { Meal } from "@/lib/api/nutrition";
 import { MealType, useDeleteMeal, useUpdateMeal } from "@/hooks/useMealsQuery";
 import { ImageModal } from "@/components/ui/image-modal";
@@ -32,9 +32,10 @@ import { useImageModal } from "@/hooks/useImageModal";
 interface MealCardProps {
   meal: Meal;
   mealType: MealType;
+  isOwnProfile?: boolean;
 }
 
-export function MealCard({ meal, mealType }: MealCardProps) {
+export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps) {
   const updateMealMutation = useUpdateMeal();
   const deleteMealMutation = useDeleteMeal();
   const [isEditing, setIsEditing] = useState(false);
@@ -119,15 +120,24 @@ export function MealCard({ meal, mealType }: MealCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover border-border">
-                <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-popover-foreground">
-                  <Edit3 className="mr-2 h-4 w-4" />
-                  Editar Descrição
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-400 focus:text-red-400">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir Refeição
-                </DropdownMenuItem>
+                {isOwnProfile ? (
+                  <>
+                    <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-popover-foreground">
+                      <Edit3 className="mr-2 h-4 w-4" />
+                      Editar Descrição
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-400 focus:text-red-400">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir Refeição
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem className="text-popover-foreground">
+                    <Flag className="mr-2 h-4 w-4" />
+                    Denunciar
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
