@@ -144,15 +144,15 @@ class WorkoutCheckin(models.Model):
         # Check if there is an overlapping check-in from the same user
         # workout_end_time = self.workout_date + self.duration
 
-        overlapping_workouts = WorkoutCheckin.objects.filter(
-            user=self.user,
-            workout_date__lte=self.workout_date,
-            workout_date__gte=self.workout_date - self.duration,
-            # The end date of the existing check-in is later than the start date of the new one
-        ).exclude(id=self.id)
+        # overlapping_workouts = WorkoutCheckin.objects.filter(
+        #     user=self.user,
+        #     workout_date__lte=self.workout_date,
+        #     workout_date__gte=self.workout_date - self.duration,
+        #     # The end date of the existing check-in is later than the start date of the new one
+        # ).exclude(id=self.id)
 
-        if overlapping_workouts.exists():
-            raise ValidationError("This workout overlaps with an existing check-in.")
+        # if overlapping_workouts.exists():
+        #     raise ValidationError("This workout overlaps with an existing check-in.")
 
 
 class WorkoutCheckinProof(models.Model):
