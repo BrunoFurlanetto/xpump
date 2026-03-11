@@ -40,9 +40,9 @@ export function EditProfileModal({ isOpen, onClose, profileId, currentData }: Ed
         return;
       }
 
-      // Validar tamanho (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("A imagem deve ter no máximo 5MB");
+      // Validar tamanho (max 50MB)
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 50MB");
         return;
       }
 

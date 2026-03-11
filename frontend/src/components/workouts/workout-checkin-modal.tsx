@@ -112,9 +112,9 @@ export function WorkoutCheckinModal({ isOpen, onClose, onSubmit, isLoading = fal
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        setErrors({ ...errors, image: "Imagem deve ter menos de 5MB" });
+      if (file.size > 50 * 1024 * 1024) {
+        // 50MB limit
+        setErrors({ ...errors, image: "Imagem deve ter menos de 50MB" });
         return;
       }
 
