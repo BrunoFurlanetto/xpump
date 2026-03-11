@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MapPin, MessageSquare, Trophy, MoreVertical, Edit3, Trash2, Save, X } from "lucide-react";
+import { MapPin, MessageSquare, Trophy, MoreVertical, Edit3, Trash2, Save, X, Flag } from "lucide-react";
 import { WorkoutCheckin } from "@/lib/api/workouts";
 import { ImageModal } from "@/components/ui/image-modal";
 import { useImageModal } from "@/hooks/useImageModal";
@@ -34,9 +34,10 @@ interface WorkoutCardProps {
   onDelete: (id: number) => Promise<void>;
   formatDate: (date: string) => string;
   formatDuration: (duration: string) => string;
+  isOwnProfile?: boolean;
 }
 
-export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, formatDuration }: WorkoutCardProps) {
+export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, formatDuration, isOwnProfile = true }: WorkoutCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedComments, setEditedComments] = useState(workout.comments);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -126,15 +127,24 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover border-border">
-                <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-popover-foreground">
-                  <Edit3 className="mr-2 h-4 w-4" />
-                  Editar Comentário
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-400 focus:text-red-400">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir Treino
-                </DropdownMenuItem>
+                {isOwnProfile ? (
+                  <>
+                    <DropdownMenuItem onClick={() => setIsEditing(true)} className="text-popover-foreground">
+                      <Edit3 className="mr-2 h-4 w-4" />
+                      Editar Comentário
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-400 focus:text-red-400">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir Treino
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem className="text-popover-foreground">
+                    <Flag className="mr-2 h-4 w-4" />
+                    Denunciar
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -19,6 +19,7 @@ interface DailyWorkoutCardProps {
   formatDate: (date: string) => string;
   formatDuration: (duration: string) => string;
   enabled?: boolean;
+  isOwnProfile?: boolean;
 }
 
 export function DailyWorkoutCard({
@@ -29,6 +30,7 @@ export function DailyWorkoutCard({
   formatDate,
   formatDuration,
   enabled = true,
+  isOwnProfile = true,
 }: DailyWorkoutCardProps) {
   const canAddMore = workouts.length < MAX_DAILY_WORKOUTS;
 
@@ -48,6 +50,7 @@ export function DailyWorkoutCard({
                   onDelete={onDelete}
                   formatDate={formatDate}
                   formatDuration={formatDuration}
+                  isOwnProfile={isOwnProfile}
                 />
               );
             }

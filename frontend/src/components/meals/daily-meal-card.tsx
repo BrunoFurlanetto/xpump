@@ -11,19 +11,21 @@ import { useState } from "react";
 interface DailyMealCardProps {
   dayData: DailyMeals;
   enabled?: boolean;
+  isOwnProfile?: boolean;
 }
 
 interface MealSlotProps {
   mealTypeInfo: MealType;
   meal: Meal | null | undefined;
   enabled: boolean;
+  isOwnProfile: boolean;
 }
 
-function MealSlot({ mealTypeInfo, meal, enabled }: MealSlotProps) {
+function MealSlot({ mealTypeInfo, meal, enabled, isOwnProfile }: MealSlotProps) {
   const [showLogModal, setShowLogModal] = useState(false);
 
   if (meal) {
-    return <MealCard meal={meal} mealType={mealTypeInfo} />;
+    return <MealCard meal={meal} mealType={mealTypeInfo} isOwnProfile={isOwnProfile} />;
   }
 
   if (!enabled) return;
@@ -57,7 +59,7 @@ function MealSlot({ mealTypeInfo, meal, enabled }: MealSlotProps) {
   );
 }
 
-export function DailyMealCard({ dayData, enabled = true }: DailyMealCardProps) {
+export function DailyMealCard({ dayData, enabled = true, isOwnProfile = true }: DailyMealCardProps) {
   const { mealTypes } = useMealsQuery();
 
   return (
@@ -70,7 +72,7 @@ export function DailyMealCard({ dayData, enabled = true }: DailyMealCardProps) {
               const meal = Object.values(dayData.meals).find((m) => m && m.meal_type.toString() === mealType.id);
               return (
                 <div key={mealType.id}>
-                  <MealSlot mealTypeInfo={mealType} meal={meal} enabled={enabled} />
+                  <MealSlot mealTypeInfo={mealType} meal={meal} enabled={enabled} isOwnProfile={isOwnProfile} />
                 </div>
               );
             })}
