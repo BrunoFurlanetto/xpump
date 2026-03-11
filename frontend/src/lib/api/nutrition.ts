@@ -161,7 +161,8 @@ export class NutritionAPI {
     const grouped: { [key: string]: DailyMeals } = {};
 
     meals.forEach((meal) => {
-      const date = new Date(meal.meal_time).toISOString().split("T")[0];
+      const d = new Date(meal.meal_time);
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
       if (!grouped[date]) {
         grouped[date] = {
@@ -214,7 +215,10 @@ export class NutritionAPI {
     const streakDays = meals[0]?.current_streak || 0;
 
     // Calculate completion rate (simplified)
-    const uniqueDays = new Set(meals.map((m) => new Date(m.meal_time).toISOString().split("T")[0])).size;
+    const uniqueDays = new Set(meals.map((m) => {
+      const d = new Date(m.meal_time);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })).size;
 
     const completionRate = uniqueDays > 0 ? Math.round((meals.length / (uniqueDays * 4)) * 100) : 0;
 
