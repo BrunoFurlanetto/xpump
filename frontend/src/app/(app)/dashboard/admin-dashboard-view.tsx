@@ -207,7 +207,7 @@ export default function AdminDashboardView() {
             value={stats?.pending_reports || 0}
             icon={Activity}
             color="text-yellow-400"
-            bgColor="bg-yellow-500/10"
+            bgColor="bg-yellow-500/10 h-full"
           />
         </Link>
         <StatCard
