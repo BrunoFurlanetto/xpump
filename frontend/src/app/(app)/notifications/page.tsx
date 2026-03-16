@@ -188,68 +188,95 @@ export default function NotificationsPage() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-4 hover:bg-muted/50 transition-colors ${
-                    !notification.isRead ? "bg-primary/5 border-l-4 border-l-primary" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Icon */}
-                    <div className={`p-2 rounded-full ${getTypeColor(notification.type)}`}>
-                      {getNotificationIcon(notification.type)}
-                    </div>
+              {notifications.map((notification) => {
+                const postId = (notification.type === "social_like" || notification.type === "social_comment")
+                  ? (notification.data?.post_id as number | undefined)
+                  : undefined;
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3
-                              className={`font-medium ${
-                                !notification.isRead ? "text-foreground" : "text-muted-foreground"
-                              }`}
-                            >
-                              {notification.title}
-                            </h3>
-                            <Badge variant="outline" className="text-xs">
-                              {getTypeLabel(notification.type)}
-                            </Badge>
-                            {!notification.isRead && <div className="h-2 w-2 bg-primary rounded-full" />}
+                const content = (
+                  <div
+                    className={`p-4 hover:bg-muted/50 transition-colors ${
+                      !notification.isRead ? "bg-primary/5 border-l-4 border-l-primary" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Icon */}
+                      <div className={`p-2 rounded-full ${getTypeColor(notification.type)}`}>
+                        {getNotificationIcon(notification.type)}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3
+                                className={`font-medium ${
+                                  !notification.isRead ? "text-foreground" : "text-muted-foreground"
+                                }`}
+                              >
+                                {notification.title}
+                              </h3>
+                              <Badge variant="outline" className="text-xs">
+                                {getTypeLabel(notification.type)}
+                              </Badge>
+                              {!notification.isRead && <div className="h-2 w-2 bg-primary rounded-full" />}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
+                            <span className="text-xs text-muted-foreground">
+                              {formatTimeAgo(notification.createdAt)}
+                            </span>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
-                          <span className="text-xs text-muted-foreground">
-                            {formatTimeAgo(notification.createdAt)}
-                          </span>
-                        </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-1">
-                          {!notification.isRead && (
+                          {/* Actions */}
+                          <div className="flex items-center gap-1">
+                            {!notification.isRead && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  markAsRead(notification.id);
+                                }}
+                                className="h-8 w-8 p-0 hover:bg-primary/10"
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => markAsRead(notification.id)}
-                              className="h-8 w-8 p-0 hover:bg-primary/10"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                deleteNotification(notification.id);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
                             >
-                              <Check className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteNotification(notification.id)}
-                            className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+
+                if (postId) {
+                  return (
+                    <Link
+                      key={notification.id}
+                      href={`/post/${postId}`}
+                      onClick={() => {
+                        if (!notification.isRead) markAsRead(notification.id);
+                      }}
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return <div key={notification.id}>{content}</div>;
+              })}
             </div>
           )}
         </CardContent>

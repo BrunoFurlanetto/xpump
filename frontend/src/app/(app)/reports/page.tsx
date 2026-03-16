@@ -36,7 +36,9 @@ import {
   XCircle,
   Clock,
   Search,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 
@@ -276,6 +278,12 @@ export default function ReportsPage() {
                           Post de @{selectedReport.post.user.username}
                         </p>
                         <p>{selectedReport.post.content_text || "(sem texto)"}</p>
+                        <Button variant="outline" size="sm" className="mt-2" asChild>
+                          <Link href={`/post/${selectedReport.post.id}`} target="_blank">
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Ver post completo
+                          </Link>
+                        </Button>
                       </>
                     )}
                     {selectedReport.comment && (
@@ -284,6 +292,14 @@ export default function ReportsPage() {
                           Comentário de @{selectedReport.comment.user.username}
                         </p>
                         <p>{selectedReport.comment.text}</p>
+                        {selectedReport.post && (
+                          <Button variant="outline" size="sm" className="mt-2" asChild>
+                            <Link href={`/post/${selectedReport.post.id}`} target="_blank">
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Ver post completo
+                            </Link>
+                          </Button>
+                        )}
                       </>
                     )}
                   </div>
