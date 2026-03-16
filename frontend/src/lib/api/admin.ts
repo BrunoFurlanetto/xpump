@@ -212,6 +212,55 @@ export interface CreateClientData {
   owner_last_name: string;
 }
 
+// ===== TIPOS PARA DENÚNCIAS =====
+export interface AdminReport {
+  id: number;
+  report_type: "post" | "comment";
+  reason: "spam" | "inappropriate" | "harassment" | "fake" | "other";
+  other_reason?: string;
+  status: "pending" | "reviewing" | "resolved" | "dismissed";
+  reporter: {
+    id: number;
+    username: string;
+    full_name: string;
+  };
+  post?: {
+    id: number;
+    content_text?: string;
+    user: {
+      id: number;
+      username: string;
+      full_name: string;
+    };
+  };
+  comment?: {
+    id: number;
+    text: string;
+    user: {
+      id: number;
+      username: string;
+      full_name: string;
+    };
+  };
+  admin_notes?: string;
+  response?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedReports {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AdminReport[];
+}
+
+export interface UpdateReportData {
+  status?: "pending" | "reviewing" | "resolved" | "dismissed";
+  admin_notes?: string;
+  response?: string;
+}
+
 export class AdminAPI {
   // ===== ENDPOINTS PARA DASHBOARD GERAL DO SISTEMA =====
 
@@ -374,20 +423,40 @@ export class AdminAPI {
     }
   }
 
-  // ===== ENDPOINTS PARA DASHBOARD DE GRUPO =====
+  // ===== ENDPOINTS PARA DENÚNCIAS =====
 
   /**
-   * Get dashboard data for a specific group
+   * Busca lista de denúncias com filtro por status
    */
-  static async getDashboard(groupId: number): Promise<AdminDashboardData> {
-    const response = await fetch(`/api/admin/dashboard?groupId=${groupId}`);
+  static async getReports(status?: string, page: number = 1): Promise<PaginatedReports> {
+    const params = new URLSearchParams({ page: page.toString() });
+    if (status && status !== "all") params.append("status", status);
+
+    const response = await fetch(`/api/v1/social-feed/reports/?${params}`);
 
     if (!response.ok) {
-      throw new Error("Erro ao buscar dados do dashboard");
+      throw new Error("Erro ao buscar denúncias");
     }
-
     return response.json();
   }
+
+  /**
+   * Atualiza uma denúncia (status, notas, resposta)
+   */
+  static async updateReport(reportId: number, data: UpdateReportData): Promise<AdminReport> {
+    const response = await fetch(`/api/v1/social-feed/reports/${reportId}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Erro ao atualizar denúncia" }));
+      throw new Error(error.detail || "Erro ao atualizar denúncia");
+    }
+    return response.json();
+  }
+
 
   /**
    * Get all workouts for a specific group with filters

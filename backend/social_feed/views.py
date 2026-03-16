@@ -247,9 +247,7 @@ class ReportListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """Users can only see their own reports."""
-        return Report.objects.filter(
-            reported_by=self.request.user
-        ).select_related('post__user', 'reported_by__user')
+        return Report.objects.all()
 
     def perform_create(self, serializer):
         """Create a report with the current user as reporter."""

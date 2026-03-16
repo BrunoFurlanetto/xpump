@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import MediaContent from "@/app/(app)/feed/media-content";
+import { ReportDialog } from "@/components/feed/report-dialog";
 
 export function PostCard({
   post,
@@ -73,6 +74,7 @@ export function PostCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(post.content_text || "");
   const [editFile, setEditFile] = useState<File[]>([]);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const { data: postWithComments } = usePostCommentsQuery(isExpanded ? post.id : 0);
 
@@ -121,7 +123,7 @@ export function PostCard({
                 </DropdownMenuItem>
               </>
             )}
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
               <Flag className="h-4 w-4 mr-2" />
               Denunciar
             </DropdownMenuItem>
@@ -394,6 +396,13 @@ export function PostCard({
           </div>
         )}
       </CardContent>
+
+      <ReportDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        postId={post.id}
+        reportType="post"
+      />
     </Card>
   );
 }
