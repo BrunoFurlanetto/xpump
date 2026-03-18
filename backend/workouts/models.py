@@ -67,7 +67,7 @@ class WorkoutCheckin(models.Model):
 
         # Calculate multiplier and points based on streak and duration
         self.multiplier = Gamification.Workout.get_multiplier(self.user)
-        self.base_points = Gamification.Workout.calculate(self.user, self.duration)
+        self.base_points = Gamification.Workout.calculate(self.user, self.duration, self.workout_date)
 
         super().save(*args, **kwargs)
 
@@ -153,6 +153,20 @@ class WorkoutCheckin(models.Model):
 
         # if overlapping_workouts.exists():
         #     raise ValidationError("This workout overlaps with an existing check-in.")
+
+
+# class WorkoutDailySummary(models.Model):
+#     """
+#     Model for storing daily workout summaries for users. Contains total duration, calories burned, and workout count
+#     for each day. Automatically updates or creates summary records when new check-ins are added.
+#     """
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_summaries')
+#     date = models.DateField()
+#     total_duration = models.DurationField(default=timedelta())    
+#     workout_count = models.IntegerField(default=0)
+#     awared_points = models.FloatField(default=0.0)
+#     bonus_points = models.FloatField(default=0.0)
+#     penalty_points = models.FloatField(default=0.0)
 
 
 class WorkoutCheckinProof(models.Model):

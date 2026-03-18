@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 import calendar
 from faulthandler import dump_traceback
 from math import floor
@@ -112,34 +112,47 @@ class WorkoutGamification(GamificationService):
         return "multiplier_workout_streak"
 
     def calculate(self, user, *args):
-        if len(args) != 1:
-            raise ValueError("WorkoutGamification.calculate expects exactly 1 extra argument: duration")
+        if len(args) != 2:
+            raise ValueError("WorkoutGamification.calculate expects exactly 2 extra arguments: duration and date")
 
         duration = args[0]
+        date = args[1]
+        workouts_in_day = user.workouts.filter(workout_date__date=date.date())
+
+        # Soma das durações dos treinos do dia, incluindo o treino atual
+        total_duration_in_day = workouts_in_day.aggregate(total_duration=Sum('duration'))['total_duration'] or timedelta(0)
+        total_duration_in_day_min = total_duration_in_day.total_seconds() / 60
         duration_min = duration.total_seconds() / 60
+        total_duration_min = total_duration_in_day_min + duration_min        
         base_points = self.base_xp(user)
         workout_minutes_base = self.settings.workout_minutes
         multiplier = self.get_multiplier(user)
-        workout_xp_today = user.workouts.filter(workout_date__date=datetime.today().date()).aggregate(
-            total=Sum('base_points')
-        )['total'] or 0
+        workout_xp_today = workouts_in_day.aggregate(total_xp=Sum('base_points'))['total_xp'] or 0
 
         if workout_xp_today >= self.settings.max_workout_xp:
             return 0
         else:
             last_points_today = self.settings.max_workout_xp - workout_xp_today
 
-            if duration_min < workout_minutes_base:
-                return min(float(base_points / 2) * multiplier, last_points_today)
+            if total_duration_min < workout_minutes_base:
+                points_today = min(float(base_points / 2) * multiplier, last_points_today)
 
-            if duration_min == workout_minutes_base:
-                return min(float(base_points) * multiplier, last_points_today)
+            if total_duration_min == workout_minutes_base:
+                points_today = min(float(base_points) * multiplier, last_points_today)
 
-            if workout_minutes_base < duration_min < workout_minutes_base * 2:
-                return min(float(base_points * 1.5) * multiplier, last_points_today)
+            if workout_minutes_base < total_duration_min < workout_minutes_base * 2:
+                points_today = min(float(base_points * 1.5) * multiplier, last_points_today)
 
-            if duration_min >= workout_minutes_base * 2:
-                return min(float(base_points * 2) * multiplier, last_points_today)
+            if total_duration_min >= workout_minutes_base * 2:
+                points_today = min(float(base_points * 2) * multiplier, last_points_today)
+            
+        if workouts_in_day.count() == 0:
+            return points_today
+        else:
+            points_workouts = points_today / (workouts_in_day.count() + 1)
+            workouts_in_day.update(base_points=points_workouts)
+
+            return points_workouts
 
         raise ValueError("Invalid duration value.")
 
