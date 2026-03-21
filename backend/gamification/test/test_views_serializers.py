@@ -363,13 +363,13 @@ class GamificationAdjustmentsAPITest(APITestCase):
         workout_content_type = ContentType.objects.get_for_model(WorkoutCheckin)
 
         GamificationBonus.objects.create(
-            user=self.user,
+            created_by=self.user,
             score=2.0,
             content_type=meal_content_type,
             object_id=self.meal.id,
         )
         GamificationPenalty.objects.create(
-            user=self.user,
+            created_by=self.user,
             score=1.0,
             content_type=workout_content_type,
             object_id=self.workout.id,

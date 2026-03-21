@@ -86,8 +86,8 @@ class GamificationAdjustmentsAPIView(ListCreateAPIView):
         penalties_qs = GamificationPenalty.objects.all().select_related('content_type')
 
         if user_id:
-            bonuses_qs = bonuses_qs.filter(user_id=user_id)
-            penalties_qs = penalties_qs.filter(user_id=user_id)
+            bonuses_qs = bonuses_qs.filter(created_by_id=user_id)
+            penalties_qs = penalties_qs.filter(created_by_id=user_id)
 
         if target_id:
             bonuses_qs = bonuses_qs.filter(object_id=target_id)

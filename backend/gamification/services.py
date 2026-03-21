@@ -68,8 +68,7 @@ class GamificationService(ABC):
         # months_to_end_season = (actual_season.end_date - datetime.today().date()).days / 30
         # Ultimo dia do mês atual
         last_day_of_month = calendar.monthrange(datetime.today().year, datetime.today().month)[1]
-        days_to_end_month = last_day_of_month - datetime.today().day
-        print(f"Days to end of month: {days_to_end_month}")
+        days_to_end_month = last_day_of_month - datetime.today().day        
         xp = self.get_xp_settings()
 
         # if months_to_end_season < self.settings.months_to_end_season:

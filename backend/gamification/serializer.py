@@ -24,7 +24,7 @@ class GamificationAdjustmentResponseSerializer(serializers.Serializer):
     adjustment_type = serializers.ChoiceField(choices=['bonus', 'penalty'])
     score = serializers.FloatField()
     created_at = serializers.DateTimeField()
-    user_id = serializers.IntegerField()
+    created_by_id = serializers.IntegerField()
     target_type = serializers.ChoiceField(choices=['meal', 'workout_checkin'])
     target_id = serializers.IntegerField()
 
@@ -84,7 +84,7 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
             'adjustment_type': adjustment_type,
             'score': instance.score,
             'created_at': instance.created_at,
-            'user_id': instance.user_id,
+            'created_by_id': instance.created_by_id,
             'target_type': target_type,
             'target_id': instance.object_id,
         }
@@ -97,7 +97,7 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
         model_cls = GamificationBonus if validated_data['adjustment_type'] == 'bonus' else GamificationPenalty
 
         instance = model_cls.objects.create(
-            user=responsible_user,
+            created_by=responsible_user,
             score=validated_data['score'],
             content_type=content_type,
             object_id=target_obj.id,
