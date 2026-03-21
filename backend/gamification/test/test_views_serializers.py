@@ -326,6 +326,7 @@ class GamificationAdjustmentsAPITest(APITestCase):
 
     def test_create_bonus_for_meal(self):
         url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
         payload = {
             'adjustment_type': 'bonus',
             'score': 2.5,
@@ -343,9 +344,12 @@ class GamificationAdjustmentsAPITest(APITestCase):
         self.assertEqual(response.data['target_type'], 'meal')
         self.assertEqual(response.data['target_id'], self.meal.id)
         self.assertTrue(GamificationBonus.objects.filter(id=response.data['id']).exists())
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before + 2.5, places=5)
 
     def test_create_penalty_for_workout(self):
         url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
         payload = {
             'adjustment_type': 'penalty',
             'score': 1.0,
@@ -363,6 +367,8 @@ class GamificationAdjustmentsAPITest(APITestCase):
         self.assertEqual(response.data['target_type'], 'workout_checkin')
         self.assertEqual(response.data['target_id'], self.workout.id)
         self.assertTrue(GamificationPenalty.objects.filter(id=response.data['id']).exists())
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before - 1.0, places=5)
 
     def test_list_adjustments_with_filter(self):
         meal_content_type = ContentType.objects.get_for_model(Meal)
