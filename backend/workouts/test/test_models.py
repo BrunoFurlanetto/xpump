@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db.models import Sum
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -137,6 +138,77 @@ class WorkoutCheckinModelTest(TestCase):
         self.profile.refresh_from_db()
         self.assertGreater(self.profile.score, initial_score)
         self.assertEqual(self.profile.score, initial_score + checkin.base_points)
+
+    def test_delete_workout_removes_xp_by_day_difference(self):
+        """Ao excluir treino, remove XP pela diferença de pontos do dia antes/depois da exclusão."""
+        workout_time = timezone.now() - timedelta(hours=2)
+
+        first = WorkoutCheckin.objects.create(
+            user=self.user,
+            workout_date=workout_time,
+            duration=timedelta(minutes=30)
+        )
+        second = WorkoutCheckin.objects.create(
+            user=self.user,
+            workout_date=workout_time + timedelta(minutes=90),
+            duration=timedelta(minutes=30)
+        )
+
+        self.profile.refresh_from_db()
+        score_before_delete = self.profile.score
+
+        total_before = WorkoutCheckin.objects.filter(
+            user=self.user,
+            workout_date__date=workout_time.date()
+        ).aggregate(total=Sum('base_points'))['total'] or 0.0
+
+        second.delete()
+
+        self.profile.refresh_from_db()
+        total_after = WorkoutCheckin.objects.filter(
+            user=self.user,
+            workout_date__date=workout_time.date()
+        ).aggregate(total=Sum('base_points'))['total'] or 0.0
+
+        removed_xp = score_before_delete - self.profile.score
+        expected_removed = float(total_before) - float(total_after)
+
+        self.assertAlmostEqual(removed_xp, expected_removed, places=5)
+
+    def test_save_workout_adds_xp_by_day_difference(self):
+        """Ao salvar treino, adiciona XP pela diferença de pontos do dia antes/depois."""
+        workout_time = timezone.now() - timedelta(hours=2)
+
+        first = WorkoutCheckin.objects.create(
+            user=self.user,
+            workout_date=workout_time,
+            duration=timedelta(minutes=30)
+        )
+
+        day_total_before = WorkoutCheckin.objects.filter(
+            user=self.user,
+            workout_date__date=workout_time.date()
+        ).aggregate(total=Sum('base_points'))['total'] or 0.0
+
+        self.profile.refresh_from_db()
+        score_before_second = self.profile.score
+
+        WorkoutCheckin.objects.create(
+            user=self.user,
+            workout_date=workout_time + timedelta(minutes=100),
+            duration=timedelta(minutes=40)
+        )
+
+        day_total_after = WorkoutCheckin.objects.filter(
+            user=self.user,
+            workout_date__date=workout_time.date()
+        ).aggregate(total=Sum('base_points'))['total'] or 0.0
+
+        self.profile.refresh_from_db()
+        added_xp = self.profile.score - score_before_second
+        expected_added = float(day_total_after) - float(day_total_before)
+
+        self.assertAlmostEqual(added_xp, expected_added, places=5)
 
 
 class WorkoutCheckinProofModelTest(TestCase):

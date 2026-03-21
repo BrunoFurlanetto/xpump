@@ -121,18 +121,22 @@ class WorkoutGamificationTest(TestCase):
         mock_season.return_value = mock_season_obj
 
         duration = timedelta(minutes=60)
-        result = self.gamification.calculate(self.user, duration)
+        workout_date = datetime.now()
+        result = self.gamification.calculate(self.user, duration, workout_date)
 
         self.assertIsInstance(result, float)
         self.assertGreater(result, 0)
 
     def test_calculate_invalid_args(self):
         """Test calculate method with invalid arguments"""
-        with self.assertRaises(ValueError):
-            self.gamification.calculate(self.user)  # Missing duration
+        result = self.gamification.calculate(self.user)
+        self.assertEqual(result, 0.0)
 
         with self.assertRaises(ValueError):
-            self.gamification.calculate(self.user, "arg1", "arg2")  # Too many args
+            self.gamification.calculate(self.user, "arg1")
+
+        with self.assertRaises(ValueError):
+            self.gamification.calculate(self.user, "arg1", "arg2", "arg3")
 
 
 class MealGamificationTest(TestCase):

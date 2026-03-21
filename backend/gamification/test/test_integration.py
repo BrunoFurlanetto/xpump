@@ -73,7 +73,7 @@ class WorkoutGamificationIntegrationTest(TestCase):
             mock_season.return_value = MagicMock()
             mock_season.return_value.end_date = date.today() + timedelta(days=90)
 
-            xp_earned = self.workout_gamification.calculate(self.user, duration)
+            xp_earned = self.workout_gamification.calculate(self.user, duration, timezone.now())
 
             # Should be base_xp * duration_ratio * multiplier
             # With streak=10, multiplier should be 1.5 (based on default settings)
@@ -93,7 +93,7 @@ class WorkoutGamificationIntegrationTest(TestCase):
             mock_season.return_value = MagicMock()
             mock_season.return_value.end_date = date.today() + timedelta(days=90)
 
-            xp_earned = self.workout_gamification.calculate(self.user, duration)
+            xp_earned = self.workout_gamification.calculate(self.user, duration, timezone.now())
             self.gamification.add_xp(self.user, xp_earned)
             self.profile.refresh_from_db()
             self.assertEqual(self.profile.score, initial_score + xp_earned)
