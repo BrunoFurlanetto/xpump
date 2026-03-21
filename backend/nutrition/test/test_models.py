@@ -4,13 +4,14 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.utils import timezone
 
 from clients.models import Client
-from gamification.models import Season
+from gamification.models import Season, GamificationBonus, GamificationPenalty
 from nutrition.models import Meal, MealConfig, MealStreak, MealProof, NutritionPlan
 from status.models import Status
 from profiles.models import Profile
@@ -259,6 +260,36 @@ class MealModelTest(TestCase):
         meal = Meal(**duplicate_meal_data)
         with self.assertRaises(ValidationError):
             meal.clean()
+
+    def test_delete_meal_removes_adjustments_and_deletes_records(self):
+        meal = Meal.objects.create(**self.meal_data)
+
+        meal_content_type = ContentType.objects.get_for_model(Meal)
+        bonus = GamificationBonus.objects.create(
+            created_by=self.user,
+            score=3.0,
+            content_type=meal_content_type,
+            object_id=meal.id,
+        )
+        penalty = GamificationPenalty.objects.create(
+            created_by=self.user,
+            score=1.0,
+            content_type=meal_content_type,
+            object_id=meal.id,
+        )
+
+        self.profile.refresh_from_db()
+        score_before_delete = self.profile.score
+
+        meal.delete()
+
+        self.profile.refresh_from_db()
+        removed_xp = score_before_delete - self.profile.score
+        expected_removed = float(meal.base_points or 0.0) + 3.0 - 1.0
+
+        self.assertAlmostEqual(removed_xp, expected_removed, places=5)
+        self.assertFalse(GamificationBonus.objects.filter(id=bonus.id).exists())
+        self.assertFalse(GamificationPenalty.objects.filter(id=penalty.id).exists())
 
     def test_same_meal_type_different_day_allowed(self):
         """Test that same meal type on different day is allowed"""

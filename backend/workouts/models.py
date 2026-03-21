@@ -1,12 +1,14 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
+from gamification.models import GamificationBonus, GamificationPenalty
 from gamification.services import Gamification
 from profiles.models import Profile
 from status.models import Status
@@ -98,10 +100,17 @@ class WorkoutCheckin(models.Model):
         user = self.user
         workout_date = self.workout_date
         workout_day = workout_date.date()
+        workout_id = self.id
 
         day_points_before_delete = user.workouts.filter(
             workout_date__date=workout_day
         ).aggregate(total_xp=Sum('base_points'))['total_xp'] or 0.0
+
+        workout_content_type = ContentType.objects.get_for_model(WorkoutCheckin)
+        bonus_qs = GamificationBonus.objects.filter(content_type=workout_content_type, object_id=workout_id)
+        penalty_qs = GamificationPenalty.objects.filter(content_type=workout_content_type, object_id=workout_id)
+        bonus_total = bonus_qs.aggregate(total=Sum('score'))['total'] or 0.0
+        penalty_total = penalty_qs.aggregate(total=Sum('score'))['total'] or 0.0
 
         # Check if this workout is part of the current streak BEFORE deleting
         is_part_of_streak = False
@@ -134,6 +143,15 @@ class WorkoutCheckin(models.Model):
 
         if xp_to_remove > 0:
             Gamification().remove_xp(user, xp_to_remove)
+
+        # Revert bonus/penalty side effects for this workout and remove adjustment records.
+        if bonus_total > 0:
+            Gamification().remove_xp(user, float(bonus_total))
+        if penalty_total > 0:
+            Gamification().add_xp(user, float(penalty_total))
+
+        bonus_qs.delete()
+        penalty_qs.delete()
 
         # Update streak if the deleted workout was part of the current streak
         if streak and is_part_of_streak:

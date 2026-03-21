@@ -174,6 +174,15 @@ class GamificationBonus(models.Model):
     def __str__(self):
         return f"Bonus {self.score} para {self.content_object}"
 
+    def save(self, *args, **kwargs):
+        is_create = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_create and self.content_object and hasattr(self.content_object, 'user'):
+            from gamification.services import Gamification
+
+            Gamification().add_xp(self.content_object.user, float(self.score or 0.0))
+
 
 class GamificationPenalty(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="gamification_penalties")
@@ -195,3 +204,12 @@ class GamificationPenalty(models.Model):
 
     def __str__(self):
         return f"Penalidade {self.score} para {self.content_object}"
+
+    def save(self, *args, **kwargs):
+        is_create = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_create and self.content_object and hasattr(self.content_object, 'user'):
+            from gamification.services import Gamification
+
+            Gamification().remove_xp(self.content_object.user, float(self.score or 0.0))
