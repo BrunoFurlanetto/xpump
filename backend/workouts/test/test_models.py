@@ -213,9 +213,12 @@ class WorkoutCheckinModelTest(TestCase):
 
     def test_delete_workout_removes_adjustments_and_deletes_records(self):
         """Ao excluir treino, reverte bônus/penalidades vinculados e remove os registros."""
+<<<<<<< HEAD
         self.profile.score = 100.0
         self.profile.save()
 
+=======
+>>>>>>> 369294b73fef25faeceab84f11f741dd1acdae11
         workout_time = timezone.now() - timedelta(hours=2)
         checkin = WorkoutCheckin.objects.create(
             user=self.user,

@@ -262,9 +262,12 @@ class MealModelTest(TestCase):
             meal.clean()
 
     def test_delete_meal_removes_adjustments_and_deletes_records(self):
+<<<<<<< HEAD
         self.profile.score = 100.0
         self.profile.save()
 
+=======
+>>>>>>> 369294b73fef25faeceab84f11f741dd1acdae11
         meal = Meal.objects.create(**self.meal_data)
 
         meal_content_type = ContentType.objects.get_for_model(Meal)
