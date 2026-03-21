@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
 
@@ -23,6 +22,7 @@ class GamificationAdjustmentResponseSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     adjustment_type = serializers.ChoiceField(choices=['bonus', 'penalty'])
     score = serializers.FloatField()
+    reason = serializers.CharField(allow_null=True, allow_blank=True)
     created_at = serializers.DateTimeField()
     created_by_id = serializers.IntegerField()
     target_type = serializers.ChoiceField(choices=['meal', 'workout_checkin'])
@@ -41,19 +41,11 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
 
     adjustment_type = serializers.ChoiceField(choices=ADJUSTMENT_CHOICES)
     score = serializers.FloatField(min_value=0.01)
+    reason = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=255)
     target_type = serializers.ChoiceField(choices=TARGET_CHOICES)
     target_id = serializers.IntegerField(min_value=1)
-    user_id = serializers.IntegerField(required=False, min_value=1)
 
     def validate(self, attrs):
-        request = self.context['request']
-        user_id = attrs.get('user_id')
-
-        if user_id and not request.user.is_staff:
-            raise serializers.ValidationError({
-                'user_id': 'Only staff users can set user_id explicitly.'
-            })
-
         model = Meal if attrs['target_type'] == 'meal' else WorkoutCheckin
 
         try:
@@ -64,12 +56,7 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
             })
 
         attrs['target_obj'] = target_obj
-        attrs['responsible_user'] = request.user
-
-        if user_id:
-            attrs['responsible_user'] = User.objects.filter(pk=user_id).first()
-            if attrs['responsible_user'] is None:
-                raise serializers.ValidationError({'user_id': f'User with id {user_id} was not found.'})
+        attrs['responsible_user'] = self.context['request'].user
 
         return attrs
 
@@ -83,6 +70,7 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
             'id': instance.id,
             'adjustment_type': adjustment_type,
             'score': instance.score,
+            'reason': instance.reason,
             'created_at': instance.created_at,
             'created_by_id': instance.created_by_id,
             'target_type': target_type,
@@ -99,6 +87,7 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
         instance = model_cls.objects.create(
             created_by=responsible_user,
             score=validated_data['score'],
+            reason=validated_data.get('reason'),
             content_type=content_type,
             object_id=target_obj.id,
         )

@@ -329,6 +329,7 @@ class GamificationAdjustmentsAPITest(APITestCase):
         payload = {
             'adjustment_type': 'bonus',
             'score': 2.5,
+            'reason': 'Bonus manual por validacao',
             'target_type': 'meal',
             'target_id': self.meal.id,
         }
@@ -337,6 +338,8 @@ class GamificationAdjustmentsAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['adjustment_type'], 'bonus')
+        self.assertEqual(response.data['reason'], 'Bonus manual por validacao')
+        self.assertEqual(response.data['created_by_id'], self.user.id)
         self.assertEqual(response.data['target_type'], 'meal')
         self.assertEqual(response.data['target_id'], self.meal.id)
         self.assertTrue(GamificationBonus.objects.filter(id=response.data['id']).exists())
@@ -346,6 +349,7 @@ class GamificationAdjustmentsAPITest(APITestCase):
         payload = {
             'adjustment_type': 'penalty',
             'score': 1.0,
+            'reason': 'Penalidade por inconsistencia',
             'target_type': 'workout_checkin',
             'target_id': self.workout.id,
         }
@@ -354,6 +358,8 @@ class GamificationAdjustmentsAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['adjustment_type'], 'penalty')
+        self.assertEqual(response.data['reason'], 'Penalidade por inconsistencia')
+        self.assertEqual(response.data['created_by_id'], self.user.id)
         self.assertEqual(response.data['target_type'], 'workout_checkin')
         self.assertEqual(response.data['target_id'], self.workout.id)
         self.assertTrue(GamificationPenalty.objects.filter(id=response.data['id']).exists())
@@ -381,3 +387,20 @@ class GamificationAdjustmentsAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
         self.assertTrue(all(item['adjustment_type'] == 'bonus' for item in response.data))
+
+    def test_list_adjustments_filter_by_created_by_id(self):
+        meal_content_type = ContentType.objects.get_for_model(Meal)
+        GamificationBonus.objects.create(
+            created_by=self.user,
+            score=3.5,
+            reason='Filtro por autor',
+            content_type=meal_content_type,
+            object_id=self.meal.id,
+        )
+
+        url = reverse('gamification-adjustments')
+        response = self.client.get(url, {'created_by_id': self.user.id})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+        self.assertTrue(all(item['created_by_id'] == self.user.id for item in response.data))

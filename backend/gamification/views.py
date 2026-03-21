@@ -78,16 +78,18 @@ class GamificationAdjustmentsAPIView(ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         adjustment_type = request.query_params.get('adjustment_type')
+        created_by_id = request.query_params.get('created_by_id')
         user_id = request.query_params.get('user_id')
+        filter_created_by = created_by_id or user_id
         target_type = request.query_params.get('target_type')
         target_id = request.query_params.get('target_id')
 
         bonuses_qs = GamificationBonus.objects.all().select_related('content_type')
         penalties_qs = GamificationPenalty.objects.all().select_related('content_type')
 
-        if user_id:
-            bonuses_qs = bonuses_qs.filter(created_by_id=user_id)
-            penalties_qs = penalties_qs.filter(created_by_id=user_id)
+        if filter_created_by:
+            bonuses_qs = bonuses_qs.filter(created_by_id=filter_created_by)
+            penalties_qs = penalties_qs.filter(created_by_id=filter_created_by)
 
         if target_id:
             bonuses_qs = bonuses_qs.filter(object_id=target_id)
