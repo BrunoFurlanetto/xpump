@@ -154,8 +154,6 @@ class WorkoutGamification(GamificationService):
 
             return points_workouts
 
-        raise ValueError("Invalid duration value.")
-
 
 class MealGamification(GamificationService):
     def __init__(self):
