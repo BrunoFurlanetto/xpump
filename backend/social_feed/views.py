@@ -10,7 +10,7 @@ from .serializers import (
     PostSerializer, PostListSerializer, PostCreateSerializer, PostUpdateSerializer,
     CommentSerializer, ReportSerializer, ReportCreateSerializer, CommentCreateSerializer
 )
-from .pagination import PostsPagination, CommentsPagination
+from .pagination import PostsPagination, CommentsPagination, ReportsPagination
 
 
 @extend_schema(tags=['Social Feed'])
@@ -238,6 +238,7 @@ class CommentToggleLikeView(generics.GenericAPIView):
 class ReportListCreateView(generics.ListCreateAPIView):
     """List all reports or create a new report."""
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = ReportsPagination
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -246,8 +247,22 @@ class ReportListCreateView(generics.ListCreateAPIView):
         return ReportSerializer
 
     def get_queryset(self):
-        """Users can only see their own reports."""
-        return Report.objects.all()
+        """Admins can see all reports; users can only see their own reports."""
+        queryset = Report.objects.select_related(
+            'reported_by', 'post__user', 'comment__post__user'
+        ).prefetch_related(
+            'post__content_files', 'comment__post__content_files'
+        )
+
+        is_admin = self.request.user.is_staff or self.request.user.is_superuser
+        if not is_admin:
+            queryset = queryset.filter(reported_by=self.request.user)
+
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        return queryset
 
     def perform_create(self, serializer):
         """Create a report with the current user as reporter."""
@@ -261,10 +276,18 @@ class ReportDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """Users can only see their own reports."""
-        return Report.objects.filter(
-            reported_by=self.request.user
-        ).select_related('post__user', 'reported_by__user')
+        """Admins can retrieve any report; users can only retrieve their own reports."""
+        queryset = Report.objects.select_related(
+            'reported_by', 'post__user', 'comment__post__user'
+        ).prefetch_related(
+            'post__content_files', 'comment__post__content_files'
+        )
+
+        is_admin = self.request.user.is_staff or self.request.user.is_superuser
+        if not is_admin:
+            queryset = queryset.filter(reported_by=self.request.user)
+
+        return queryset
 
 
 @extend_schema(tags=['Social Feed'])
