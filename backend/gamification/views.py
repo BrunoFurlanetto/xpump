@@ -101,6 +101,12 @@ class GamificationAdjustmentsAPIView(ListCreateAPIView):
         elif target_type == 'workout_checkin':
             bonuses_qs = bonuses_qs.filter(content_type__model='workoutcheckin')
             penalties_qs = penalties_qs.filter(content_type__model='workoutcheckin')
+        elif target_type == 'social':
+            bonuses_qs = bonuses_qs.filter(content_type__model='post')
+            penalties_qs = penalties_qs.filter(content_type__model='post')
+        elif target_type == 'comments':
+            bonuses_qs = bonuses_qs.filter(content_type__model='comment')
+            penalties_qs = penalties_qs.filter(content_type__model='comment')
 
         items = []
         if adjustment_type in (None, '', 'bonus'):

@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from gamification.models import GamificationSettings, Season, GamificationBonus, GamificationPenalty
 from nutrition.models import Meal
+from social_feed.models import Post, Comment
 from workouts.models import WorkoutCheckin
 
 
@@ -25,7 +26,7 @@ class GamificationAdjustmentResponseSerializer(serializers.Serializer):
     reason = serializers.CharField(allow_null=True, allow_blank=True)
     created_at = serializers.DateTimeField()
     created_by_id = serializers.IntegerField()
-    target_type = serializers.ChoiceField(choices=['meal', 'workout_checkin'])
+    target_type = serializers.ChoiceField(choices=['meal', 'workout_checkin', 'social', 'comments'])
     target_id = serializers.IntegerField()
 
 
@@ -37,6 +38,8 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
     TARGET_CHOICES = [
         ('meal', 'Meal'),
         ('workout_checkin', 'WorkoutCheckin'),
+        ('social', 'SocialPost'),
+        ('comments', 'Comment'),
     ]
 
     adjustment_type = serializers.ChoiceField(choices=ADJUSTMENT_CHOICES)
@@ -45,8 +48,22 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
     target_type = serializers.ChoiceField(choices=TARGET_CHOICES)
     target_id = serializers.IntegerField(min_value=1)
 
+    TARGET_MODEL_MAP = {
+        'meal': Meal,
+        'workout_checkin': WorkoutCheckin,
+        'social': Post,
+        'comments': Comment,
+    }
+
+    MODEL_TARGET_MAP = {
+        'workoutcheckin': 'workout_checkin',
+        'meal': 'meal',
+        'post': 'social',
+        'comment': 'comments',
+    }
+
     def validate(self, attrs):
-        model = Meal if attrs['target_type'] == 'meal' else WorkoutCheckin
+        model = self.TARGET_MODEL_MAP[attrs['target_type']]
 
         try:
             target_obj = model.objects.get(pk=attrs['target_id'])
@@ -62,9 +79,10 @@ class GamificationAdjustmentSerializer(serializers.Serializer):
 
     @staticmethod
     def to_adjustment_payload(instance, adjustment_type):
-        target_type = instance.content_type.model
-        if target_type == 'workoutcheckin':
-            target_type = 'workout_checkin'
+        target_type = GamificationAdjustmentSerializer.MODEL_TARGET_MAP.get(
+            instance.content_type.model,
+            instance.content_type.model,
+        )
 
         return {
             'id': instance.id,
