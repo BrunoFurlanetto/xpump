@@ -23,11 +23,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee, Flag } from "lucide-react";
+import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee, Flag, TrendingUp, TrendingDown } from "lucide-react";
+import { AdjustmentBadge } from "@/components/ui/adjustment-badge";
 import { Meal } from "@/lib/api/nutrition";
 import { MealType, useDeleteMeal, useUpdateMeal } from "@/hooks/useMealsQuery";
 import { ImageModal } from "@/components/ui/image-modal";
 import { useImageModal } from "@/hooks/useImageModal";
+import { useUserAuth } from "@/context/userAuthContext";
+import { AdjustmentDialog } from "@/components/admin/adjustment-dialog";
 
 interface MealCardProps {
   meal: Meal;
@@ -43,7 +46,10 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [adjustmentOpen, setAdjustmentOpen] = useState(false);
+  const [adjustmentType, setAdjustmentType] = useState<"bonus" | "penalty">("bonus");
   const imageModal = useImageModal();
+  const { isAdmin } = useUserAuth();
 
   const handleSaveComments = async () => {
     try {
@@ -86,11 +92,10 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  meal.fasting
+                className={`w-10 h-10 rounded-lg flex items-center justify-center ${meal.fasting
                     ? "bg-gradient-to-br from-amber-500/30 to-orange-500/20"
                     : "bg-gradient-to-br from-primary/20 to-primary/10"
-                }`}
+                  }`}
               >
                 {meal.fasting ? (
                   <Coffee className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -99,12 +104,16 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-1 ">
+                  <div className="flex items-center gap-1">
+                    <Badge variant="secondary" className="text-xs">
+                      <Trophy className="h-3 w-3 mr-1" />
+                      {Math.round(meal.base_points * meal.multiplier) + (meal.total_bonus || 0) - (meal.total_penalty || 0)}
+                    </Badge>
+                    <AdjustmentBadge type="bonus" total={meal.total_bonus || 0} entries={meal.bonus_list || []} />
+                    <AdjustmentBadge type="penalty" total={meal.total_penalty || 0} entries={meal.penalties_list || []} />
+                  </div>
                   <h4 className="font-semibold text-foreground">{meal.fasting ? `Jejum` : mealType.name}</h4>
-                  <Badge variant="secondary" className="text-xs">
-                    <Trophy className="h-3 w-3 mr-1" />
-                    {Math.round(meal.base_points * meal.multiplier)}
-                  </Badge>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
@@ -137,6 +146,25 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
                     <Flag className="mr-2 h-4 w-4" />
                     Denunciar
                   </DropdownMenuItem>
+                )}
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => { setAdjustmentType("bonus"); setAdjustmentOpen(true); }}
+                      className="text-green-500"
+                    >
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Aplicar bônus
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setAdjustmentType("penalty"); setAdjustmentOpen(true); }}
+                      className="text-red-500"
+                    >
+                      <TrendingDown className="mr-2 h-4 w-4" />
+                      Aplicar penalidade
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -226,6 +254,17 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
         onClose={imageModal.closeModal}
         alt={`Foto da refeição - ${mealType.name}`}
       />
+
+      {isAdmin && (
+        <AdjustmentDialog
+          open={adjustmentOpen}
+          onOpenChange={setAdjustmentOpen}
+          defaultType={adjustmentType}
+          targetType="meal"
+          targetId={meal.id}
+          contextLabel={`${meal.fasting ? "Jejum" : mealType.name}`}
+        />
+      )}
     </>
   );
 }

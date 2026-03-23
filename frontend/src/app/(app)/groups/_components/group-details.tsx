@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, Crown, Users, ArrowLeft, UserCog, Loader2, Calendar, Users2, Search, Star } from "lucide-react";
+import { AdjustmentBadge } from "@/components/ui/adjustment-badge";
 import { GroupMembersManager } from "./group-members-manager";
 import { Group, GroupsAPI } from "@/lib/api/groups";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -253,9 +254,11 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                               <h4 className="font-semibold text-foreground truncate">{member.full_name}</h4>
                               {member.is_admin && <Crown className="h-4 w-4 text-yellow-400" />}
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                               <span>💪 {member.workouts || 0} treinos</span>
                               <span>🥗 {member.meals || 0} refeições</span>
+                              <AdjustmentBadge type="bonus" total={member.adjustments?.total_bonus || 0} entries={member.adjustments?.bonus_list || []} />
+                              <AdjustmentBadge type="penalty" total={member.adjustments?.total_penalty || 0} entries={member.adjustments?.penalties_list || []} />
                             </div>
                           </div>
 

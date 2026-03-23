@@ -14,6 +14,10 @@ export interface WorkoutCheckin {
   }>;
   current_streak: number;
   longest_streak: number;
+  total_bonus: number;
+  total_penalty: number;
+  bonus_list: import("./gamification").AdjustmentEntry[];
+  penalties_list: import("./gamification").AdjustmentEntry[];
 }
 
 export interface CreateWorkoutData {
@@ -124,7 +128,9 @@ export class WorkoutsAPI {
 
     const thisMonthWorkouts = workouts.filter((w) => new Date(w.workout_date) >= monthStart);
 
-    const totalPoints = workouts.reduce((sum, w) => sum + w.base_points * w.multiplier, 0);
+    const totalPoints = workouts.reduce(
+      (sum, w) => sum + w.base_points * w.multiplier + (w.total_bonus || 0) - (w.total_penalty || 0), 0
+    );
 
     const totalMinutes = workouts.reduce((sum, w) => {
       const [hours, minutes] = w.duration.split(":").map(Number);
