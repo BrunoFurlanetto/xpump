@@ -237,10 +237,29 @@ class ReportSerializer(serializers.ModelSerializer):
     reported_by = serializers.SerializerMethodField()
     reported_post = serializers.SerializerMethodField()
 
+    def get_reported_by(self, obj):
+        if not obj.reported_by:
+            return None
+        return {
+            'id': obj.reported_by.id,
+            'username': obj.reported_by.username,
+        }
+
+    def get_reported_post(self, obj):
+        post = obj.post if obj.report_type == 'post' else getattr(obj.comment, 'post', None)
+        if not post:
+            return None
+        return {
+            'id': post.id,
+            'user_id': post.user_id,
+            'content_text': post.content_text,
+            'created_at': post.created_at,
+        }
+
     class Meta:
         model = Report
         fields = [
-            'id', 'report_type', 'post', 'comment', 'reported_by', 'reason',
+            'id', 'report_type', 'post', 'comment', 'reported_by', 'reported_post', 'reason',
             'other_reason', 'status', 'created_at', 'resolved_at', 'notes', 'response'
         ]
         read_only_fields = [
