@@ -47,6 +47,10 @@ class PostViewSet(ModelViewSet):
             'comments__user', 'likes__user', 'content_files'
         )
 
+        # In general listing, expose only published posts.
+        if self.action == 'list':
+            queryset = queryset.filter(status__action='PUBLISHED')
+
         # Superusers can see all posts without employer filtering
         if user.is_superuser:
             # Filter by visibility (optional for superusers)

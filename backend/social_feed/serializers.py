@@ -237,13 +237,22 @@ class ReportSerializer(serializers.ModelSerializer):
     reported_by = serializers.SerializerMethodField()
     reported_post = serializers.SerializerMethodField()
 
-    def get_reported_by(self, obj):
-        if not obj.reported_by:
+    @staticmethod
+    def _build_user_payload(user):
+        if not user:
             return None
+
+        full_name = user.get_full_name().strip()
+        if not full_name:
+            full_name = user.username
+
         return {
-            'id': obj.reported_by.id,
-            'username': obj.reported_by.username,
+            'id': user.id,
+            'full_name': full_name,
         }
+
+    def get_reported_by(self, obj):
+        return self._build_user_payload(obj.reported_by)
 
     def get_reported_post(self, obj):
         post = obj.post if obj.report_type == 'post' else getattr(obj.comment, 'post', None)
@@ -251,7 +260,7 @@ class ReportSerializer(serializers.ModelSerializer):
             return None
         return {
             'id': post.id,
-            'user_id': post.user_id,
+            'user': self._build_user_payload(post.user),
             'content_text': post.content_text,
             'created_at': post.created_at,
         }
