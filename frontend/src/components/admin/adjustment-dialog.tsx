@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +52,10 @@ export function AdjustmentDialog({
   const [adjustmentType, setAdjustmentType] = useState<"bonus" | "penalty">(defaultType || "penalty");
   const [score, setScore] = useState("");
   const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (defaultType) setAdjustmentType(defaultType);
+  }, [defaultType]);
 
   const createAdjustment = useCreateAdjustment();
 

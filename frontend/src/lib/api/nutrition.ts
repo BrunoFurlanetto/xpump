@@ -23,6 +23,10 @@ export interface Meal {
   current_streak: number;
   longest_streak: number;
   fasting: boolean;
+  total_bonus: number;
+  total_penalty: number;
+  bonus_list: import("./gamification").AdjustmentEntry[];
+  penalties_list: import("./gamification").AdjustmentEntry[];
 }
 
 export interface CreateMealData {

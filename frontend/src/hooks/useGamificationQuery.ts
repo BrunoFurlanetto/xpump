@@ -3,6 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GamificationAPI, CreateAdjustmentData, AdjustmentResponse } from "@/lib/api/gamification";
 import { toast } from "sonner";
+import { workoutsKeys } from "./useWorkoutsQuery";
+import { mealsKeys } from "./useMealsQuery";
+import { groupsKeys } from "./useGroupsQuery";
 
 export const gamificationKeys = {
   all: ["gamification"] as const,
@@ -19,6 +22,13 @@ export function useCreateAdjustment() {
     mutationFn: (data: CreateAdjustmentData) => GamificationAPI.createAdjustment(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: gamificationKeys.all });
+      // Invalidar dados que contêm total_bonus/total_penalty
+      if (variables.target_type === "workout_checkin") {
+        queryClient.invalidateQueries({ queryKey: workoutsKeys.all });
+      } else if (variables.target_type === "meal") {
+        queryClient.invalidateQueries({ queryKey: mealsKeys.all });
+      }
+      queryClient.invalidateQueries({ queryKey: groupsKeys.all });
       const label = variables.adjustment_type === "bonus" ? "Bônus" : "Penalidade";
       toast.success(`${label} aplicado(a) com sucesso!`);
     },

@@ -1,5 +1,12 @@
 // Gamification API
 
+export interface AdjustmentEntry {
+  score: number;
+  created_at: string;
+  created_by: { id: number; fullname: string };
+  reason?: string;
+}
+
 export interface CreateAdjustmentData {
   adjustment_type: "bonus" | "penalty";
   score: number;

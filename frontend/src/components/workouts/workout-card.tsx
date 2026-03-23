@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MapPin, MessageSquare, Trophy, MoreVertical, Edit3, Trash2, Save, X, Flag, TrendingUp, TrendingDown } from "lucide-react";
+import { MapPin, MessageSquare, MoreVertical, Edit3, Trash2, Save, X, Flag, TrendingUp, TrendingDown } from "lucide-react";
 import { WorkoutCheckin } from "@/lib/api/workouts";
 import { ImageModal } from "@/components/ui/image-modal";
 import { useImageModal } from "@/hooks/useImageModal";
@@ -118,10 +118,6 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
                     <span>{workout.location}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1">
-                  <Trophy className="h-3 w-3" />
-                  <span>{workout.base_points.toFixed(1)} pontos</span>
-                </div>
               </div>
             </div>
 
