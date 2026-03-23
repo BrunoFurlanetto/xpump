@@ -23,11 +23,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee, Flag } from "lucide-react";
+import { MessageSquare, Clock, Trophy, MoreVertical, Edit3, Trash2, Save, X, Coffee, Flag, TrendingUp, TrendingDown } from "lucide-react";
 import { Meal } from "@/lib/api/nutrition";
 import { MealType, useDeleteMeal, useUpdateMeal } from "@/hooks/useMealsQuery";
 import { ImageModal } from "@/components/ui/image-modal";
 import { useImageModal } from "@/hooks/useImageModal";
+import { useUserAuth } from "@/context/userAuthContext";
+import { AdjustmentDialog } from "@/components/admin/adjustment-dialog";
 
 interface MealCardProps {
   meal: Meal;
@@ -43,7 +45,10 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [adjustmentOpen, setAdjustmentOpen] = useState(false);
+  const [adjustmentType, setAdjustmentType] = useState<"bonus" | "penalty">("bonus");
   const imageModal = useImageModal();
+  const { isAdmin } = useUserAuth();
 
   const handleSaveComments = async () => {
     try {
@@ -138,6 +143,25 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
                     Denunciar
                   </DropdownMenuItem>
                 )}
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => { setAdjustmentType("bonus"); setAdjustmentOpen(true); }}
+                      className="text-green-500"
+                    >
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Aplicar bônus
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setAdjustmentType("penalty"); setAdjustmentOpen(true); }}
+                      className="text-red-500"
+                    >
+                      <TrendingDown className="mr-2 h-4 w-4" />
+                      Aplicar penalidade
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -226,6 +250,17 @@ export function MealCard({ meal, mealType, isOwnProfile = true }: MealCardProps)
         onClose={imageModal.closeModal}
         alt={`Foto da refeição - ${mealType.name}`}
       />
+
+      {isAdmin && (
+        <AdjustmentDialog
+          open={adjustmentOpen}
+          onOpenChange={setAdjustmentOpen}
+          defaultType={adjustmentType}
+          targetType="meal"
+          targetId={meal.id}
+          contextLabel={`${meal.fasting ? "Jejum" : mealType.name}`}
+        />
+      )}
     </>
   );
 }

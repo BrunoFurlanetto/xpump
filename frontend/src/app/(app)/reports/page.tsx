@@ -282,7 +282,7 @@ export default function ReportsPage() {
                         </p>
                       )}
                       <Button variant="outline" size="sm" className="mt-2" asChild>
-                        <Link href={`/post/${selectedReport.reported_post.id}`} target="_blank">
+                        <Link href={`/post/${selectedReport.reported_post.id}`} >
                           <ExternalLink className="h-3 w-3 mr-1" />
                           Ver post completo
                         </Link>

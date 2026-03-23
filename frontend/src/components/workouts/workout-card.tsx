@@ -23,10 +23,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MapPin, MessageSquare, Trophy, MoreVertical, Edit3, Trash2, Save, X, Flag } from "lucide-react";
+import { MapPin, MessageSquare, Trophy, MoreVertical, Edit3, Trash2, Save, X, Flag, TrendingUp, TrendingDown } from "lucide-react";
 import { WorkoutCheckin } from "@/lib/api/workouts";
 import { ImageModal } from "@/components/ui/image-modal";
 import { useImageModal } from "@/hooks/useImageModal";
+import { useUserAuth } from "@/context/userAuthContext";
+import { AdjustmentDialog } from "@/components/admin/adjustment-dialog";
 
 interface WorkoutCardProps {
   workout: WorkoutCheckin;
@@ -43,7 +45,10 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [adjustmentOpen, setAdjustmentOpen] = useState(false);
+  const [adjustmentType, setAdjustmentType] = useState<"bonus" | "penalty">("bonus");
   const imageModal = useImageModal();
+  const { isAdmin } = useUserAuth();
 
   const handleSaveComments = async () => {
     try {
@@ -145,6 +150,25 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
                     Denunciar
                   </DropdownMenuItem>
                 )}
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => { setAdjustmentType("bonus"); setAdjustmentOpen(true); }}
+                      className="text-green-500"
+                    >
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Aplicar bônus
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { setAdjustmentType("penalty"); setAdjustmentOpen(true); }}
+                      className="text-red-500"
+                    >
+                      <TrendingDown className="mr-2 h-4 w-4" />
+                      Aplicar penalidade
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -237,6 +261,17 @@ export function WorkoutCard({ workout, onUpdateComments, onDelete, formatDate, f
         onClose={imageModal.closeModal}
         alt="Foto do treino"
       />
+
+      {isAdmin && (
+        <AdjustmentDialog
+          open={adjustmentOpen}
+          onOpenChange={setAdjustmentOpen}
+          defaultType={adjustmentType}
+          targetType="workout_checkin"
+          targetId={workout.id}
+          contextLabel={`Treino de ${formatDate(workout.workout_date)}`}
+        />
+      )}
     </>
   );
 }

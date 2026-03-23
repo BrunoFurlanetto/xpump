@@ -170,7 +170,7 @@ export function PostCard({
       </div>
       <CardHeader className="pb-3 mt-2 overflow-hidden">
         <div className="flex items-start justify-between">
-          <Link href={`/profile/${post.user.id}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
+          <Link href={`/profile/${post.profile_id}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                 <User className="h-5 w-5" />
