@@ -10,8 +10,10 @@ from datetime import date, timedelta
 from gamification.models import GamificationSettings, Season, GamificationBonus, GamificationPenalty
 from gamification.serializer import GamificationSettingsSerializer, SeasonSerializer
 from clients.models import Client
+from groups.models import Group
 from profiles.models import Profile
 from nutrition.models import MealConfig, Meal
+from social_feed.models import Post, Comment
 from workouts.models import WorkoutCheckin
 
 
@@ -299,7 +301,16 @@ class GamificationAdjustmentsAPITest(APITestCase):
             phone='(11)98888-7777',
             address='Rua Ajuste, 123, Centro, Sao Paulo - SP',
         )
-        Profile.objects.create(user=self.user, employer=self.client_obj, score=0, level=0)
+        self.profile = Profile.objects.create(user=self.user, employer=self.client_obj, score=0, level=0)
+
+        self.main_group = Group.objects.create(
+            name='Main Group Adjustment',
+            description='Main group for adjustment tests',
+            created_by=self.user,
+            owner=self.user,
+            main=True,
+        )
+        self.profile.groups.add(self.main_group)
 
         self.meal_config = MealConfig.objects.create(
             meal_name='breakfast',
@@ -319,6 +330,19 @@ class GamificationAdjustmentsAPITest(APITestCase):
             workout_date=timezone.now() - timedelta(hours=3),
             duration=timedelta(minutes=40),
             comments='workout for adjustment test'
+        )
+
+        self.social_post = Post.objects.create(
+            user=self.user,
+            content_type='social',
+            content_text='social post for adjustment test',
+            visibility='global',
+        )
+
+        self.comment = Comment.objects.create(
+            post=self.social_post,
+            user=self.user,
+            text='comment for adjustment test',
         )
 
         self.client = APIClient()
@@ -410,3 +434,43 @@ class GamificationAdjustmentsAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
         self.assertTrue(all(item['created_by_id'] == self.user.id for item in response.data))
+
+    def test_create_bonus_for_social_post(self):
+        url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
+        payload = {
+            'adjustment_type': 'bonus',
+            'score': 2.0,
+            'reason': 'Bonus social post',
+            'target_type': 'social',
+            'target_id': self.social_post.id,
+        }
+
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['adjustment_type'], 'bonus')
+        self.assertEqual(response.data['target_type'], 'social')
+        self.assertEqual(response.data['target_id'], self.social_post.id)
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before + 2.0, places=5)
+
+    def test_create_penalty_for_comment(self):
+        url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
+        payload = {
+            'adjustment_type': 'penalty',
+            'score': 1.25,
+            'reason': 'Penalty comment',
+            'target_type': 'comments',
+            'target_id': self.comment.id,
+        }
+
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['adjustment_type'], 'penalty')
+        self.assertEqual(response.data['target_type'], 'comments')
+        self.assertEqual(response.data['target_id'], self.comment.id)
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before - 1.25, places=5)

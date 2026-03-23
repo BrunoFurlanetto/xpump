@@ -262,6 +262,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
         request = self.context.get('request')
         content_files = []
+        
         for content_file in post.content_files.all():
             file_url = content_file.file.url
             if request is not None:
