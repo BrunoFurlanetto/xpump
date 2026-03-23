@@ -239,10 +239,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _build_user_payload(user):
-        if not user:
-            return None
-
-        full_name = user.get_full_name().strip()
+        full_name = f"{user.first_name} {user.last_name}".strip()
         if not full_name:
             full_name = user.username
 
@@ -255,15 +252,34 @@ class ReportSerializer(serializers.ModelSerializer):
         return self._build_user_payload(obj.reported_by)
 
     def get_reported_post(self, obj):
-        post = obj.post if obj.report_type == 'post' else getattr(obj.comment, 'post', None)
+        post = obj.post
+
+        if not post and obj.comment_id and getattr(obj.comment, 'post', None):
+            post = obj.comment.post
+
         if not post:
             return None
+
+        request = self.context.get('request')
+        content_files = []
+        for content_file in post.content_files.all():
+            file_url = content_file.file.url
+            if request is not None:
+                file_url = request.build_absolute_uri(file_url)
+            content_files.append(file_url)
+
         return {
             'id': post.id,
             'user': self._build_user_payload(post.user),
+            'content_type': post.content_type,
             'content_text': post.content_text,
+            'visibility': post.visibility,
+            'comments_count': post.comments_count,
+            'likes_count': post.likes_count,
             'created_at': post.created_at,
+            'content_files': content_files,
         }
+
 
     class Meta:
         model = Report
