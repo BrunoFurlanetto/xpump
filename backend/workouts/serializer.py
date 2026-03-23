@@ -136,7 +136,7 @@ class WorkoutCheckinSerializer(serializers.ModelSerializer):
                     'id': bonus.created_by_id,
                     'fullname': self._get_full_name(bonus.created_by),
                 },
-                'readon': bonus.reason,
+                'reason': bonus.reason,
             }
             cache[bonus.object_id]['bonus_list'].append(payload)
             cache[bonus.object_id]['total_bonus'] += float(bonus.score)
@@ -149,7 +149,7 @@ class WorkoutCheckinSerializer(serializers.ModelSerializer):
                     'id': penalty.created_by_id,
                     'fullname': self._get_full_name(penalty.created_by),
                 },
-                'readon': penalty.reason,
+                'reason': penalty.reason,
             }
             cache[penalty.object_id]['penalties_list'].append(payload)
             cache[penalty.object_id]['total_penalty'] += float(penalty.score)
