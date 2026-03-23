@@ -62,22 +62,12 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class SocialFeedMealSerializer(MealSerializer):
-    meal_type = serializers.SerializerMethodField()
-
-    class Meta(MealSerializer.Meta):
-        fields = MealSerializer.Meta.fields
-
-    def get_meal_type(self, obj):
-        return obj.meal_type.get_meal_name_display()
-
-
 class PostSerializer(serializers.ModelSerializer):
     user = UserSimpleSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     likes = PostLikeSerializer(many=True, read_only=True)
     workout_checkin = WorkoutCheckinSerializer(read_only=True)
-    meal = SocialFeedMealSerializer(read_only=True)
+    meal = MealSerializer(read_only=True)
     content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
     is_superuser_post = serializers.SerializerMethodField()
@@ -108,8 +98,9 @@ class PostSerializer(serializers.ModelSerializer):
 class PostListSerializer(serializers.ModelSerializer):
     """Lighter serializer for list views without comments"""
     user = UserSimpleSerializer(read_only=True)
+    profile_id = serializers.SerializerMethodField()
     workout_checkin = WorkoutCheckinSerializer(read_only=True)
-    meal = SocialFeedMealSerializer(read_only=True)
+    meal = MealSerializer(read_only=True)
     content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
     is_superuser_post = serializers.SerializerMethodField()
@@ -117,11 +108,15 @@ class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'user', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
+            'id', 'user', 'profile_id', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
             'comments_count', 'likes_count', 'created_at', 'visibility',
             'allow_comments', 'is_liked_by_user', 'is_superuser_post'
         ]
-        read_only_fields = ['id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post']
+        read_only_fields = ['id', 'profile_id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post']
+
+    def get_profile_id(self, obj):
+        profile = getattr(obj.user, 'profile', None)
+        return getattr(profile, 'id', None)
 
     def get_is_liked_by_user(self, obj):
         request = self.context.get('request')
@@ -246,55 +241,11 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = [
             'id', 'report_type', 'post', 'comment', 'reported_by', 'reason',
-            'other_reason', 'status', 'created_at', 'resolved_at', 'notes', 'response',
-            'reported_post'
+            'other_reason', 'status', 'created_at', 'resolved_at', 'notes', 'response'
         ]
         read_only_fields = [
-            'id', 'created_at', 'resolved_at', 'status', 'notes', 'response', 'reported_by', 'reported_post'
+            'id', 'created_at', 'resolved_at', 'status', 'notes', 'response'
         ]
-
-    @staticmethod
-    def _build_user_payload(user):
-        full_name = f"{user.first_name} {user.last_name}".strip()
-        if not full_name:
-            full_name = user.username
-
-        return {
-            'id': user.id,
-            'full_name': full_name,
-        }
-
-    def get_reported_by(self, obj):
-        return self._build_user_payload(obj.reported_by)
-
-    def get_reported_post(self, obj):
-        post = obj.post
-
-        if not post and obj.comment_id and getattr(obj.comment, 'post', None):
-            post = obj.comment.post
-
-        if not post:
-            return None
-
-        request = self.context.get('request')
-        content_files = []
-        for content_file in post.content_files.all():
-            file_url = content_file.file.url
-            if request is not None:
-                file_url = request.build_absolute_uri(file_url)
-            content_files.append(file_url)
-
-        return {
-            'id': post.id,
-            'user': self._build_user_payload(post.user),
-            'content_type': post.content_type,
-            'content_text': post.content_text,
-            'visibility': post.visibility,
-            'comments_count': post.comments_count,
-            'likes_count': post.likes_count,
-            'created_at': post.created_at,
-            'content_files': content_files,
-        }
 
 
 class ReportCreateSerializer(serializers.ModelSerializer):
