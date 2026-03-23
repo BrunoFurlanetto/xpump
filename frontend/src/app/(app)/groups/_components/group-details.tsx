@@ -232,39 +232,43 @@ export function GroupDetails({ group: initialGroup, period: externalPeriod, onPe
                   <div className="space-y-4 max-h-[calc(100vh-15rem)] overflow-y-auto">
                     {rankedMembers.length > 0 ? (
                       rankedMembers.map((member, index) => (
+                          <div
+                            key={member.id}
+                            className={`p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
+                              }`}
+                            onClick={() => router.push(`/profile/${member.profile_id}`)}
+                          >
                         <div
-                          key={member.id}
-                          className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:opacity-80 ${
-                            index < 3 ? "bg-primary/10 border border-primary/20" : "bg-muted/30 border border-border"
-                          }`}
-                          onClick={() => router.push(`/profile/${member.profile_id}`)}
+                        className="flex items-center gap-4 "
                         >
-                          <div className="flex items-center gap-3">
-                            {getPositionIcon(member.position || 0)}
-                            <Avatar className="h-10 w-10">
-                              {member.photo && <AvatarImage src={member.photo} alt={member.full_name} />}
-                              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-                                {getInitials(member.full_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-foreground truncate">{member.full_name}</h4>
-                              {member.is_admin && <Crown className="h-4 w-4 text-yellow-400" />}
+                            <div className="flex items-center gap-3">
+                              {getPositionIcon(member.position || 0)}
+                              <Avatar className="h-10 w-10">
+                                {member.photo && <AvatarImage src={member.photo} alt={member.full_name} />}
+                                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+                                  {getInitials(member.full_name)}
+                                </AvatarFallback>
+                              </Avatar>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                              <span>💪 {member.workouts || 0} treinos</span>
-                              <span>🥗 {member.meals || 0} refeições</span>
-                              <AdjustmentBadge type="bonus" total={member.adjustments?.total_bonus || 0} entries={member.adjustments?.bonus_list || []} />
-                              <AdjustmentBadge type="penalty" total={member.adjustments?.total_penalty || 0} entries={member.adjustments?.penalties_list || []} />
-                            </div>
-                          </div>
 
-                          <div className="text-right">
-                            <p className="text-xl font-bold text-primary">{member.score?.toFixed(2) || 0}</p>
-                            <p className="text-sm text-muted-foreground">pontos</p>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-foreground truncate">{member.full_name}</h4>
+                                {member.is_admin && <Crown className="h-4 w-4 text-yellow-400" />}
+                              </div>
+                            </div>
+
+                            <div className="text-right -mb-2">
+                              <p className="text-xl font-bold text-primary -mb-2">{member.score?.toFixed(2) || 0}</p>
+                              <p className="text-xs text-muted-foreground -mb-2">pontos</p>
+                            </div>
+
+                          </div>
+                          <div className="flex ml-4 items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                            <span>💪 {member.workouts || 0} </span>
+                            <span>🥗 {member.meals || 0} </span>
+                            <AdjustmentBadge type="bonus" total={member.adjustments?.total_bonus || 0} entries={member.adjustments?.bonus_list || []} />
+                            <AdjustmentBadge type="penalty" total={member.adjustments?.total_penalty || 0} entries={member.adjustments?.penalties_list || []} />
                           </div>
                         </div>
                       ))
