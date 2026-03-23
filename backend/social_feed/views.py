@@ -8,7 +8,7 @@ from django.db.models import Q
 from .models import Post, Comment, Report, PostLike, CommentLike
 from .serializers import (
     PostSerializer, PostListSerializer, PostCreateSerializer, PostUpdateSerializer,
-    CommentSerializer, ReportSerializer, ReportCreateSerializer, CommentCreateSerializer
+    CommentSerializer, ReportSerializer, ReportCreateSerializer, ReportUpdateSerializer, CommentCreateSerializer
 )
 from .pagination import PostsPagination, CommentsPagination, ReportsPagination
 
@@ -270,13 +270,17 @@ class ReportListCreateView(generics.ListCreateAPIView):
 
 
 @extend_schema(tags=['Social Feed'])
-class ReportDetailView(generics.RetrieveAPIView):
-    """Retrieve a report detail."""
-    serializer_class = ReportSerializer
+class ReportDetailView(generics.RetrieveUpdateAPIView):
+    """Retrieve or update a report."""
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_serializer_class(self):
+        if self.request.method in ('PATCH', 'PUT'):
+            return ReportUpdateSerializer
+        return ReportSerializer
+
     def get_queryset(self):
-        """Admins can retrieve any report; users can only retrieve their own reports."""
+        """Admins can retrieve/update any report; users can only retrieve their own reports."""
         queryset = Report.objects.select_related(
             'reported_by', 'post__user', 'comment__post__user'
         ).prefetch_related(
@@ -288,6 +292,15 @@ class ReportDetailView(generics.RetrieveAPIView):
             queryset = queryset.filter(reported_by=self.request.user)
 
         return queryset
+
+    def update(self, request, *args, **kwargs):
+        """Only admins can update reports."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response(
+                {'detail': 'Apenas administradores podem atualizar denúncias.'},
+                status=403
+            )
+        return super().update(request, *args, **kwargs)
 
 
 @extend_schema(tags=['Social Feed'])

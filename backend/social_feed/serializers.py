@@ -324,3 +324,17 @@ class ReportCreateSerializer(serializers.ModelSerializer):
         validated_data['reported_by'] = self.context['request'].user
 
         return super().create(validated_data)
+
+
+class ReportUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['status', 'notes', 'response']
+
+    def update(self, instance, validated_data):
+        new_status = validated_data.get('status')
+        if new_status in ('resolved', 'dismissed') and not instance.resolved_at:
+            from django.utils import timezone
+            validated_data['resolved_at'] = timezone.now()
+
+        return super().update(instance, validated_data)

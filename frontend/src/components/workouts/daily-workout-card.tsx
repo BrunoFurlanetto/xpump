@@ -37,7 +37,7 @@ export function DailyWorkoutCard({
   return (
     <Card className="bg-card border-border">
       <CardContent className="p-4 space-y-3">
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {SLOT_LABELS.map((label, index) => {
             const workout = workouts[index];
 

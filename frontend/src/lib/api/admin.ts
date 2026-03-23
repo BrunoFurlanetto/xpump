@@ -216,36 +216,33 @@ export interface CreateClientData {
 export interface AdminReport {
   id: number;
   report_type: "post" | "comment";
-  reason: "spam" | "inappropriate" | "harassment" | "fake" | "other";
-  other_reason?: string;
-  status: "pending" | "reviewing" | "resolved" | "dismissed";
-  reporter: {
+  post?: number;
+  comment?: number;
+  reported_by: {
     id: number;
-    username: string;
     full_name: string;
   };
-  post?: {
+  reported_post?: {
     id: number;
+    user: {
+      id: number;
+      full_name: string;
+    };
+    content_type: string;
     content_text?: string;
-    user: {
-      id: number;
-      username: string;
-      full_name: string;
-    };
+    visibility: string;
+    comments_count: number;
+    likes_count: number;
+    created_at: string;
+    content_files: string[];
   };
-  comment?: {
-    id: number;
-    text: string;
-    user: {
-      id: number;
-      username: string;
-      full_name: string;
-    };
-  };
-  admin_notes?: string;
-  response?: string;
+  reason: "spam" | "inappropriate" | "harassment" | "fake" | "other";
+  other_reason?: string;
+  status: "pending" | "reviewed" | "resolved" | "dismissed";
   created_at: string;
-  updated_at: string;
+  resolved_at?: string;
+  notes?: string;
+  response?: string;
 }
 
 export interface PaginatedReports {
@@ -256,8 +253,8 @@ export interface PaginatedReports {
 }
 
 export interface UpdateReportData {
-  status?: "pending" | "reviewing" | "resolved" | "dismissed";
-  admin_notes?: string;
+  status?: "pending" | "reviewed" | "resolved" | "dismissed";
+  notes?: string;
   response?: string;
 }
 

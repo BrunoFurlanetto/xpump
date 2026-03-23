@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useUserAuth } from "@/context/userAuthContext";
 import { useAdminReports, useUpdateReport } from "@/hooks/useAdminQuery";
 import type { AdminReport, UpdateReportData } from "@/lib/api/admin";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,13 +19,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Flag,
   AlertTriangle,
   ChevronLeft,
@@ -34,27 +27,29 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  Clock,
   Search,
   ExternalLink,
+  TrendingDown,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
+import { AdjustmentDialog } from "@/components/admin/adjustment-dialog";
+import { usePostQuery } from "@/hooks/useFeedQuery";
 
 const STATUS_FILTERS = [
   { value: "all", label: "Todas" },
   { value: "pending", label: "Pendentes" },
-  { value: "reviewing", label: "Em Revisão" },
+  { value: "reviewed", label: "Em Revisão" },
   { value: "resolved", label: "Resolvidas" },
   { value: "dismissed", label: "Descartadas" },
 ];
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; color: string }> = {
-  pending: { label: "Pendente", variant: "destructive", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
-  reviewing: { label: "Em Revisão", variant: "default", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
-  resolved: { label: "Resolvida", variant: "secondary", color: "bg-green-500/10 text-green-500 border-green-500/20" },
-  dismissed: { label: "Descartada", variant: "outline", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  pending: { label: "Pendente", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
+  reviewed: { label: "Em Revisão", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+  resolved: { label: "Resolvida", color: "bg-green-500/10 text-green-500 border-green-500/20" },
+  dismissed: { label: "Descartada", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
 };
 
 const REASON_LABELS: Record<string, string> = {
@@ -73,9 +68,18 @@ export default function ReportsPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
   const [adminResponse, setAdminResponse] = useState("");
+  const [adjustmentOpen, setAdjustmentOpen] = useState(false);
 
   const { data, isLoading } = useAdminReports(statusFilter, page);
   const updateReport = useUpdateReport();
+
+  // Busca post completo para obter workout_checkin/meal quando um report é selecionado
+  const reportedPostId = selectedReport?.reported_post?.id || 0;
+  const { data: fullPost } = usePostQuery(reportedPostId);
+
+  const hasGamificationTarget = !!(fullPost?.workout_checkin || fullPost?.meal);
+  const gamificationTargetType = fullPost?.workout_checkin ? "workout_checkin" as const : "meal" as const;
+  const gamificationTargetId = fullPost?.workout_checkin?.id || fullPost?.meal?.id || 0;
 
   if (!isAdmin) {
     return (
@@ -93,7 +97,7 @@ export default function ReportsPage() {
 
   const openDetail = (report: AdminReport) => {
     setSelectedReport(report);
-    setAdminNotes(report.admin_notes || "");
+    setAdminNotes(report.notes || "");
     setAdminResponse(report.response || "");
     setDetailOpen(true);
   };
@@ -106,7 +110,7 @@ export default function ReportsPage() {
         reportId: selectedReport.id,
         data: {
           status,
-          admin_notes: adminNotes.trim() || undefined,
+          notes: adminNotes.trim() || undefined,
           response: adminResponse.trim() || undefined,
         },
       },
@@ -191,16 +195,11 @@ export default function ReportsPage() {
                       </div>
                       <p className="text-sm">
                         <span className="text-muted-foreground">Reportado por </span>
-                        <span className="font-medium">@{report.reporter.username}</span>
+                        <span className="font-medium">{report.reported_by.full_name}</span>
                       </p>
-                      {report.post && (
+                      {report.reported_post && (
                         <p className="text-sm text-muted-foreground truncate">
-                          Post de @{report.post.user.username}: {report.post.content_text || "(sem texto)"}
-                        </p>
-                      )}
-                      {report.comment && (
-                        <p className="text-sm text-muted-foreground truncate">
-                          Comentário de @{report.comment.user.username}: {report.comment.text}
+                          Post de {report.reported_post.user.full_name}: {report.reported_post.content_text || "(sem texto)"}
                         </p>
                       )}
                     </div>
@@ -264,46 +263,48 @@ export default function ReportsPage() {
                 <div>
                   <p className="text-sm font-medium mb-1">Reportado por</p>
                   <p className="text-sm text-muted-foreground">
-                    {selectedReport.reporter.full_name} (@{selectedReport.reporter.username})
+                    {selectedReport.reported_by.full_name}
                   </p>
                 </div>
 
                 {/* Conteúdo denunciado */}
-                <div>
-                  <p className="text-sm font-medium mb-1">Conteúdo denunciado</p>
-                  <div className="p-3 bg-secondary/50 rounded-lg text-sm">
-                    {selectedReport.post && (
-                      <>
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Post de @{selectedReport.post.user.username}
+                {selectedReport.reported_post && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Conteúdo denunciado</p>
+                    <div className="p-3 bg-secondary/50 rounded-lg text-sm space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Post de {selectedReport.reported_post.user.full_name}
+                      </p>
+                      <p>{selectedReport.reported_post.content_text || "(sem texto)"}</p>
+                      {selectedReport.reported_post.content_files.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {selectedReport.reported_post.content_files.length} arquivo(s) anexado(s)
                         </p>
-                        <p>{selectedReport.post.content_text || "(sem texto)"}</p>
-                        <Button variant="outline" size="sm" className="mt-2" asChild>
-                          <Link href={`/post/${selectedReport.post.id}`} target="_blank">
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            Ver post completo
-                          </Link>
-                        </Button>
-                      </>
-                    )}
-                    {selectedReport.comment && (
-                      <>
-                        <p className="text-xs text-muted-foreground mb-1">
-                          Comentário de @{selectedReport.comment.user.username}
-                        </p>
-                        <p>{selectedReport.comment.text}</p>
-                        {selectedReport.post && (
-                          <Button variant="outline" size="sm" className="mt-2" asChild>
-                            <Link href={`/post/${selectedReport.post.id}`} target="_blank">
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              Ver post completo
-                            </Link>
-                          </Button>
-                        )}
-                      </>
-                    )}
+                      )}
+                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                        <Link href={`/post/${selectedReport.reported_post.id}`} target="_blank">
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          Ver post completo
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Ação de penalização — só se o post tem treino ou refeição */}
+                {hasGamificationTarget && (
+                  <div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-500 border-red-500/30 hover:bg-red-500/10"
+                      onClick={() => setAdjustmentOpen(true)}
+                    >
+                      <TrendingDown className="h-4 w-4 mr-2" />
+                      Penalizar usuário
+                    </Button>
+                  </div>
+                )}
 
                 {/* Notas administrativas */}
                 <div className="space-y-2">
@@ -334,7 +335,7 @@ export default function ReportsPage() {
                 {selectedReport.status === "pending" && (
                   <Button
                     variant="outline"
-                    onClick={() => handleUpdateStatus("reviewing")}
+                    onClick={() => handleUpdateStatus("reviewed")}
                     disabled={updateReport.isPending}
                   >
                     {updateReport.isPending ? (
@@ -370,6 +371,22 @@ export default function ReportsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de ajuste (bônus/penalidade) */}
+      {hasGamificationTarget && (
+        <AdjustmentDialog
+          open={adjustmentOpen}
+          onOpenChange={setAdjustmentOpen}
+          defaultType="penalty"
+          targetType={gamificationTargetType}
+          targetId={gamificationTargetId}
+          contextLabel={
+            selectedReport?.reported_post
+              ? `${gamificationTargetType === "workout_checkin" ? "Treino" : "Refeição"} de ${selectedReport.reported_post.user.full_name}`
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

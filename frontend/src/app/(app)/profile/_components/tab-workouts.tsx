@@ -28,7 +28,7 @@ const formatDuration = (duration: string) => {
   return `${m}min`;
 };
 
-const noop = async () => {};
+const noop = async () => { };
 
 export function TabWorkouts({ userId, isOwnProfile }: TabWorkoutsProps) {
   const { data, isLoading } = useWorkoutsQuery(userId);
@@ -80,26 +80,22 @@ export function TabWorkouts({ userId, isOwnProfile }: TabWorkoutsProps) {
         });
 
         return (
-          <Card key={date} className="bg-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm text-foreground">
-                <Calendar className="h-4 w-4 text-primary" />
-                <span className="capitalize">{label}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <DailyWorkoutCard
-                workouts={byDate[date]}
-                onAddWorkout={noop}
-                onUpdateComments={noop}
-                onDelete={noop}
-                formatDate={formatDate}
-                formatDuration={formatDuration}
-                enabled={false}
-                isOwnProfile={isOwnProfile}
-              />
-            </CardContent>
-          </Card>
+          <div key={date} className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
+              <Calendar className="h-4 w-4 text-primary" />
+              <span className="capitalize font-medium text-foreground">{label}</span>
+            </div>
+            <DailyWorkoutCard
+              workouts={byDate[date]}
+              onAddWorkout={noop}
+              onUpdateComments={noop}
+              onDelete={noop}
+              formatDate={formatDate}
+              formatDuration={formatDuration}
+              enabled={false}
+              isOwnProfile={isOwnProfile}
+            />
+          </div>
         );
       })}
     </div>

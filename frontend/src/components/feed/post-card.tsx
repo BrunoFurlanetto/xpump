@@ -23,6 +23,8 @@ import {
   Pencil,
   X,
   Check,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -40,6 +42,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import MediaContent from "@/app/(app)/feed/media-content";
 import { ReportDialog } from "@/components/feed/report-dialog";
+import { AdjustmentDialog } from "@/components/admin/adjustment-dialog";
+import { useUserAuth } from "@/context/userAuthContext";
+import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 export function PostCard({
   post,
@@ -76,8 +81,15 @@ export function PostCard({
   const [editText, setEditText] = useState(post.content_text || "");
   const [editFile, setEditFile] = useState<File[]>([]);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [adjustmentOpen, setAdjustmentOpen] = useState(false);
+  const [adjustmentType, setAdjustmentType] = useState<"bonus" | "penalty">("bonus");
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const { data: postWithComments } = usePostCommentsQuery(isExpanded ? post.id : 0);
+  const { isAdmin } = useUserAuth();
+
+  const hasGamificationTarget = !!(post.workout_checkin || post.meal);
+  const gamificationTargetType = post.workout_checkin ? "workout_checkin" as const : "meal" as const;
+  const gamificationTargetId = post.workout_checkin?.id || post.meal?.id || 0;
 
   const formatTimeAgo = (date: string) => {
     try {
@@ -128,6 +140,31 @@ export function PostCard({
               <Flag className="h-4 w-4 mr-2" />
               Denunciar
             </DropdownMenuItem>
+            {isAdmin && hasGamificationTarget && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    setAdjustmentType("bonus");
+                    setAdjustmentOpen(true);
+                  }}
+                  className="text-green-500"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Aplicar bônus
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setAdjustmentType("penalty");
+                    setAdjustmentOpen(true);
+                  }}
+                  className="text-red-500"
+                >
+                  <TrendingDown className="h-4 w-4 mr-2" />
+                  Aplicar penalidade
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -404,6 +441,17 @@ export function PostCard({
         postId={post.id}
         reportType="post"
       />
+
+      {isAdmin && hasGamificationTarget && (
+        <AdjustmentDialog
+          open={adjustmentOpen}
+          onOpenChange={setAdjustmentOpen}
+          defaultType={adjustmentType}
+          targetType={gamificationTargetType}
+          targetId={gamificationTargetId}
+          contextLabel={`${post.content_type === "workout" ? "Treino" : "Refeição"} de ${post.user.full_name}`}
+        />
+      )}
     </Card>
   );
 }
