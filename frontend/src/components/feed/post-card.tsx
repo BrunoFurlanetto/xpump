@@ -170,7 +170,7 @@ export function PostCard({
       </div>
       <CardHeader className="pb-3 mt-2 overflow-hidden">
         <div className="flex items-start justify-between">
-          <Link href={`/profile/${post.profile_id}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
+          <Link href={`/profile/${post.id}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                 <User className="h-5 w-5" />
@@ -325,7 +325,7 @@ export function PostCard({
             </div>
             <div className="text-sm space-y-1">
               <p className="font-medium">
-                {post.meal.fasting ? `Jejum ${post.meal.meal_type_name || ""}` : post.meal.meal_type_name}
+                {post.meal.fasting ? `Jejum (${post.meal.meal_type_name || ""})` : post.meal.meal_type_name}
               </p>
               {post.meal.comments && <p className="text-muted-foreground">{post.meal.comments}</p>}
               <div className="flex items-center gap-4 text-xs">
