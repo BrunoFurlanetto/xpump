@@ -100,7 +100,7 @@ class PostListSerializer(serializers.ModelSerializer):
     user = UserSimpleSerializer(read_only=True)
     profile_id = serializers.SerializerMethodField()
     workout_checkin = WorkoutCheckinSerializer(read_only=True)
-    meal = MealSerializer(read_only=True)
+    meal = serializers.SerializerMethodField()
     content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
     is_superuser_post = serializers.SerializerMethodField()
@@ -129,6 +129,15 @@ class PostListSerializer(serializers.ModelSerializer):
     def get_is_superuser_post(self, obj):
         author = getattr(obj, 'user', None)
         return bool(getattr(author, 'is_superuser', False))
+
+    def get_meal(self, obj):
+        if not obj.meal:
+            return None
+
+        meal_payload = MealSerializer(obj.meal, context=self.context).data
+        meal_payload['meal_type_name'] = obj.meal.meal_type.get_meal_name_display()
+
+        return meal_payload
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
