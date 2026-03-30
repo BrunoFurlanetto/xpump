@@ -71,15 +71,16 @@ class PostSerializer(serializers.ModelSerializer):
     content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
     is_superuser_post = serializers.SerializerMethodField()
+    profile_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = [
             'id', 'user', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
-            'comments_count', 'likes_count', 'created_at', 'visibility',
+            'comments_count', 'likes_count', 'created_at', 'visibility', 'profile_id',
             'allow_comments', 'comments', 'likes', 'is_liked_by_user', 'is_superuser_post'
         ]
-        read_only_fields = ['id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post']
+        read_only_fields = ['id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post', 'profile_id']
 
     def get_is_liked_by_user(self, obj):
         request = self.context.get('request')
@@ -93,6 +94,10 @@ class PostSerializer(serializers.ModelSerializer):
         # Safely check if the post's author is a superuser. If user is missing, return False.
         author = getattr(obj, 'user', None)
         return bool(getattr(author, 'is_superuser', False))
+    
+    def get_profile_id(self, obj):
+        profile = getattr(obj.user, 'profile', None)
+        return getattr(profile, 'id', None)
 
 
 class PostListSerializer(serializers.ModelSerializer):
@@ -110,7 +115,7 @@ class PostListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'profile_id', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
             'comments_count', 'likes_count', 'created_at', 'visibility',
-            'allow_comments', 'is_liked_by_user', 'is_superuser_post'
+            'allow_comments', 'is_liked_by_user', 'is_superuser_post', 
         ]
         read_only_fields = ['id', 'profile_id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post']
 

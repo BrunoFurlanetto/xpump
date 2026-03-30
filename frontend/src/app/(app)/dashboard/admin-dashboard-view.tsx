@@ -480,7 +480,7 @@ export default function AdminDashboardView() {
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-foreground">Grupos Ativos</CardTitle>
-            <Link href="/admin/groups" className="text-sm text-primary hover:underline">
+            <Link href="/groups" className="text-sm text-primary hover:underline">
               Ver todos
             </Link>
           </CardHeader>
