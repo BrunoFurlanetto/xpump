@@ -1,6 +1,8 @@
 from django.core.validators import FileExtensionValidator
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
 
+from gamification.models import GamificationBonus, GamificationPenalty
 from workouts.models import WorkoutCheckin, WorkoutCheckinProof, WorkoutPlan
 
 
@@ -33,6 +35,10 @@ class WorkoutCheckinSerializer(serializers.ModelSerializer):
     current_streak = serializers.SerializerMethodField(read_only=True)
     longest_streak = serializers.SerializerMethodField(read_only=True)
     level_up = serializers.BooleanField(read_only=True, default=False)
+    total_bonus = serializers.SerializerMethodField(read_only=True)
+    total_penalty = serializers.SerializerMethodField(read_only=True)
+    bonus_list = serializers.SerializerMethodField(read_only=True)
+    penalties_list = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = WorkoutCheckin
@@ -40,10 +46,19 @@ class WorkoutCheckinSerializer(serializers.ModelSerializer):
             'id', 'user', 'comments', 'workout_date',
             'duration', 'validation_status', 'base_points',
             'multiplier', 'proof_files', 'proofs', 'current_streak',
-            'longest_streak', 'level_up'
+            'longest_streak', 'level_up', 'total_bonus', 'total_penalty', 'bonus_list', 'penalties_list'
         ]
         # Prevent modification of automatically calculated fields
-        read_only_fields = ('user', 'base_points', 'multiplier', 'validation_status')
+        read_only_fields = (
+            'user',
+            'base_points',
+            'multiplier',
+            'validation_status',
+            'total_bonus',
+            'total_penalty',
+            'bonus_list',
+            'penalties_list'
+        )
 
     def validate(self, attrs):
         """
@@ -82,6 +97,101 @@ class WorkoutCheckinSerializer(serializers.ModelSerializer):
             return obj.user.workout_streak.longest_streak
         except:
             return 0
+
+    @staticmethod
+    def _get_full_name(user):
+        full_name = user.get_full_name().strip()
+        if full_name:
+            return full_name
+        return user.username
+
+    def _build_adjustments_cache(self, ids):
+        content_type_id = ContentType.objects.get_for_model(WorkoutCheckin).id
+
+        bonuses = GamificationBonus.objects.filter(
+            content_type_id=content_type_id,
+            object_id__in=ids,
+        ).select_related('created_by').order_by('-created_at')
+
+        penalties = GamificationPenalty.objects.filter(
+            content_type_id=content_type_id,
+            object_id__in=ids,
+        ).select_related('created_by').order_by('-created_at')
+
+        cache = {
+            workout_id: {
+                'total_bonus': 0.0,
+                'total_penalty': 0.0,
+                'bonus_list': [],
+                'penalties_list': [],
+            }
+            for workout_id in ids
+        }
+
+        for bonus in bonuses:
+            payload = {
+                'score': float(bonus.score),
+                'created_at': bonus.created_at,
+                'created_by': {
+                    'id': bonus.created_by_id,
+                    'fullname': self._get_full_name(bonus.created_by),
+                },
+                'reason': bonus.reason,
+            }
+            cache[bonus.object_id]['bonus_list'].append(payload)
+            cache[bonus.object_id]['total_bonus'] += float(bonus.score)
+
+        for penalty in penalties:
+            payload = {
+                'score': float(penalty.score),
+                'created_at': penalty.created_at,
+                'created_by': {
+                    'id': penalty.created_by_id,
+                    'fullname': self._get_full_name(penalty.created_by),
+                },
+                'reason': penalty.reason,
+            }
+            cache[penalty.object_id]['penalties_list'].append(payload)
+            cache[penalty.object_id]['total_penalty'] += float(penalty.score)
+
+        return cache
+
+    def _ensure_adjustments_cache(self, obj):
+        if hasattr(self, '_adjustments_cache'):
+            return
+
+        instance = self.instance
+        if instance is None:
+            self._adjustments_cache = self._build_adjustments_cache([obj.id])
+            return
+
+        if hasattr(instance, '__iter__') and not isinstance(instance, WorkoutCheckin):
+            ids = [item.id for item in instance]
+        else:
+            ids = [instance.id]
+
+        self._adjustments_cache = self._build_adjustments_cache(ids)
+
+    def _get_adjustment_summary(self, obj):
+        self._ensure_adjustments_cache(obj)
+        return self._adjustments_cache.get(obj.id, {
+            'total_bonus': 0.0,
+            'total_penalty': 0.0,
+            'bonus_list': [],
+            'penalties_list': [],
+        })
+
+    def get_total_bonus(self, obj):
+        return self._get_adjustment_summary(obj)['total_bonus']
+
+    def get_total_penalty(self, obj):
+        return self._get_adjustment_summary(obj)['total_penalty']
+
+    def get_bonus_list(self, obj):
+        return self._get_adjustment_summary(obj)['bonus_list']
+
+    def get_penalties_list(self, obj):
+        return self._get_adjustment_summary(obj)['penalties_list']
 
     def create(self, validated_data):
         """

@@ -1,12 +1,14 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
+from gamification.models import GamificationBonus, GamificationPenalty
 from gamification.services import Gamification
 from profiles.models import Profile
 from status.models import Status
@@ -49,6 +51,15 @@ class WorkoutCheckin(models.Model):
         Override save method to handle validation, streak updates, and point calculations.
         Automatically sets validation status and updates user's score.
         """
+        is_new = self.pk is None
+        workout_day = self.workout_date.date()
+        day_points_before_save = 0.0
+
+        if is_new:
+            day_points_before_save = self.user.workouts.filter(
+                workout_date__date=workout_day
+            ).aggregate(total_xp=Sum('base_points'))['total_xp'] or 0.0
+
         self.clean()
         # Set validation status to published for workouts
         self.validation_status = Status.objects.filter(app_name='WORKOUT', action='PUBLISHED', is_active=True).first()
@@ -65,21 +76,41 @@ class WorkoutCheckin(models.Model):
         if not created:
             streak.update_streak(self.workout_date.astimezone())
 
-        # Calculate multiplier and points based on streak and duration
-        self.multiplier = Gamification.Workout.get_multiplier(self.user)
-        self.base_points = Gamification.Workout.calculate(self.user, self.duration)
+        if is_new:
+            # Calculate multiplier and points based on streak and duration
+            self.multiplier = Gamification.Workout.get_multiplier(self.user)
+            self.base_points = Gamification.Workout.calculate(self.user, self.duration, self.workout_date)
 
         super().save(*args, **kwargs)
 
         self.groups.set([group.id for group in self.user.profile.groups.all()])
 
-        # Update the user's profile with the new points
-        Gamification().add_xp(self.user, self.base_points)
+        if is_new:
+            day_points_after_save = self.user.workouts.filter(
+                workout_date__date=workout_day
+            ).aggregate(total_xp=Sum('base_points'))['total_xp'] or 0.0
+
+            xp_to_add = max(float(day_points_after_save) - float(day_points_before_save), 0.0)
+
+            # Update the user's profile with the day points difference.
+            if xp_to_add > 0:
+                Gamification().add_xp(self.user, xp_to_add)
 
     def delete(self, *args, **kwargs):
-        workout_points = self.base_points
         user = self.user
         workout_date = self.workout_date
+        workout_day = workout_date.date()
+        workout_id = self.id
+
+        day_points_before_delete = user.workouts.filter(
+            workout_date__date=workout_day
+        ).aggregate(total_xp=Sum('base_points'))['total_xp'] or 0.0
+
+        workout_content_type = ContentType.objects.get_for_model(WorkoutCheckin)
+        bonus_qs = GamificationBonus.objects.filter(content_type=workout_content_type, object_id=workout_id)
+        penalty_qs = GamificationPenalty.objects.filter(content_type=workout_content_type, object_id=workout_id)
+        bonus_total = bonus_qs.aggregate(total=Sum('score'))['total'] or 0.0
+        penalty_total = penalty_qs.aggregate(total=Sum('score'))['total'] or 0.0
 
         # Check if this workout is part of the current streak BEFORE deleting
         is_part_of_streak = False
@@ -102,7 +133,25 @@ class WorkoutCheckin(models.Model):
         except Exception as e:
             raise e
 
-        Gamification().remove_xp(user, workout_points)
+        Gamification.Workout.recalculate_day_points(user, workout_day)
+
+        day_points_after_delete = user.workouts.filter(
+            workout_date__date=workout_day
+        ).aggregate(total_xp=Sum('base_points'))['total_xp'] or 0.0
+
+        xp_to_remove = max(float(day_points_before_delete) - float(day_points_after_delete), 0.0)
+
+        if xp_to_remove > 0:
+            Gamification().remove_xp(user, xp_to_remove)
+
+        # Revert bonus/penalty side effects for this workout and remove adjustment records.
+        if bonus_total > 0:
+            Gamification().remove_xp(user, float(bonus_total))
+        if penalty_total > 0:
+            Gamification().add_xp(user, float(penalty_total))
+
+        bonus_qs.delete()
+        penalty_qs.delete()
 
         # Update streak if the deleted workout was part of the current streak
         if streak and is_part_of_streak:
@@ -153,6 +202,20 @@ class WorkoutCheckin(models.Model):
 
         # if overlapping_workouts.exists():
         #     raise ValidationError("This workout overlaps with an existing check-in.")
+
+
+# class WorkoutDailySummary(models.Model):
+#     """
+#     Model for storing daily workout summaries for users. Contains total duration, calories burned, and workout count
+#     for each day. Automatically updates or creates summary records when new check-ins are added.
+#     """
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_summaries')
+#     date = models.DateField()
+#     total_duration = models.DurationField(default=timedelta())    
+#     workout_count = models.IntegerField(default=0)
+#     awared_points = models.FloatField(default=0.0)
+#     bonus_points = models.FloatField(default=0.0)
+#     penalty_points = models.FloatField(default=0.0)
 
 
 class WorkoutCheckinProof(models.Model):

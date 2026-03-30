@@ -212,6 +212,52 @@ export interface CreateClientData {
   owner_last_name: string;
 }
 
+// ===== TIPOS PARA DENÚNCIAS =====
+export interface AdminReport {
+  id: number;
+  report_type: "post" | "comment";
+  post?: number;
+  comment?: number;
+  reported_by: {
+    id: number;
+    full_name: string;
+  };
+  reported_post?: {
+    id: number;
+    user: {
+      id: number;
+      full_name: string;
+    };
+    content_type: string;
+    content_text?: string;
+    visibility: string;
+    comments_count: number;
+    likes_count: number;
+    created_at: string;
+    content_files: string[];
+  };
+  reason: "spam" | "inappropriate" | "harassment" | "fake" | "other";
+  other_reason?: string;
+  status: "pending" | "reviewed" | "resolved" | "dismissed";
+  created_at: string;
+  resolved_at?: string;
+  notes?: string;
+  response?: string;
+}
+
+export interface PaginatedReports {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AdminReport[];
+}
+
+export interface UpdateReportData {
+  status?: "pending" | "reviewed" | "resolved" | "dismissed";
+  notes?: string;
+  response?: string;
+}
+
 export class AdminAPI {
   // ===== ENDPOINTS PARA DASHBOARD GERAL DO SISTEMA =====
 
@@ -219,7 +265,7 @@ export class AdminAPI {
    * Busca estatísticas gerais do sistema (visão do Personal Trainer)
    */
   static async getSystemDashboardStats(): Promise<SystemDashboardStats> {
-    const response = await fetch("/api/admin/system/stats");
+    const response = await fetch("/api/v1/analytics/admin/system/stats");
 
     if (!response.ok) {
       throw new Error("Erro ao buscar estatísticas do sistema");
@@ -283,7 +329,7 @@ export class AdminAPI {
       page_size: pageSize.toString(),
     });
 
-    const response = await fetch(`/api/admin/system/groups?${params}`);
+    const response = await fetch(`/api/v1/analytics/admin/system/groups?${params}`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar grupos");
@@ -300,7 +346,7 @@ export class AdminAPI {
       ...(type && { type }),
     });
 
-    const response = await fetch(`/api/admin/system/activities?${params}`);
+    const response = await fetch(`/api/v1/analytics/admin/system/activities?${params}`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar atividades do sistema");
@@ -374,20 +420,40 @@ export class AdminAPI {
     }
   }
 
-  // ===== ENDPOINTS PARA DASHBOARD DE GRUPO =====
+  // ===== ENDPOINTS PARA DENÚNCIAS =====
 
   /**
-   * Get dashboard data for a specific group
+   * Busca lista de denúncias com filtro por status
    */
-  static async getDashboard(groupId: number): Promise<AdminDashboardData> {
-    const response = await fetch(`/api/admin/dashboard?groupId=${groupId}`);
+  static async getReports(status?: string, page: number = 1): Promise<PaginatedReports> {
+    const params = new URLSearchParams({ page: page.toString() });
+    if (status && status !== "all") params.append("status", status);
+
+    const response = await fetch(`/api/v1/social-feed/reports/?${params}`);
 
     if (!response.ok) {
-      throw new Error("Erro ao buscar dados do dashboard");
+      throw new Error("Erro ao buscar denúncias");
     }
-
     return response.json();
   }
+
+  /**
+   * Atualiza uma denúncia (status, notas, resposta)
+   */
+  static async updateReport(reportId: number, data: UpdateReportData): Promise<AdminReport> {
+    const response = await fetch(`/api/v1/social-feed/reports/${reportId}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Erro ao atualizar denúncia" }));
+      throw new Error(error.detail || "Erro ao atualizar denúncia");
+    }
+    return response.json();
+  }
+
 
   /**
    * Get all workouts for a specific group with filters
@@ -409,7 +475,7 @@ export class AdminAPI {
       ...(filters?.status && { status: filters.status.toString() }),
     });
 
-    const response = await fetch(`/api/admin/workouts?${params}`);
+    const response = await fetch(`/api/v1/analytics/admin/workouts?${params}`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar treinos do grupo");
@@ -438,7 +504,7 @@ export class AdminAPI {
       ...(filters?.status && { status: filters.status.toString() }),
     });
 
-    const response = await fetch(`/api/admin/meals?${params}`);
+    const response = await fetch(`/api/v1/analytics/admin/meals?${params}`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar refeições do grupo");
@@ -451,7 +517,7 @@ export class AdminAPI {
    * Get activity summary for all members in a group
    */
   static async getGroupMembers(groupId: number): Promise<AdminMemberActivity[]> {
-    const response = await fetch(`/api/admin/members?groupId=${groupId}`);
+    const response = await fetch(`/api/v1/analytics/admin/members?groupId=${groupId}`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar membros do grupo");
@@ -464,7 +530,7 @@ export class AdminAPI {
    * Update validation status of a workout
    */
   static async updateWorkoutValidation(workoutId: number, data: UpdateValidationData): Promise<AdminWorkoutDetail> {
-    const response = await fetch(`/api/admin/workouts/${workoutId}/validate`, {
+    const response = await fetch(`/api/v1/analytics/admin/workouts/${workoutId}/validate`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -484,7 +550,7 @@ export class AdminAPI {
    * Update validation status of a meal
    */
   static async updateMealValidation(mealId: number, data: UpdateValidationData): Promise<AdminMealDetail> {
-    const response = await fetch(`/api/admin/meals/${mealId}/validate`, {
+    const response = await fetch(`/api/v1/analytics/admin/meals/${mealId}/validate`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -510,7 +576,7 @@ export class AdminAPI {
       endDate,
     });
 
-    const response = await fetch(`/api/admin/stats?${params}`);
+    const response = await fetch(`/api/v1/analytics/admin/stats?${params}`);
 
     if (!response.ok) {
       throw new Error("Erro ao buscar estatísticas do grupo");

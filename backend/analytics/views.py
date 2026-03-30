@@ -43,7 +43,7 @@ class SystemStatsAPIView(APIView):
     def get(self, request):
         stats = SystemAnalyticsService.get_system_stats()
         serializer = SystemStatsSerializer(stats)
-
+        print(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

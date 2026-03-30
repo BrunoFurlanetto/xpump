@@ -1,10 +1,12 @@
 import tempfile
+from django.utils import timezone
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from faker import Faker
 
-from social_feed.models import Post, Comment
+from social_feed.models import Post, Comment, Report
+from nutrition.models import Meal, MealConfig
 from .base import SocialFeedAPITestCase
 
 fake = Faker('pt_BR')
@@ -102,6 +104,35 @@ class PostViewSetTest(SocialFeedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], post.id)
         self.assertEqual(response.data['content_type'], 'social')
+
+    def test_retrieve_meal_post_returns_meal_type_display_name(self):
+        """Post de refeição deve retornar meal_type como nome exibido."""
+        self.client.force_authenticate(user=self.user1)
+
+        meal_config = MealConfig.objects.create(
+            meal_name='breakfast',
+            interval_start='07:00:00',
+            interval_end='09:00:00'
+        )
+        meal = Meal.objects.create(
+            user=self.user1,
+            meal_type=meal_config,
+            meal_time=timezone.now(),
+            fasting=True
+        )
+        post = Post.objects.create(
+            user=self.user1,
+            content_type='meal',
+            meal=meal,
+            visibility='global'
+        )
+
+        url = reverse('social_feed:posts-detail', kwargs={'pk': post.pk})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['content_type'], 'meal')
+        self.assertEqual(response.data['meal']['meal_type'], 'Café da manhã')
 
     def test_update_post(self):
         """Teste atualização de post."""
@@ -261,6 +292,131 @@ class PostViewSetTest(SocialFeedAPITestCase):
         # Verificar que só retorna posts sociais
         for post in response.data['results']:
             self.assertEqual(post['content_type'], 'social')
+
+
+class ReportViewTest(SocialFeedAPITestCase):
+    """Testes para views de reports."""
+
+    def setUp(self):
+        """Setup para testes de reports."""
+        super().setUp()
+        self.user1.first_name = 'Admin'
+        self.user1.last_name = 'User'
+        self.user1.save(update_fields=['first_name', 'last_name'])
+        self.user2.first_name = 'Common'
+        self.user2.last_name = 'User'
+        self.user2.save(update_fields=['first_name', 'last_name'])
+
+        self.admin = self.user1
+        self.admin.is_staff = True
+        self.admin.save(update_fields=['is_staff'])
+
+        self.post_1 = Post.objects.create(
+            user=self.user1,
+            content_type='social',
+            content_text='Post 1',
+            visibility='global'
+        )
+        self.post_2 = Post.objects.create(
+            user=self.user2,
+            content_type='social',
+            content_text='Post 2',
+            visibility='global'
+        )
+
+        self.report_user1_pending = Report.objects.create(
+            report_type='post',
+            post=self.post_2,
+            reported_by=self.user1,
+            reason='spam',
+            status='pending'
+        )
+        self.report_user2_resolved = Report.objects.create(
+            report_type='post',
+            post=self.post_1,
+            reported_by=self.user2,
+            reason='harassment',
+            status='resolved'
+        )
+
+    def test_non_admin_only_sees_own_reports(self):
+        """Usuário comum deve listar apenas os próprios reports."""
+        self.admin.is_staff = False
+        self.admin.save(update_fields=['is_staff'])
+        self.client.force_authenticate(user=self.user1)
+
+        url = reverse('social_feed:report-list-create')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['id'], self.report_user1_pending.id)
+
+    def test_admin_sees_all_reports(self):
+        """Admin deve listar todos os reports."""
+        self.client.force_authenticate(user=self.admin)
+
+        url = reverse('social_feed:report-list-create')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 2)
+        self.assertEqual(len(response.data['results']), 2)
+
+    def test_admin_can_filter_reports_by_status(self):
+        """Admin deve conseguir filtrar reports por status."""
+        self.client.force_authenticate(user=self.admin)
+
+        url = reverse('social_feed:report-list-create') + '?status=resolved'
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['status'], 'resolved')
+        self.assertEqual(response.data['results'][0]['id'], self.report_user2_resolved.id)
+
+    def test_report_list_returns_reported_post_details(self):
+        """Retorno de report deve incluir detalhes do post reportado."""
+        self.client.force_authenticate(user=self.admin)
+
+        url = reverse('social_feed:report-list-create') + '?status=pending'
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(len(response.data['results']), 1)
+
+        report_payload = response.data['results'][0]
+        self.assertIn('reported_post', report_payload)
+        self.assertIsNotNone(report_payload['reported_post'])
+        self.assertEqual(report_payload['reported_post']['id'], self.post_2.id)
+        self.assertEqual(report_payload['reported_post']['content_text'], self.post_2.content_text)
+        self.assertEqual(report_payload['reported_by']['id'], self.user1.id)
+        self.assertEqual(report_payload['reported_by']['full_name'], 'Admin User')
+        self.assertEqual(report_payload['reported_post']['user']['id'], self.user2.id)
+        self.assertEqual(report_payload['reported_post']['user']['full_name'], 'Common User')
+
+    def test_status_filter_returns_paginated_data(self):
+        """Filtro por status deve respeitar paginação."""
+        self.client.force_authenticate(user=self.admin)
+
+        Report.objects.create(
+            report_type='post',
+            post=self.post_2,
+            reported_by=self.user2,
+            reason='fake',
+            status='pending'
+        )
+
+        url = reverse('social_feed:report-list-create') + '?status=pending&page=1&page_size=1'
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 2)
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertIsNotNone(response.data['next'])
 
 
 class CommentViewTest(SocialFeedAPITestCase):

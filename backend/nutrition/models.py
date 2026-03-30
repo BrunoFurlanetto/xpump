@@ -1,11 +1,14 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.db.models import Sum
 from django.core.exceptions import ObjectDoesNotExist as RelatedObjectDoesNotExist, ValidationError
 from django.utils import timezone
 
+from gamification.models import GamificationBonus, GamificationPenalty
 from gamification.services import Gamification
 from status.models import Status
 
@@ -95,6 +98,13 @@ class Meal(models.Model):
         # Before deleting the meal, deduct the points from the user's profile
         meal_points = self.base_points
         user = self.user
+        meal_id = self.id
+
+        meal_content_type = ContentType.objects.get_for_model(Meal)
+        bonus_qs = GamificationBonus.objects.filter(content_type=meal_content_type, object_id=meal_id)
+        penalty_qs = GamificationPenalty.objects.filter(content_type=meal_content_type, object_id=meal_id)
+        bonus_total = bonus_qs.aggregate(total=Sum('score'))['total'] or 0.0
+        penalty_total = penalty_qs.aggregate(total=Sum('score'))['total'] or 0.0
 
         try:
             super().delete(*args, **kwargs)
@@ -102,6 +112,15 @@ class Meal(models.Model):
             raise e
 
         Gamification().remove_xp(user, meal_points)
+
+        # Revert bonus/penalty side effects for this meal and remove adjustment records.
+        if bonus_total > 0:
+            Gamification().remove_xp(user, float(bonus_total))
+        if penalty_total > 0:
+            Gamification().add_xp(user, float(penalty_total))
+
+        bonus_qs.delete()
+        penalty_qs.delete()
 
     def clean(self):
         if self.id is None:  # Only check for duplicates on creation

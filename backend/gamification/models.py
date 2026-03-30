@@ -1,6 +1,9 @@
 import copy
 from datetime import datetime
 
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from clients.models import Client
@@ -148,3 +151,65 @@ class Season(models.Model):
             raise MultipleSeasonsFoundError(f'Multiple active seasons found for client {client.name}.')
 
         return season
+
+
+class GamificationBonus(models.Model):
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="gamification_bonuses")
+    score = models.FloatField(help_text="Pontuacao de bonus aplicada ao objeto")
+    created_at = models.DateTimeField(auto_now_add=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveBigIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+    reason = models.CharField(max_length=255, blank=True, null=True, help_text="Motivo do bônus", verbose_name="Motivo")
+
+    class Meta:
+        verbose_name = "Gamification Bonus"
+        verbose_name_plural = "Gamification Bonuses"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["content_type", "object_id"]),
+        ]
+
+    def __str__(self):
+        return f"Bonus {self.score} para {self.content_object}"
+
+    def save(self, *args, **kwargs):
+        is_create = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_create and self.content_object and hasattr(self.content_object, 'user'):
+            from gamification.services import Gamification
+
+            Gamification().add_xp(self.content_object.user, float(self.score or 0.0))
+
+
+class GamificationPenalty(models.Model):
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="gamification_penalties")
+    score = models.FloatField(help_text="Pontuacao de penalidade aplicada ao objeto")
+    created_at = models.DateTimeField(auto_now_add=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveBigIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+    reason = models.CharField(max_length=255, blank=True, null=True, help_text="Motivo da penalização", verbose_name="Motivo")
+
+    class Meta:
+        verbose_name = "Gamification Penalty"
+        verbose_name_plural = "Gamification Penalties"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["content_type", "object_id"]),
+        ]
+
+    def __str__(self):
+        return f"Penalidade {self.score} para {self.content_object}"
+
+    def save(self, *args, **kwargs):
+        is_create = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_create and self.content_object and hasattr(self.content_object, 'user'):
+            from gamification.services import Gamification
+
+            Gamification().remove_xp(self.content_object.user, float(self.score or 0.0))

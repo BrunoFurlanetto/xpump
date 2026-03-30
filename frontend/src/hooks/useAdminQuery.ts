@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { AdminAPI, SystemDashboardStats, ClientOverview, GroupOverview, SystemActivity } from "@/lib/api/admin";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AdminAPI, SystemDashboardStats, ClientOverview, GroupOverview, SystemActivity, PaginatedReports, UpdateReportData } from "@/lib/api/admin";
+import { toast } from "sonner";
 
 /**
  * Hook para buscar estatísticas gerais do sistema
@@ -62,5 +63,35 @@ export function useClientDetail(clientId: number | null) {
     queryFn: () => AdminAPI.getClientDetail(clientId!),
     enabled: !!clientId,
     staleTime: 1000 * 60 * 2, // 2 minutos
+  });
+}
+
+/**
+ * Hook para buscar denúncias com filtro por status
+ */
+export function useAdminReports(status?: string, page: number = 1) {
+  return useQuery<PaginatedReports>({
+    queryKey: ["admin", "reports", status, page],
+    queryFn: () => AdminAPI.getReports(status, page),
+    staleTime: 1000 * 60, // 1 minuto
+  });
+}
+
+/**
+ * Hook para atualizar uma denúncia
+ */
+export function useUpdateReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ reportId, data }: { reportId: number; data: UpdateReportData }) =>
+      AdminAPI.updateReport(reportId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "reports"] });
+      toast.success("Denúncia atualizada com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao atualizar denúncia");
+    },
   });
 }

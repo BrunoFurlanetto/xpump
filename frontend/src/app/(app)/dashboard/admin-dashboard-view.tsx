@@ -201,13 +201,15 @@ export default function AdminDashboardView() {
           color="text-red-400"
           bgColor="bg-red-500/10"
         />
-        <StatCard
-          title="Relatórios Pendentes"
-          value={stats?.pending_reports || 0}
-          icon={Activity}
-          color="text-yellow-400"
-          bgColor="bg-yellow-500/10"
-        />
+        <Link href="/reports" className="block hover:ring-2 hover:ring-primary/40 rounded-lg transition-all cursor-pointer">
+          <StatCard
+            title="Relatórios Pendentes"
+            value={stats?.pending_reports || 0}
+            icon={Activity}
+            color="text-yellow-400"
+            bgColor="bg-yellow-500/10 h-full"
+          />
+        </Link>
         <StatCard
           title="Nível Médio dos Usuários"
           value={parseFloat((stats?.average_user_level || 0).toFixed(1))}
@@ -478,7 +480,7 @@ export default function AdminDashboardView() {
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-foreground">Grupos Ativos</CardTitle>
-            <Link href="/admin/groups" className="text-sm text-primary hover:underline">
+            <Link href="/groups" className="text-sm text-primary hover:underline">
               Ver todos
             </Link>
           </CardHeader>

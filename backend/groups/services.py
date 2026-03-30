@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Sum, Count, FloatField, OuterRef, Value, Subquery, IntegerField
+from django.db.models import Sum, Count, FloatField, OuterRef, Value, Subquery, IntegerField, Q
 from django.db.models.functions import Coalesce
 
 from groups.models import GroupMembers, Group
@@ -84,6 +84,9 @@ def compute_group_members_data(group):
     """
     Meal = apps.get_model('nutrition', 'Meal')
     Workout = apps.get_model('workouts', 'WorkoutCheckin')
+    Bonus = apps.get_model('gamification', 'GamificationBonus')
+    Penalty = apps.get_model('gamification', 'GamificationPenalty')
+    ContentType = apps.get_model('contenttypes', 'ContentType')
 
     month_start = timezone.localtime(timezone.now()).replace(
         day=1, hour=0, minute=0, second=0, microsecond=0,
@@ -149,7 +152,110 @@ def compute_group_members_data(group):
     )
 
     members = list(qs)
-    members.sort(key=lambda m: (m.workout_points or 0) + (m.meal_points or 0), reverse=True)
+
+    member_ids = [member.member_id for member in members]
+
+    def empty_adjustments():
+        return {
+            "total_bonus": 0.0,
+            "total_penalty": 0.0,
+            "bonus_list": [],
+            "penalties_list": [],
+        }
+
+    adjustments_by_member = {
+        member_id: empty_adjustments()
+        for member_id in member_ids
+    }
+
+    workout_items = list(
+        Workout.objects.filter(
+            user_id__in=member_ids,
+            groups=group,
+            workout_date__gte=month_start,
+        ).values('id', 'user_id')
+    )
+    meal_items = list(
+        Meal.objects.filter(
+            user_id__in=member_ids,
+            groups=group,
+            meal_time__gte=month_start,
+        ).values('id', 'user_id')
+    )
+
+    workout_owner_map = {item['id']: item['user_id'] for item in workout_items}
+    meal_owner_map = {item['id']: item['user_id'] for item in meal_items}
+    workout_ids = list(workout_owner_map.keys())
+    meal_ids = list(meal_owner_map.keys())
+
+    if workout_ids or meal_ids:
+        workout_ct_id = ContentType.objects.get_for_model(Workout).id
+        meal_ct_id = ContentType.objects.get_for_model(Meal).id
+
+        filters = Q()
+        if workout_ids:
+            filters |= Q(content_type_id=workout_ct_id, object_id__in=workout_ids)
+        if meal_ids:
+            filters |= Q(content_type_id=meal_ct_id, object_id__in=meal_ids)
+
+        bonuses = Bonus.objects.filter(filters).select_related('created_by').order_by('-created_at')
+        penalties = Penalty.objects.filter(filters).select_related('created_by').order_by('-created_at')
+
+        def get_owner_id(content_type_id, object_id):
+            if content_type_id == workout_ct_id:
+                return workout_owner_map.get(object_id)
+            if content_type_id == meal_ct_id:
+                return meal_owner_map.get(object_id)
+            return None
+
+        def get_full_name(user):
+            full_name = user.get_full_name().strip()
+            return full_name or user.username
+
+        for bonus in bonuses:
+            owner_id = get_owner_id(bonus.content_type_id, bonus.object_id)
+            if owner_id not in adjustments_by_member:
+                continue
+
+            payload = {
+                'score': float(bonus.score),
+                'created_at': bonus.created_at,
+                'created_by': {
+                    'id': bonus.created_by_id,
+                    'fullname': get_full_name(bonus.created_by),
+                },
+                'readon': bonus.reason,
+            }
+            adjustments_by_member[owner_id]['bonus_list'].append(payload)
+            adjustments_by_member[owner_id]['total_bonus'] += float(bonus.score)
+
+        for penalty in penalties:
+            owner_id = get_owner_id(penalty.content_type_id, penalty.object_id)
+            if owner_id not in adjustments_by_member:
+                continue
+
+            payload = {
+                'score': float(penalty.score),
+                'created_at': penalty.created_at,
+                'created_by': {
+                    'id': penalty.created_by_id,
+                    'fullname': get_full_name(penalty.created_by),
+                },
+                'readon': penalty.reason,
+            }
+            adjustments_by_member[owner_id]['penalties_list'].append(payload)
+            adjustments_by_member[owner_id]['total_penalty'] += float(penalty.score)
+
+    def get_member_score(member):
+        adjustments = adjustments_by_member.get(member.member_id, empty_adjustments())
+        return (
+            float(member.workout_points or 0)
+            + float(member.meal_points or 0)
+            + float(adjustments['total_bonus'] or 0)
+            - float(adjustments['total_penalty'] or 0)
+        )
+
+    members.sort(key=get_member_score, reverse=True)
 
     result = []
     prev_score = None
@@ -161,7 +267,8 @@ def compute_group_members_data(group):
     meal_streaks = []
 
     for idx, m in enumerate(members):
-        score = (m.workout_points or 0) + (m.meal_points or 0)
+        adjustments = adjustments_by_member.get(m.member_id, empty_adjustments())
+        score = get_member_score(m)
         if score != prev_score:
             rank = idx + 1
             prev_score = score
@@ -192,6 +299,7 @@ def compute_group_members_data(group):
             "score": score,
             "workouts": m.workout_points or 0,
             "meals": m.meal_points or 0,
+            "adjustments": adjustments,
             "profile_id": getattr(getattr(m.member, 'profile', None), 'id', None),
         })
 

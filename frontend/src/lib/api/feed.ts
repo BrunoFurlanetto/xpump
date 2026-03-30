@@ -71,6 +71,7 @@ export interface Meal {
 export interface Post {
   id: number;
   user: User;
+  profile_id: number;
   content_type: "workout" | "meal" | "social" | "achievement";
   content_text?: string;
   content_files: ContentFile[];
@@ -89,6 +90,7 @@ export interface Post {
 export interface PostList {
   id: number;
   user: User;
+  profile_id: number;
   content_type: "workout" | "meal" | "social" | "achievement";
   content_text?: string;
   content_files: ContentFile[];

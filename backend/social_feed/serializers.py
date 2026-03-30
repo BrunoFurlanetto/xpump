@@ -71,15 +71,16 @@ class PostSerializer(serializers.ModelSerializer):
     content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
     is_superuser_post = serializers.SerializerMethodField()
+    profile_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = [
             'id', 'user', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
-            'comments_count', 'likes_count', 'created_at', 'visibility',
+            'comments_count', 'likes_count', 'created_at', 'visibility', 'profile_id',
             'allow_comments', 'comments', 'likes', 'is_liked_by_user', 'is_superuser_post'
         ]
-        read_only_fields = ['id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post']
+        read_only_fields = ['id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post', 'profile_id']
 
     def get_is_liked_by_user(self, obj):
         request = self.context.get('request')
@@ -93,13 +94,18 @@ class PostSerializer(serializers.ModelSerializer):
         # Safely check if the post's author is a superuser. If user is missing, return False.
         author = getattr(obj, 'user', None)
         return bool(getattr(author, 'is_superuser', False))
+    
+    def get_profile_id(self, obj):
+        profile = getattr(obj.user, 'profile', None)
+        return getattr(profile, 'id', None)
 
 
 class PostListSerializer(serializers.ModelSerializer):
     """Lighter serializer for list views without comments"""
     user = UserSimpleSerializer(read_only=True)
+    profile_id = serializers.SerializerMethodField()
     workout_checkin = WorkoutCheckinSerializer(read_only=True)
-    meal = MealSerializer(read_only=True)
+    meal = serializers.SerializerMethodField()
     content_files = ContentFilePostSerializer(many=True, read_only=True)
     is_liked_by_user = serializers.SerializerMethodField()
     is_superuser_post = serializers.SerializerMethodField()
@@ -107,11 +113,15 @@ class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'user', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
+            'id', 'user', 'profile_id', 'content_type', 'content_text', 'content_files', 'workout_checkin', 'meal',
             'comments_count', 'likes_count', 'created_at', 'visibility',
-            'allow_comments', 'is_liked_by_user', 'is_superuser_post'
+            'allow_comments', 'is_liked_by_user', 'is_superuser_post', 
         ]
-        read_only_fields = ['id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post']
+        read_only_fields = ['id', 'profile_id', 'created_at', 'comments_count', 'likes_count', 'is_superuser_post']
+
+    def get_profile_id(self, obj):
+        profile = getattr(obj.user, 'profile', None)
+        return getattr(profile, 'id', None)
 
     def get_is_liked_by_user(self, obj):
         request = self.context.get('request')
@@ -124,6 +134,15 @@ class PostListSerializer(serializers.ModelSerializer):
     def get_is_superuser_post(self, obj):
         author = getattr(obj, 'user', None)
         return bool(getattr(author, 'is_superuser', False))
+
+    def get_meal(self, obj):
+        if not obj.meal:
+            return None
+
+        meal_payload = MealSerializer(obj.meal, context=self.context).data
+        meal_payload['meal_type_name'] = obj.meal.meal_type.get_meal_name_display()
+
+        return meal_payload
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
@@ -229,14 +248,58 @@ class PostUpdateSerializer(serializers.ModelSerializer):
 
 
 class ReportSerializer(serializers.ModelSerializer):
-    # reported_by = ProfilesSerialializer(read_only=True)
-    # post = PostListSerializer(read_only=True)
-    # comment = CommentSerializer(read_only=True)
+    reported_by = serializers.SerializerMethodField()
+    reported_post = serializers.SerializerMethodField()
+
+    @staticmethod
+    def _build_user_payload(user):
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        if not full_name:
+            full_name = user.username
+
+        return {
+            'id': user.id,
+            'full_name': full_name,
+        }
+
+    def get_reported_by(self, obj):
+        return self._build_user_payload(obj.reported_by)
+
+    def get_reported_post(self, obj):
+        post = obj.post
+
+        if not post and obj.comment_id and getattr(obj.comment, 'post', None):
+            post = obj.comment.post
+
+        if not post:
+            return None
+
+        request = self.context.get('request')
+        content_files = []
+        
+        for content_file in post.content_files.all():
+            file_url = content_file.file.url
+            if request is not None:
+                file_url = request.build_absolute_uri(file_url)
+            content_files.append(file_url)
+
+        return {
+            'id': post.id,
+            'user': self._build_user_payload(post.user),
+            'content_type': post.content_type,
+            'content_text': post.content_text,
+            'visibility': post.visibility,
+            'comments_count': post.comments_count,
+            'likes_count': post.likes_count,
+            'created_at': post.created_at,
+            'content_files': content_files,
+        }
+
 
     class Meta:
         model = Report
         fields = [
-            'id', 'report_type', 'post', 'comment', 'reported_by', 'reason',
+            'id', 'report_type', 'post', 'comment', 'reported_by', 'reported_post', 'reason',
             'other_reason', 'status', 'created_at', 'resolved_at', 'notes', 'response'
         ]
         read_only_fields = [
@@ -271,3 +334,17 @@ class ReportCreateSerializer(serializers.ModelSerializer):
         validated_data['reported_by'] = self.context['request'].user
 
         return super().create(validated_data)
+
+
+class ReportUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['status', 'notes', 'response']
+
+    def update(self, instance, validated_data):
+        new_status = validated_data.get('status')
+        if new_status in ('resolved', 'dismissed') and not instance.resolved_at:
+            from django.utils import timezone
+            validated_data['resolved_at'] = timezone.now()
+
+        return super().update(instance, validated_data)

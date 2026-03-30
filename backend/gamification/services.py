@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 import calendar
 from faulthandler import dump_traceback
 from math import floor
@@ -68,8 +68,7 @@ class GamificationService(ABC):
         # months_to_end_season = (actual_season.end_date - datetime.today().date()).days / 30
         # Ultimo dia do mês atual
         last_day_of_month = calendar.monthrange(datetime.today().year, datetime.today().month)[1]
-        days_to_end_month = last_day_of_month - datetime.today().day
-        print(f"Days to end of month: {days_to_end_month}")
+        days_to_end_month = last_day_of_month - datetime.today().day        
         xp = self.get_xp_settings()
 
         # if months_to_end_season < self.settings.months_to_end_season:
@@ -111,37 +110,69 @@ class WorkoutGamification(GamificationService):
     def multiplier_streak_attr(self):
         return "multiplier_workout_streak"
 
-    def calculate(self, user, *args):
-        if len(args) != 1:
-            raise ValueError("WorkoutGamification.calculate expects exactly 1 extra argument: duration")
-
-        duration = args[0]
-        duration_min = duration.total_seconds() / 60
+    def _calculate_day_total_points(self, user, total_duration_min):
         base_points = self.base_xp(user)
         workout_minutes_base = self.settings.workout_minutes
         multiplier = self.get_multiplier(user)
-        workout_xp_today = user.workouts.filter(workout_date__date=datetime.today().date()).aggregate(
-            total=Sum('base_points')
-        )['total'] or 0
 
-        if workout_xp_today >= self.settings.max_workout_xp:
-            return 0
+        if total_duration_min < workout_minutes_base:
+            points_today = float(base_points / 2) * multiplier
+        elif total_duration_min == workout_minutes_base:
+            points_today = float(base_points) * multiplier
+        elif workout_minutes_base < total_duration_min < workout_minutes_base * 2:
+            points_today = float(base_points * 1.5) * multiplier
         else:
-            last_points_today = self.settings.max_workout_xp - workout_xp_today
+            points_today = float(base_points * 2) * multiplier
 
-            if duration_min < workout_minutes_base:
-                return min(float(base_points / 2) * multiplier, last_points_today)
+        return min(points_today, float(self.settings.max_workout_xp))
 
-            if duration_min == workout_minutes_base:
-                return min(float(base_points) * multiplier, last_points_today)
+    def recalculate_day_points(self, user, workout_day):
+        workouts_in_day = user.workouts.filter(workout_date__date=workout_day)
+        workouts_count = workouts_in_day.count()
 
-            if workout_minutes_base < duration_min < workout_minutes_base * 2:
-                return min(float(base_points * 1.5) * multiplier, last_points_today)
+        if workouts_count == 0:
+            return 0.0
 
-            if duration_min >= workout_minutes_base * 2:
-                return min(float(base_points * 2) * multiplier, last_points_today)
+        total_duration_in_day = workouts_in_day.aggregate(total_duration=Sum('duration'))['total_duration'] or timedelta(0)
+        total_duration_min = total_duration_in_day.total_seconds() / 60
+        points_today = self._calculate_day_total_points(user, total_duration_min)
+        points_per_workout = points_today / workouts_count
 
-        raise ValueError("Invalid duration value.")
+        workouts_in_day.update(base_points=points_per_workout)
+
+        return points_today
+
+    def calculate(self, user, *args):
+        # Create mode: new check-in is being saved and duration/date are provided.
+        if len(args) == 2:
+            duration, workout_date = args
+            workouts_in_day = user.workouts.filter(workout_date__date=workout_date.date())
+            total_duration_in_day = workouts_in_day.aggregate(total_duration=Sum('duration'))['total_duration'] or timedelta(0)
+
+            total_duration_min = (total_duration_in_day.total_seconds() / 60) + (duration.total_seconds() / 60)
+            points_today = self._calculate_day_total_points(user, total_duration_min)
+
+            total_workouts_in_day = workouts_in_day.count() + 1
+            points_per_workout = points_today / total_workouts_in_day
+
+            workouts_in_day.update(base_points=points_per_workout)
+
+            return points_per_workout
+
+        # Recalculation mode: no args, recompute all workouts that remain for this user.
+        if len(args) == 0:
+            workout_days = user.workouts.order_by().values_list('workout_date__date', flat=True).distinct()
+            total_points = 0.0
+
+            for workout_day in workout_days:
+                total_points += self.recalculate_day_points(user, workout_day)
+
+            return total_points
+
+        raise ValueError(
+            "WorkoutGamification.calculate expects either: "
+            "(duration, workout_date) for create mode or no args for recalculation mode"
+        )
 
 
 class MealGamification(GamificationService):
@@ -213,7 +244,7 @@ class Gamification:
         meals = user.meals.filter(date__gte=start_date, date__lte=end_date)
 
         for workout in workouts:
-            total_workout_xp += self.Workout.calculate(user, workout.duration)
+            total_workout_xp += self.Workout.calculate(user, workout.duration, workout.workout_date)
 
         for meal in meals:
             total_meal_xp += self.Meal.calculate(user)

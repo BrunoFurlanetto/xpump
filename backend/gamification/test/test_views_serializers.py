@@ -1,13 +1,20 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from datetime import date, timedelta
 
-from gamification.models import GamificationSettings, Season
+from gamification.models import GamificationSettings, Season, GamificationBonus, GamificationPenalty
 from gamification.serializer import GamificationSettingsSerializer, SeasonSerializer
 from clients.models import Client
+from groups.models import Group
+from profiles.models import Profile
+from nutrition.models import MealConfig, Meal
+from social_feed.models import Post, Comment
+from workouts.models import WorkoutCheckin
 
 
 class GamificationSettingsSerializerTest(TestCase):
@@ -281,3 +288,189 @@ class SeasonAPITest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], 'Test Season')
+
+
+class GamificationAdjustmentsAPITest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='adjustment_user', password='pass123')
+        self.client_obj = Client.objects.create(
+            name='Client Adjustment',
+            cnpj='11.222.333/0001-44',
+            owners=self.user,
+            contact_email='adjustment@client.test',
+            phone='(11)98888-7777',
+            address='Rua Ajuste, 123, Centro, Sao Paulo - SP',
+        )
+        self.profile = Profile.objects.create(user=self.user, employer=self.client_obj, score=0, level=0)
+
+        self.main_group = Group.objects.create(
+            name='Main Group Adjustment',
+            description='Main group for adjustment tests',
+            created_by=self.user,
+            owner=self.user,
+            main=True,
+        )
+        self.profile.groups.add(self.main_group)
+
+        self.meal_config = MealConfig.objects.create(
+            meal_name='breakfast',
+            interval_start=(timezone.now() - timedelta(hours=1)).time(),
+            interval_end=(timezone.now() + timedelta(hours=1)).time(),
+        )
+
+        self.meal = Meal.objects.create(
+            user=self.user,
+            meal_type=self.meal_config,
+            meal_time=timezone.now() - timedelta(hours=2),
+            comments='meal for adjustment test'
+        )
+
+        self.workout = WorkoutCheckin.objects.create(
+            user=self.user,
+            workout_date=timezone.now() - timedelta(hours=3),
+            duration=timedelta(minutes=40),
+            comments='workout for adjustment test'
+        )
+
+        self.social_post = Post.objects.create(
+            user=self.user,
+            content_type='social',
+            content_text='social post for adjustment test',
+            visibility='global',
+        )
+
+        self.comment = Comment.objects.create(
+            post=self.social_post,
+            user=self.user,
+            text='comment for adjustment test',
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_bonus_for_meal(self):
+        url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
+        payload = {
+            'adjustment_type': 'bonus',
+            'score': 2.5,
+            'reason': 'Bonus manual por validacao',
+            'target_type': 'meal',
+            'target_id': self.meal.id,
+        }
+
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['adjustment_type'], 'bonus')
+        self.assertEqual(response.data['reason'], 'Bonus manual por validacao')
+        self.assertEqual(response.data['created_by_id'], self.user.id)
+        self.assertEqual(response.data['target_type'], 'meal')
+        self.assertEqual(response.data['target_id'], self.meal.id)
+        self.assertTrue(GamificationBonus.objects.filter(id=response.data['id']).exists())
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before + 2.5, places=5)
+
+    def test_create_penalty_for_workout(self):
+        url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
+        payload = {
+            'adjustment_type': 'penalty',
+            'score': 1.0,
+            'reason': 'Penalidade por inconsistencia',
+            'target_type': 'workout_checkin',
+            'target_id': self.workout.id,
+        }
+
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['adjustment_type'], 'penalty')
+        self.assertEqual(response.data['reason'], 'Penalidade por inconsistencia')
+        self.assertEqual(response.data['created_by_id'], self.user.id)
+        self.assertEqual(response.data['target_type'], 'workout_checkin')
+        self.assertEqual(response.data['target_id'], self.workout.id)
+        self.assertTrue(GamificationPenalty.objects.filter(id=response.data['id']).exists())
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before - 1.0, places=5)
+
+    def test_list_adjustments_with_filter(self):
+        meal_content_type = ContentType.objects.get_for_model(Meal)
+        workout_content_type = ContentType.objects.get_for_model(WorkoutCheckin)
+
+        GamificationBonus.objects.create(
+            created_by=self.user,
+            score=2.0,
+            content_type=meal_content_type,
+            object_id=self.meal.id,
+        )
+        GamificationPenalty.objects.create(
+            created_by=self.user,
+            score=1.0,
+            content_type=workout_content_type,
+            object_id=self.workout.id,
+        )
+
+        url = reverse('gamification-adjustments')
+        response = self.client.get(url, {'adjustment_type': 'bonus'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+        self.assertTrue(all(item['adjustment_type'] == 'bonus' for item in response.data))
+
+    def test_list_adjustments_filter_by_created_by_id(self):
+        meal_content_type = ContentType.objects.get_for_model(Meal)
+        GamificationBonus.objects.create(
+            created_by=self.user,
+            score=3.5,
+            reason='Filtro por autor',
+            content_type=meal_content_type,
+            object_id=self.meal.id,
+        )
+
+        url = reverse('gamification-adjustments')
+        response = self.client.get(url, {'created_by_id': self.user.id})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+        self.assertTrue(all(item['created_by_id'] == self.user.id for item in response.data))
+
+    def test_create_bonus_for_social_post(self):
+        url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
+        payload = {
+            'adjustment_type': 'bonus',
+            'score': 2.0,
+            'reason': 'Bonus social post',
+            'target_type': 'social',
+            'target_id': self.social_post.id,
+        }
+
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['adjustment_type'], 'bonus')
+        self.assertEqual(response.data['target_type'], 'social')
+        self.assertEqual(response.data['target_id'], self.social_post.id)
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before + 2.0, places=5)
+
+    def test_create_penalty_for_comment(self):
+        url = reverse('gamification-adjustments')
+        score_before = self.user.profile.score
+        payload = {
+            'adjustment_type': 'penalty',
+            'score': 1.25,
+            'reason': 'Penalty comment',
+            'target_type': 'comments',
+            'target_id': self.comment.id,
+        }
+
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['adjustment_type'], 'penalty')
+        self.assertEqual(response.data['target_type'], 'comments')
+        self.assertEqual(response.data['target_id'], self.comment.id)
+        self.user.profile.refresh_from_db()
+        self.assertAlmostEqual(self.user.profile.score, score_before - 1.25, places=5)
