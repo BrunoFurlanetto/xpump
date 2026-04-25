@@ -139,6 +139,15 @@ class WorkoutGamificationTest(TestCase):
         self.assertEqual(result_30, 1.0)
         self.assertEqual(result_90, 3.0)
 
+    def test_calculate_keeps_bonus_aware_base_xp(self):
+        """Test workout block calculation still uses bonus-aware base XP."""
+        workout_date = datetime.now()
+
+        with patch.object(self.gamification, 'base_xp', return_value=2.5):
+            result_60 = self.gamification.calculate(self.user, timedelta(minutes=60), workout_date)
+
+        self.assertEqual(result_60, 5.0)
+
     def test_calculate_invalid_args(self):
         """Test calculate method with invalid arguments"""
         result = self.gamification.calculate(self.user)

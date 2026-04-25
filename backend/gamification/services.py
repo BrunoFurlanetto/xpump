@@ -112,7 +112,7 @@ class WorkoutGamification(GamificationService):
 
     def _calculate_day_total_points(self, user, total_duration_min):
         workout_minutes_base = self.settings.workout_minutes
-        base_points = self.settings.workout_xp
+        base_points = self.base_xp(user)
         multiplier = self.get_multiplier(user)
         completed_blocks = floor(total_duration_min / workout_minutes_base) if workout_minutes_base > 0 else 0
         points_today = float(completed_blocks * base_points) * multiplier
