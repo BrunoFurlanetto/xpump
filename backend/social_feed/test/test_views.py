@@ -418,6 +418,77 @@ class ReportViewTest(SocialFeedAPITestCase):
         self.assertEqual(len(response.data['results']), 1)
         self.assertIsNotNone(response.data['next'])
 
+    def test_admin_can_list_grouped_reports(self):
+        """Admin deve listar denúncias agrupadas por item reportado."""
+        self.client.force_authenticate(user=self.admin)
+
+        comment = Comment.objects.create(
+            user=self.user2,
+            post=self.post_1,
+            text='Comentario denunciado'
+        )
+        Report.objects.create(
+            report_type='post',
+            post=self.post_2,
+            reported_by=self.user2,
+            reason='fake',
+            status='pending'
+        )
+        Report.objects.create(
+            report_type='comment',
+            comment=comment,
+            reported_by=self.user1,
+            reason='inappropriate',
+            status='pending'
+        )
+
+        url = reverse('social_feed:report-grouped-list')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 3)
+        post_group = next(item for item in response.data['results'] if item['report_type'] == 'post' and item['target_id'] == self.post_2.id)
+        self.assertEqual(post_group['total_reports'], 2)
+        self.assertEqual(post_group['status'], 'pending')
+
+    def test_non_admin_cannot_access_grouped_reports(self):
+        """Usuário comum não deve acessar moderação agregada."""
+        self.admin.is_staff = False
+        self.admin.save(update_fields=['is_staff'])
+        self.client.force_authenticate(user=self.user1)
+
+        url = reverse('social_feed:report-grouped-list')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_can_patch_grouped_reports(self):
+        """Admin deve conseguir resolver denúncias pendentes do item em lote."""
+        self.client.force_authenticate(user=self.admin)
+
+        second_report = Report.objects.create(
+            report_type='post',
+            post=self.post_2,
+            reported_by=self.user2,
+            reason='fake',
+            status='pending'
+        )
+
+        url = reverse('social_feed:report-grouped-detail', kwargs={'report_type': 'post', 'target_id': self.post_2.id})
+        response = self.client.patch(url, {
+            'status': 'dismissed',
+            'notes': 'Conteúdo revisado',
+            'response': 'Encerrado'
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.report_user1_pending.refresh_from_db()
+        second_report.refresh_from_db()
+        self.assertEqual(self.report_user1_pending.status, 'dismissed')
+        self.assertEqual(second_report.status, 'dismissed')
+        self.assertEqual(self.report_user1_pending.notes, 'Conteúdo revisado')
+        self.assertEqual(second_report.response, 'Encerrado')
+
 
 class CommentViewTest(SocialFeedAPITestCase):
     """Testes para views de comentários."""

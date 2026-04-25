@@ -604,7 +604,10 @@ class SystemAnalyticsService:
         likes_this_week = (post_like_stats['week'] or 0) + (comment_like_stats['week'] or 0)
         likes_this_month = (post_like_stats['month'] or 0) + (comment_like_stats['month'] or 0)
 
-        pending_reports = Report.objects.filter(status='pending').count()
+        pending_reports = (
+            Report.objects.filter(status='pending', post__isnull=False).values('post_id').distinct().count() +
+            Report.objects.filter(status='pending', comment__isnull=False).values('comment_id').distinct().count()
+        )
 
         # Gamification statistics
         profile_stats = Profile.objects.filter(

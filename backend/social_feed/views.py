@@ -1,14 +1,18 @@
+from collections import Counter
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from .models import Post, Comment, Report, PostLike, CommentLike
 from .serializers import (
     PostSerializer, PostListSerializer, PostCreateSerializer, PostUpdateSerializer,
-    CommentSerializer, ReportSerializer, ReportCreateSerializer, ReportUpdateSerializer, CommentCreateSerializer
+    CommentSerializer, ReportSerializer, ReportCreateSerializer, ReportUpdateSerializer, CommentCreateSerializer,
+    AggregatedReportSerializer,
 )
 from .pagination import PostsPagination, CommentsPagination, ReportsPagination
 
@@ -305,6 +309,129 @@ class ReportDetailView(generics.RetrieveUpdateAPIView):
                 status=403
             )
         return super().update(request, *args, **kwargs)
+
+
+class ReportAggregationMixin:
+    @staticmethod
+    def _ensure_admin(user):
+        if not (user.is_staff or user.is_superuser):
+            raise PermissionDenied('Apenas administradores podem acessar a moderação agregada.')
+
+    @staticmethod
+    def _get_group_status(reports):
+        statuses = {report.status for report in reports}
+        for candidate in ('pending', 'reviewed', 'resolved', 'dismissed'):
+            if candidate in statuses:
+                return candidate
+
+        return reports[0].status
+
+    def _build_aggregated_groups(self, reports):
+        grouped = {}
+
+        for report in reports:
+            target_id = report.comment_id if report.report_type == 'comment' else report.post_id
+            key = (report.report_type, target_id)
+            bucket = grouped.setdefault(key, [])
+            bucket.append(report)
+
+        aggregated = []
+        for (report_type, target_id), bucket in grouped.items():
+            ordered_bucket = sorted(bucket, key=lambda report: report.created_at)
+            reason_counter = Counter(report.reason for report in bucket)
+            aggregated.append({
+                'report_type': report_type,
+                'target_id': target_id,
+                'status': self._get_group_status(bucket),
+                'total_reports': len(bucket),
+                'reasons': [
+                    {'reason': reason, 'count': count}
+                    for reason, count in reason_counter.items()
+                ],
+                'first_reported_at': ordered_bucket[0].created_at,
+                'last_reported_at': ordered_bucket[-1].created_at,
+                'item': ordered_bucket[-1].comment if report_type == 'comment' else ordered_bucket[-1].post,
+                'reports': bucket,
+            })
+
+        aggregated.sort(key=lambda group: group['last_reported_at'], reverse=True)
+        return aggregated
+
+    def _get_reports_for_target(self, report_type, target_id):
+        return list(
+            Report.objects.select_related(
+                'reported_by', 'post__user', 'comment__user', 'comment__post__user'
+            ).prefetch_related(
+                'post__content_files', 'comment__post__content_files'
+            ).filter(
+                report_type=report_type,
+                **({'comment_id': target_id} if report_type == 'comment' else {'post_id': target_id})
+            )
+        )
+
+
+@extend_schema(tags=['Social Feed'])
+class AggregatedReportListView(ReportAggregationMixin, APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = ReportsPagination
+
+    def get(self, request):
+        self._ensure_admin(request.user)
+        reports = Report.objects.select_related(
+            'reported_by', 'post__user', 'comment__user', 'comment__post__user'
+        ).prefetch_related(
+            'post__content_files', 'comment__post__content_files'
+        )
+        groups = self._build_aggregated_groups(reports)
+
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            groups = [group for group in groups if group['status'] == status_filter]
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(groups, request, view=self)
+        serializer = AggregatedReportSerializer(page, many=True, context={'request': request})
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+@extend_schema(tags=['Social Feed'])
+class AggregatedReportDetailView(ReportAggregationMixin, APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, report_type, target_id):
+        self._ensure_admin(request.user)
+        reports = self._get_reports_for_target(report_type, target_id)
+        if not reports:
+            return Response({'detail': 'Grupo de denúncias não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        payload = self._build_aggregated_groups(reports)[0]
+        serializer = AggregatedReportSerializer(payload, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request, report_type, target_id):
+        self._ensure_admin(request.user)
+        reports = self._get_reports_for_target(report_type, target_id)
+        if not reports:
+            return Response({'detail': 'Grupo de denúncias não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        pending_reports = [report for report in reports if report.status == 'pending']
+        if not pending_reports:
+            return Response(
+                {'detail': 'Não há denúncias pendentes para este item.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = ReportUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        for report in pending_reports:
+            ReportUpdateSerializer().update(report, serializer.validated_data.copy())
+
+        refreshed_reports = self._get_reports_for_target(report_type, target_id)
+        payload = self._build_aggregated_groups(refreshed_reports)[0]
+        response_serializer = AggregatedReportSerializer(payload, context={'request': request})
+        return Response(response_serializer.data)
 
 
 @extend_schema(tags=['Social Feed'])

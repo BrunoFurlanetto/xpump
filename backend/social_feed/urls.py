@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     PostViewSet, CommentListCreateView, CommentDetailView, CommentToggleLikeView,
-    ReportListCreateView, ReportDetailView, UserPostsView
+    ReportListCreateView, ReportDetailView, AggregatedReportListView, AggregatedReportDetailView, UserPostsView
 )
 
 app_name = 'social_feed'
@@ -16,6 +16,8 @@ urlpatterns = [
     path('comments/<int:pk>/', CommentDetailView.as_view(), name='comment-detail'),
     path('comments/<int:pk>/toggle-like/', CommentToggleLikeView.as_view(), name='comment-toggle-like'),
     path('reports/', ReportListCreateView.as_view(), name='report-list-create'),
+    path('reports/grouped/', AggregatedReportListView.as_view(), name='report-grouped-list'),
+    path('reports/grouped/<str:report_type>/<int:target_id>/', AggregatedReportDetailView.as_view(), name='report-grouped-detail'),
     path('reports/<int:pk>/', ReportDetailView.as_view(), name='report-detail'),
     path('users/<int:user_id>/posts/', UserPostsView.as_view(), name='user-posts'),
 ]
