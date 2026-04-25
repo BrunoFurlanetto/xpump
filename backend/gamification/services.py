@@ -111,18 +111,11 @@ class WorkoutGamification(GamificationService):
         return "multiplier_workout_streak"
 
     def _calculate_day_total_points(self, user, total_duration_min):
-        base_points = self.base_xp(user)
         workout_minutes_base = self.settings.workout_minutes
+        base_points = self.settings.workout_xp
         multiplier = self.get_multiplier(user)
-
-        if total_duration_min < workout_minutes_base:
-            points_today = float(base_points / 2) * multiplier
-        elif total_duration_min == workout_minutes_base:
-            points_today = float(base_points) * multiplier
-        elif workout_minutes_base < total_duration_min < workout_minutes_base * 2:
-            points_today = float(base_points * 1.5) * multiplier
-        else:
-            points_today = float(base_points * 2) * multiplier
+        completed_blocks = floor(total_duration_min / workout_minutes_base) if workout_minutes_base > 0 else 0
+        points_today = float(completed_blocks * base_points) * multiplier
 
         return min(points_today, float(self.settings.max_workout_xp))
 

@@ -22,10 +22,10 @@ class GamificationSettingsModelTest(TestCase):
         self.assertEqual(settings.xp_base, 6)
         self.assertEqual(settings.exponential_factor, 1.5)
         self.assertEqual(settings.max_level, 50)
-        self.assertEqual(settings.workout_minutes, 50)
-        self.assertEqual(settings.workout_xp, 2)
+        self.assertEqual(settings.workout_minutes, 30)
+        self.assertEqual(settings.workout_xp, 1)
         self.assertEqual(settings.meal_xp, 1)
-        self.assertEqual(settings.months_to_end_season, 2)
+        self.assertEqual(settings.days_to_end_month, 10)
         self.assertEqual(settings.season_bonus_percentage, 50.0)
         self.assertEqual(settings.percentage_from_first_position, 60.0)
 
@@ -98,7 +98,7 @@ class WorkoutGamificationTest(TestCase):
         )
 
         # Create settings for this test
-        self.settings = GamificationSettings.objects.create(workout_xp=3)
+        self.settings = GamificationSettings.objects.create(workout_xp=1, workout_minutes=30, max_workout_xp=4)
         self.gamification = WorkoutGamification()
 
     def test_get_streak(self):
@@ -126,6 +126,18 @@ class WorkoutGamificationTest(TestCase):
 
         self.assertIsInstance(result, float)
         self.assertGreater(result, 0)
+
+    def test_calculate_uses_completed_30_minute_blocks(self):
+        """Test XP calculation by completed 30-minute blocks."""
+        workout_date = datetime.now()
+
+        result_29 = self.gamification.calculate(self.user, timedelta(minutes=29), workout_date)
+        result_30 = self.gamification.calculate(self.user, timedelta(minutes=30), workout_date)
+        result_90 = self.gamification.calculate(self.user, timedelta(minutes=90), workout_date)
+
+        self.assertEqual(result_29, 0.0)
+        self.assertEqual(result_30, 1.0)
+        self.assertEqual(result_90, 3.0)
 
     def test_calculate_invalid_args(self):
         """Test calculate method with invalid arguments"""
