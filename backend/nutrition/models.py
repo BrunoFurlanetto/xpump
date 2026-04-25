@@ -57,6 +57,7 @@ class Meal(models.Model):
     validation_status = models.ForeignKey(Status, on_delete=models.PROTECT, default=get_published_status_id)
     base_points = models.FloatField(null=True, blank=True, editable=False)
     fasting = models.BooleanField(default=False)
+    broke_diet = models.BooleanField(default=False)
     multiplier = models.FloatField(default=1.0)
     groups = models.ManyToManyField('groups.Group', blank=True)
 
@@ -71,28 +72,38 @@ class Meal(models.Model):
             'action': 'PUBLISHED',
         })
 
+        meal_datetime = self.meal_time.astimezone()
+        streak_defaults = {
+            'current_streak': 0 if self.broke_diet else 1,
+            'longest_streak': 0 if self.broke_diet else 1,
+            'last_meal_datetime': meal_datetime,
+        }
         streak, created = MealStreak.objects.get_or_create(
             user=self.user,
-            defaults={
-                'current_streak': 1,
-                'longest_streak': 1,
-                'last_meal_datetime': self.meal_time.astimezone(),
-            }
+            defaults=streak_defaults
         )
 
         if not created:
-            streak.update_streak(self.meal_time.astimezone())
+            if self.broke_diet:
+                streak.break_streak(meal_datetime)
+            else:
+                streak.update_streak(meal_datetime)
 
         # Calculate multiplier and points based on streak
-        self.multiplier = Gamification.Meal.get_multiplier(self.user)
-        self.base_points = Gamification.Meal.calculate(self.user)
+        if self.broke_diet:
+            self.multiplier = 1.0
+            self.base_points = 0.0
+        else:
+            self.multiplier = Gamification.Meal.get_multiplier(self.user)
+            self.base_points = Gamification.Meal.calculate(self.user)
 
         super().save(*args, **kwargs)
 
         self.groups.set([group.id for group in self.user.profile.groups.all()])
 
         # Update the user's profile with the new points
-        Gamification().add_xp(self.user, self.base_points)
+        if self.base_points:
+            Gamification().add_xp(self.user, self.base_points)
 
     def delete(self, *args, **kwargs):
         # Before deleting the meal, deduct the points from the user's profile
@@ -222,6 +233,13 @@ class MealStreak(models.Model):
         self.last_meal_datetime = meal_datetime
 
         self.save()
+
+        return self.current_streak
+
+    def break_streak(self, meal_datetime):
+        self.current_streak = 0
+        self.last_meal_datetime = meal_datetime
+        self.save(update_fields=['current_streak', 'last_meal_datetime'])
 
         return self.current_streak
 
