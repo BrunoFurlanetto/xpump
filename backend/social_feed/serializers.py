@@ -262,21 +262,13 @@ class ReportSerializer(serializers.ModelSerializer):
             'full_name': full_name,
         }
 
-    def get_reported_by(self, obj):
-        return self._build_user_payload(obj.reported_by)
-
-    def get_reported_post(self, obj):
-        post = obj.post
-
-        if not post and obj.comment_id and getattr(obj.comment, 'post', None):
-            post = obj.comment.post
-
+    def _build_post_payload(self, post):
         if not post:
             return None
 
         request = self.context.get('request')
         content_files = []
-        
+
         for content_file in post.content_files.all():
             file_url = content_file.file.url
             if request is not None:
@@ -294,6 +286,19 @@ class ReportSerializer(serializers.ModelSerializer):
             'created_at': post.created_at,
             'content_files': content_files,
         }
+
+    def get_reported_by(self, obj):
+        return self._build_user_payload(obj.reported_by)
+
+    def get_reported_post(self, obj):
+        post = obj.post
+
+        if not post and obj.comment_id and getattr(obj.comment, 'post', None):
+            post = obj.comment.post
+
+        if not post:
+            return None
+        return self._build_post_payload(post)
 
 
     class Meta:
@@ -348,3 +353,42 @@ class ReportUpdateSerializer(serializers.ModelSerializer):
             validated_data['resolved_at'] = timezone.now()
 
         return super().update(instance, validated_data)
+
+
+class AggregatedReportSerializer(ReportSerializer):
+    status = serializers.CharField()
+    target_id = serializers.IntegerField()
+    total_reports = serializers.IntegerField()
+    reasons = serializers.ListField()
+    first_reported_at = serializers.DateTimeField()
+    last_reported_at = serializers.DateTimeField()
+    reported_item = serializers.SerializerMethodField()
+    reported_post = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Report
+        fields = [
+            'report_type', 'target_id', 'status', 'total_reports', 'reasons',
+            'first_reported_at', 'last_reported_at', 'reported_item', 'reported_post',
+        ]
+        read_only_fields = fields
+
+    def get_reported_item(self, obj):
+        item = obj['item']
+
+        if obj['report_type'] == 'comment':
+            return {
+                'id': item.id,
+                'text': item.text,
+                'created_at': item.created_at,
+                'user': self._build_user_payload(item.user),
+                'post_id': item.post_id,
+            }
+
+        return self._build_post_payload(item)
+
+    def get_reported_post(self, obj):
+        if obj['report_type'] == 'comment':
+            return self._build_post_payload(obj['item'].post)
+
+        return self._build_post_payload(obj['item'])

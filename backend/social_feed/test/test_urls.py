@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from social_feed.views import (
     PostViewSet, CommentListCreateView, CommentDetailView,
     CommentToggleLikeView, ReportListCreateView, ReportDetailView,
+    AggregatedReportListView, AggregatedReportDetailView,
     UserPostsView
 )
 
@@ -101,6 +102,22 @@ class URLTest(TestCase):
         resolver = resolve(url)
         self.assertEqual(resolver.func.view_class, ReportDetailView)
 
+    def test_reports_grouped_list_url(self):
+        """Teste URL de listagem agregada de reports."""
+        url = reverse('social_feed:report-grouped-list')
+        self.assertEqual(url, '/api/v1/social-feed/reports/grouped/')
+
+        resolver = resolve(url)
+        self.assertEqual(resolver.func.view_class, AggregatedReportListView)
+
+    def test_reports_grouped_detail_url(self):
+        """Teste URL de detalhe agregado de reports."""
+        url = reverse('social_feed:report-grouped-detail', kwargs={'report_type': 'post', 'target_id': 1})
+        self.assertEqual(url, '/api/v1/social-feed/reports/grouped/post/1/')
+
+        resolver = resolve(url)
+        self.assertEqual(resolver.func.view_class, AggregatedReportDetailView)
+
     def test_user_posts_url(self):
         """Teste URL para posts de usuário específico."""
         url = reverse('social_feed:user-posts', kwargs={'user_id': 1})
@@ -118,6 +135,7 @@ class URLTest(TestCase):
             'comment-detail',
             'comment-toggle-like',
             'report-list-create',
+            'report-grouped-list',
             'report-detail',
             'user-posts'
         ]
@@ -126,6 +144,8 @@ class URLTest(TestCase):
             try:
                 if url_name in ['posts-detail', 'comment-detail', 'report-detail', 'comment-toggle-like']:
                     url = reverse(f'social_feed:{url_name}', kwargs={'pk': 1})
+                elif url_name == 'report-grouped-list':
+                    url = reverse(f'social_feed:{url_name}')
                 elif url_name == 'user-posts':
                     url = reverse(f'social_feed:{url_name}', kwargs={'user_id': 1})
                 else:

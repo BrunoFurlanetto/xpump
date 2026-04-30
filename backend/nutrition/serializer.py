@@ -63,7 +63,7 @@ class MealSerializer(serializers.ModelSerializer):
             'id', 'user', 'meal_type', 'meal_time',
             'comments', 'validation_status', 'base_points',
             'multiplier', 'proof_files', 'proofs',
-            'current_streak', 'longest_streak', 'level_up', 'fasting',
+            'current_streak', 'longest_streak', 'level_up', 'fasting', 'broke_diet',
             'total_bonus', 'total_penalty', 'bonus_list', 'penalties_list'
         ]
         # Prevent modification of automatically calculated fields

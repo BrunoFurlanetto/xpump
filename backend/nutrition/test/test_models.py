@@ -262,12 +262,8 @@ class MealModelTest(TestCase):
             meal.clean()
 
     def test_delete_meal_removes_adjustments_and_deletes_records(self):
-<<<<<<< HEAD
         self.profile.score = 100.0
         self.profile.save()
-
-=======
->>>>>>> 369294b73fef25faeceab84f11f741dd1acdae11
         meal = Meal.objects.create(**self.meal_data)
 
         meal_content_type = ContentType.objects.get_for_model(Meal)
@@ -296,6 +292,24 @@ class MealModelTest(TestCase):
         self.assertAlmostEqual(removed_xp, expected_removed, places=5)
         self.assertFalse(GamificationBonus.objects.filter(id=bonus.id).exists())
         self.assertFalse(GamificationPenalty.objects.filter(id=penalty.id).exists())
+
+    def test_broke_diet_meal_does_not_add_xp_and_breaks_streak(self):
+        """Meal com broke_diet salva sem XP e zera streak atual."""
+        MealStreak.objects.create(
+            user=self.user,
+            current_streak=4,
+            longest_streak=4,
+            last_meal_datetime=datetime(2025, 8, 26, 8, 30)
+        )
+
+        meal = Meal.objects.create(**self.meal_data, broke_diet=True)
+
+        self.profile.refresh_from_db()
+        self.user.meal_streak.refresh_from_db()
+        self.assertTrue(meal.broke_diet)
+        self.assertEqual(meal.base_points, 0.0)
+        self.assertEqual(self.profile.score, 0.0)
+        self.assertEqual(self.user.meal_streak.current_streak, 0)
 
     def test_same_meal_type_different_day_allowed(self):
         """Test that same meal type on different day is allowed"""

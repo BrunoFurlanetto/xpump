@@ -327,6 +327,34 @@ class MealsAPIViewTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    @patch('nutrition.models.Status.objects.get_or_create')
+    def test_create_meal_with_broke_diet(self, mock_status):
+        """Test meal creation with diet break flag."""
+        mock_status.return_value = (self.status, True)
+
+        self.client.force_authenticate(user=self.user)
+        url = reverse('meals-list')
+        image_file = SimpleUploadedFile(
+            "test_image.jpg",
+            b"fake image content",
+            content_type="image/jpeg"
+        )
+        meal_time = datetime.now().replace(hour=8, minute=0, second=0, microsecond=0)
+
+        response = self.client.post(url, {
+            'meal_type': self.meal_config.pk,
+            'meal_time': meal_time.isoformat(),
+            'broke_diet': 'true',
+            'proof_files': [image_file]
+        }, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        meal = Meal.objects.get()
+        self.assertTrue(meal.broke_diet)
+        self.assertEqual(float(meal.base_points), 0.0)
+        self.user.profile.refresh_from_db()
+        self.assertEqual(float(self.user.profile.score), 0.0)
+
     def test_list_meals_authenticated(self):
         """Test listing meals as authenticated user"""
         self.client.force_authenticate(user=self.user)

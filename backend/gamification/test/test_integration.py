@@ -21,8 +21,9 @@ class WorkoutGamificationIntegrationTest(TestCase):
 
     def setUp(self):
         self.settings = GamificationSettings.load()
-        self.settings.workout_xp = 5
-        self.settings.workout_minutes = 60
+        self.settings.workout_xp = 1
+        self.settings.workout_minutes = 30
+        self.settings.max_workout_xp = 10
         self.settings.save()
 
         self.user = User.objects.create_user(username='testuser', password='pass')
@@ -66,7 +67,7 @@ class WorkoutGamificationIntegrationTest(TestCase):
     def test_workout_xp_calculation_with_streak(self):
         """Test XP calculation for workout with streak multiplier"""
         # Create workout
-        duration = timedelta(minutes=90)  # 1.5x base workout time
+        duration = timedelta(minutes=90)
 
         # Mock season to avoid actual season lookup
         with patch('gamification.services.Season.objects.get') as mock_season:
@@ -75,11 +76,8 @@ class WorkoutGamificationIntegrationTest(TestCase):
 
             xp_earned = self.workout_gamification.calculate(self.user, duration, timezone.now())
 
-            # Should be base_xp * duration_ratio * multiplier
-            # With streak=10, multiplier should be 1.5 (based on default settings)
-            # expected_multiplier = 1.5 TODO: Temporaly multiplier is defined as 1.0
             expected_multiplier = 1.0
-            expected_xp = 5 * (90 / 60) * expected_multiplier  # 5 * 1.5 * 1.5 = 11.25
+            expected_xp = 3 * expected_multiplier
 
             self.assertAlmostEqual(xp_earned, expected_xp, places=2)
 

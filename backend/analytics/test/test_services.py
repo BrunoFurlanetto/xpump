@@ -20,6 +20,7 @@ from profiles.models import Profile
 from groups.models import Group, GroupMembers
 from workouts.models import WorkoutCheckin, WorkoutStreak
 from nutrition.models import MealStreak
+from social_feed.models import Post, Comment, Report
 
 
 faker = Faker('pt_BR')
@@ -384,6 +385,34 @@ class SystemAnalyticsServiceTest(TestCase):
 
         self.assertEqual(stats['total_workouts'], 1)
         self.assertEqual(stats['workouts_today'], 1)
+
+    def test_get_system_stats_counts_pending_reports_by_unique_item(self):
+        """Pending reports devem contar itens únicos, não ocorrências individuais."""
+        post = Post.objects.create(
+            user=self.user,
+            content_type='social',
+            content_text='Reported post',
+            visibility='global'
+        )
+        comment = Comment.objects.create(
+            user=self.user,
+            post=post,
+            text='Reported comment'
+        )
+        reviewer = User.objects.create_user(
+            username='reviewer',
+            email='reviewer@example.com',
+            password='testpass123'
+        )
+        Profile.objects.create(user=reviewer, score=0, level=1, employer=self.client)
+
+        Report.objects.create(report_type='post', post=post, reported_by=self.user, reason='spam', status='pending')
+        Report.objects.create(report_type='post', post=post, reported_by=reviewer, reason='fake', status='pending')
+        Report.objects.create(report_type='comment', comment=comment, reported_by=self.user, reason='harassment', status='pending')
+
+        stats = SystemAnalyticsService.get_system_stats()
+
+        self.assertEqual(stats['pending_reports'], 2)
 
 
 class ActivityFeedServiceTest(TestCase):

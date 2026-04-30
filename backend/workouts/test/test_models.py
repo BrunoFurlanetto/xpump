@@ -213,12 +213,8 @@ class WorkoutCheckinModelTest(TestCase):
 
     def test_delete_workout_removes_adjustments_and_deletes_records(self):
         """Ao excluir treino, reverte bônus/penalidades vinculados e remove os registros."""
-<<<<<<< HEAD
         self.profile.score = 100.0
         self.profile.save()
-
-=======
->>>>>>> 369294b73fef25faeceab84f11f741dd1acdae11
         workout_time = timezone.now() - timedelta(hours=2)
         checkin = WorkoutCheckin.objects.create(
             user=self.user,
@@ -262,6 +258,18 @@ class WorkoutCheckinModelTest(TestCase):
         self.assertAlmostEqual(removed_xp, expected_removed, places=5)
         self.assertFalse(GamificationBonus.objects.filter(id=bonus.id).exists())
         self.assertFalse(GamificationPenalty.objects.filter(id=penalty.id).exists())
+
+    def test_workout_under_30_minutes_gives_no_xp(self):
+        """Treino abaixo de 30 minutos não deve conceder XP."""
+        checkin = WorkoutCheckin.objects.create(
+            user=self.user,
+            workout_date=timezone.now() - timedelta(hours=1),
+            duration=timedelta(minutes=29)
+        )
+
+        self.profile.refresh_from_db()
+        self.assertEqual(checkin.base_points, 0.0)
+        self.assertEqual(self.profile.score, 0.0)
 
 
 class WorkoutCheckinProofModelTest(TestCase):
